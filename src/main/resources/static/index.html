@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTCC Places Recommender</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Boxicons for modern icons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <i class='bx bx-map-alt'></i>
+                <span>UTCCRECOM</span>
+            </div>
+            <div class="nav-actions">
+                <button id="addPlaceBtn" class="btn-primary">
+                    <i class='bx bx-plus'></i> เพิ่มสถานที่
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="hero">
+            <h1>ค้นพบสถานที่น่าสนใจรอบ ม.หอการค้าไทย</h1>
+            <p>แนะนำร้านอาหาร คาเฟ่ และสถานที่ต่างๆ สำหรับนักศึกษา UTCC</p>
+            
+            <div class="search-bar">
+                <i class='bx bx-search'></i>
+                <input type="text" id="searchInput" placeholder="ค้นหาสถานที่, ร้านอาหาร, คาเฟ่...">
+                <button id="searchBtn">ค้นหา</button>
+            </div>
+            
+            <div class="filter-tags">
+                <span class="filter-tag active" data-category="">ทั้งหมด</span>
+                <span class="filter-tag" data-category="Restaurant">ร้านอาหาร</span>
+                <span class="filter-tag" data-category="Cafe">คาเฟ่</span>
+                <span class="filter-tag" data-category="Study Area">ที่อ่านหนังสือ</span>
+            </div>
+        </header>
+
+        <section class="places-grid" id="placesGrid">
+            <!-- Places will be generated here by JavaScript -->
+            <div class="loading">
+                <i class='bx bx-loader-alt bx-spin'></i> กำลังโหลดข้อมูล...
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Place Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>เพิ่มสถานที่ใหม่</h2>
+                <button class="close-btn" id="closeModalBtn"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPlaceForm">
+                    <div class="form-group">
+                        <label>ชื่อสถานที่ <span style="color:red">*</span></label>
+                        <input type="text" id="pName" required placeholder="เช่น ร้านข้าวป้าศรี">
+                    </div>
+                    <div class="form-group">
+                        <label>รายละเอียด</label>
+                        <textarea id="pDesc" rows="3" placeholder="อร่อย ให้เยอะ ราคาถูก..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>หมวดหมู่</label>
+                            <select id="pCategory">
+                                <option value="Restaurant">ร้านอาหาร</option>
+                                <option value="Cafe">คาเฟ่</option>
+                                <option value="Study Area">ที่อ่านหนังสือ</option>
+                                <option value="Other">อื่นๆ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ที่อยู่ / โซน</label>
+                            <input type="text" id="pAddress" placeholder="ซอยวิภาวดี 2">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>ลิงก์รูปภาพ (URL)</label>
+                        <input type="url" id="pImage" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label>แท็ก (คั่นด้วยลูกน้ำ ,)</label>
+                        <input type="text" id="pTags" placeholder="แอร์เย็น, ปลั๊กเยอะ, อร่อย">
+                    </div>
+                    <button type="submit" class="btn-primary full-width">บันทึกข้อมูล</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
