@@ -17,6 +17,15 @@
                 <span>UTCCRECOM</span>
             </div>
             <div class="nav-actions">
+                <button class="nav-icon-btn" id="favNavBtn" title="รายการโปรด" onclick="toggleFavPanel()">
+                    <i class='bx bxs-heart'></i>
+                    <span class="nav-btn-label">รายการโปรด</span>
+                    <span class="fav-count-badge" id="favCountBadge" style="display:none">0</span>
+                </button>
+                <button class="nav-icon-btn" id="settingsNavBtn" title="ตั้งค่า" onclick="toggleSettingsPanel()">
+                    <i class='bx bx-cog'></i>
+                    <span class="nav-btn-label">ตั้งค่า</span>
+                </button>
                 <button id="addPlaceBtn" class="btn-primary">
                     <i class='bx bx-plus'></i> เพิ่มสถานที่
                 </button>
@@ -24,14 +33,180 @@
         </div>
     </nav>
 
+    <!-- ====== Favorites Side Panel ====== -->
+    <div class="side-panel" id="favPanel">
+        <div class="side-panel-header">
+            <div class="side-panel-title">
+                <i class='bx bxs-heart' style="color:#ef4444"></i>
+                รายการโปรดของฉัน
+            </div>
+            <button class="close-panel-btn" onclick="toggleFavPanel()"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="side-panel-body" id="favList">
+            <div class="fav-empty">
+                <i class='bx bx-heart'></i>
+                <p>ยังไม่มีรายการโปรด</p>
+                <small>กดไอคอน ♡ บนการ์ดสถานที่เพื่อบันทึก</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== Settings Side Panel ====== -->
+    <div class="side-panel" id="settingsPanel">
+        <div class="side-panel-header">
+            <div class="side-panel-title">
+                <i class='bx bx-cog' style="color:var(--primary-color)"></i>
+                การตั้งค่า
+            </div>
+            <button class="close-panel-btn" onclick="toggleSettingsPanel()"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="side-panel-body">
+            <!-- Dark Mode -->
+            <div class="settings-section">
+                <div class="settings-section-title"><i class='bx bx-moon'></i> ธีม</div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">โหมดมืด (Dark Mode)</div>
+                        <div class="settings-desc">เปลี่ยนหน้าเว็บเป็นสีเข้ม</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <!-- Language -->
+            <div class="settings-section">
+                <div class="settings-section-title"><i class='bx bx-globe'></i> ภาษา</div>
+                <div class="settings-row">
+                    <div class="settings-label">ภาษาแสดงผล</div>
+                    <div class="lang-toggle">
+                        <button class="lang-btn active" id="langTH" onclick="setLanguage('th')">🇹🇭 ไทย</button>
+                        <button class="lang-btn" id="langEN" onclick="setLanguage('en')">🇺🇸 EN</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card Size -->
+            <div class="settings-section">
+                <div class="settings-section-title"><i class='bx bx-grid-alt'></i> การแสดงการ์ด</div>
+                <div class="settings-row" style="flex-wrap:wrap; gap:0.5rem;">
+                    <div class="settings-label" style="width:100%; margin-bottom:0.5rem">ขนาดการ์ด</div>
+                    <button class="size-btn active" id="sizeNormal" onclick="setCardSize('normal')">กลาง</button>
+                    <button class="size-btn" id="sizeSmall" onclick="setCardSize('small')">เล็ก</button>
+                    <button class="size-btn" id="sizeLarge" onclick="setCardSize('large')">ใหญ่</button>
+                </div>
+            </div>
+            <!-- About -->
+            <div class="settings-section">
+                <div class="settings-section-title"><i class='bx bx-info-circle'></i> เกี่ยวกับ</div>
+                <p class="settings-desc" style="line-height:1.8">
+                    UTCC Places Recommender<br>
+                    <strong>Version:</strong> 1.0.0<br>
+                    <strong>พัฒนาโดย:</strong> นักศึกษา UTCC
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- Panel Backdrop -->
+    <div class="panel-backdrop" id="panelBackdrop" onclick="closeAllPanels()"></div>
+
+
     <main class="container">
+
+        <!-- ====== FULL-SCREEN HERO LANDING (utcc.ac.th style) ====== -->
+        <section class="hero-landing" id="heroLanding">
+            <div class="hero-bg-overlay"></div>
+            <div class="hero-landing-content">
+                <div class="hero-badge">
+                    <i class='bx bxs-star'></i>
+                    มหาวิทยาลัยหอการค้าไทย
+                </div>
+                <h1 class="hero-landing-title">
+                    ค้นพบสถานที่น่าสนใจ<br>
+                    <span class="hero-highlight">รอบ ม.หอการค้าไทย</span>
+                </h1>
+                <p class="hero-landing-subtitle">
+                    แนะนำร้านอาหาร คาเฟ่ และสถานที่ต่างๆ ภายในและรอบแคมปัส<br>
+                    สำหรับนักศึกษา UTCC โดยเฉพาะ
+                </p>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <span class="hero-stat-num">20+</span>
+                        <span class="hero-stat-label">อาคาร</span>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-num">50+</span>
+                        <span class="hero-stat-label">สถานที่แนะนำ</span>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-num">3</span>
+                        <span class="hero-stat-label">หมวดหมู่</span>
+                    </div>
+                </div>
+                <a href="#mapSection" class="hero-cta-btn" onclick="document.getElementById('mapSection').scrollIntoView({behavior:'smooth'})">
+                    <i class='bx bx-map-alt'></i>
+                    ดูแผนผังมหาวิทยาลัย
+                </a>
+            </div>
+            <div class="hero-scroll-indicator" onclick="document.getElementById('mapSection').scrollIntoView({behavior:'smooth'})">
+                <span>เลื่อนลงดูแผนที่</span>
+                <i class='bx bx-chevron-down bx-fade-down'></i>
+            </div>
+        </section>
+        <!-- ========================================================== -->
+
+        <section id="mapSection">
         <header class="hero">
-            <h1>ค้นพบสถานที่น่าสนใจรอบ ม.หอการค้าไทย</h1>
-            <p>แนะนำร้านอาหาร คาเฟ่ และสถานที่ต่างๆ สำหรับนักศึกษา UTCC</p>
+            <h2 class="section-title-map">🗺️ แผนผังมหาวิทยาลัยหอการค้าไทย</h2>
+            <p class="section-sub-map">คลิกที่หมุดอาคารเพื่อดูรายละเอียดและร้านค้าในบริเวณนั้น</p>
             
+            <!-- ====== Interactive Campus Map ====== -->
+            <div class="campus-map-wrapper">
+                <div class="map-container">
+                    <!-- Map Information Side Panel -->
+                    <div class="building-info-panel" id="buildingInfoPanel">
+                        <button class="close-panel-btn" onclick="closeBuildingInfo()"><i class='bx bx-x'></i></button>
+                        <img src="" alt="Building" class="panel-bldg-img" id="panelBldgImg">
+                        <div class="panel-bldg-content">
+                            <h3 id="panelBldgName">ชื่ออาคาร</h3>
+                            <p id="panelBldgDesc">รายละเอียด...</p>
+                            <div style="flex:1"></div>
+                            <button class="btn-primary full-width" id="panelBldgSearchBtn" onclick="searchFromPanel()"><i class='bx bx-search'></i> ดูสถานที่และร้านค้าในตึกนี้</button>
+                        </div>
+                    </div>
+
+                    <!-- UTCC Campus Map Image -->
+                    <img src="campus-map.jpg" alt="UTCC Campus Map" class="campus-map-img">
+                    
+                    <!-- Hotspot: Building 24 (Yellow circle 24) -->
+                    <div class="map-hotspot" style="top: 15%; left: 53.5%;" onclick="openBuildingInfo('อาคาร 24')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 24 (ตึกเรือใบ)</span>
+                    </div>
+
+                    <!-- Hotspot: Building 10 (Yellow circle 10) -->
+                    <div class="map-hotspot" style="top: 72%; left: 34.5%;" onclick="openBuildingInfo('อาคาร 10')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 10</span>
+                    </div>
+
+                    <!-- Hotspot: Building 9 (Yellow circle 9) -->
+                    <div class="map-hotspot" style="top: 62.5%; left: 60.5%;" onclick="openBuildingInfo('อาคาร 9')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 9</span>
+                    </div>
+                </div>
+            </div>
+            <!-- =================================== -->
+
             <div class="search-bar">
                 <i class='bx bx-search'></i>
-                <input type="text" id="searchInput" placeholder="ค้นหาสถานที่, ร้านอาหาร, คาเฟ่...">
+                <input type="text" id="searchInput" placeholder="ค้นหาสถานที่, ตึกเรียน, ร้านอาหาร, คาเฟ่...">
                 <button id="searchBtn">ค้นหา</button>
             </div>
             
@@ -49,6 +224,7 @@
                 <i class='bx bx-loader-alt bx-spin'></i> กำลังโหลดข้อมูล...
             </div>
         </section>
+        </section><!-- end mapSection -->
     </main>
 
     <!-- Add Place Modal -->

@@ -1,5 +1,7 @@
 const API_BASE = '/api/places';
 let currentCategory = '';
+let currentLang = localStorage.getItem('lang') || 'th';
+let favorites = JSON.parse(localStorage.getItem('utcc_favorites') || '[]');
 
 // DOM Elements
 const placesGrid = document.getElementById('placesGrid');
@@ -13,8 +15,57 @@ const addPlaceBtn = document.getElementById('addPlaceBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const addPlaceForm = document.getElementById('addPlaceForm');
 
+// Map Building Static Data 
+const BUILDING_DATA = {
+    'อาคาร 24': {
+        title: 'อาคาร 24 (สัญลักษณ์ ม.)',
+        desc: 'อาคารเรียนรวมมโหฒาร ศูนย์รวมนักศึกษา คาเฟ่ชื่อดัง และห้องสมุดที่ทันสมัยที่สุดในแคมปัส พิกัดหลักสำหรับการนัดเจอเพื่อนๆ!',
+        image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 10': {
+        title: 'อาคาร 10 (อเนกประสงค์)',
+        desc: 'ตึกเรียนสำหรับวิชาพื้นฐาน มีโรงอาหารขนาดย่อม และจุดนั่งทำงานหรืออ่านหนังสือใต้ตึกที่เย็นสบาย',
+        image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 9': {
+        title: 'อาคาร 9',
+        desc: 'ศูนย์รวมของคณะทางด้านศิลปะและภาษา มีมุมถ่ายรูปสวยๆ เยอะมาก',
+        image: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=600'
+    }
+};
+
+let currentSelectedBuilding = '';
+
+// Map Interaction
+function openBuildingInfo(buildingKey) {
+    const data = BUILDING_DATA[buildingKey];
+    if(!data) return;
+    
+    currentSelectedBuilding = buildingKey;
+    document.getElementById('panelBldgName').innerText = data.title;
+    document.getElementById('panelBldgDesc').innerText = data.desc;
+    document.getElementById('panelBldgImg').src = data.image;
+    
+    document.getElementById('buildingInfoPanel').classList.add('active');
+}
+
+function closeBuildingInfo() {
+    document.getElementById('buildingInfoPanel').classList.remove('active');
+}
+
+function searchFromPanel() {
+    searchInput.value = currentSelectedBuilding;
+    handleSearch();
+    closeBuildingInfo();
+    document.getElementById('placesGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // Event Listeners
-document.addEventListener('DOMContentLoaded', fetchPlaces);
+document.addEventListener('DOMContentLoaded', () => {
+    fetchPlaces();
+    updateFavBadge();
+    applyStoredSettings();
+});
 searchBtn.addEventListener('click', handleSearch);
 searchInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSearch(); });
 
@@ -37,6 +88,128 @@ filterTags.forEach(tag => {
         }
     });
 });
+
+// ====== FAVORITES SYSTEM ======
+function toggleFavorite(placeId, placeName, placeImg, placeCategory) {
+    const idx = favorites.findIndex(f => f.id === placeId);
+    if (idx === -1) {
+        favorites.push({ id: placeId, name: placeName, image: placeImg, category: placeCategory });
+    } else {
+        favorites.splice(idx, 1);
+    }
+    localStorage.setItem('utcc_favorites', JSON.stringify(favorites));
+    updateFavBadge();
+    renderFavList();
+    // Re-render heart icon state on card
+    const btn = document.querySelector(`.fav-btn[data-id="${placeId}"]`);
+    if (btn) {
+        const isFav = favorites.some(f => f.id === placeId);
+        btn.classList.toggle('is-fav', isFav);
+        btn.title = isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด';
+    }
+}
+
+function updateFavBadge() {
+    const badge = document.getElementById('favCountBadge');
+    if (favorites.length > 0) {
+        badge.style.display = 'flex';
+        badge.textContent = favorites.length;
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function renderFavList() {
+    const list = document.getElementById('favList');
+    if (favorites.length === 0) {
+        list.innerHTML = `<div class="fav-empty"><i class='bx bx-heart'></i><p>ยังไม่มีรายการโปรด</p><small>กดไอคอน ♡ บนการ์ดสถานที่เพื่อบันทึก</small></div>`;
+        return;
+    }
+    list.innerHTML = favorites.map(f => `
+        <div class="fav-item">
+            <img src="${f.image}" alt="${f.name}" class="fav-item-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=100'">
+            <div class="fav-item-info">
+                <div class="fav-item-name">${f.name}</div>
+                <div class="fav-item-cat">${translateCategory(f.category)}</div>
+            </div>
+            <button class="fav-remove-btn" onclick="toggleFavorite('${f.id}', '${f.name}', '${f.image}', '${f.category}')" title="ลบออก"><i class='bx bx-x'></i></button>
+        </div>
+    `).join('');
+}
+
+function toggleFavPanel() {
+    renderFavList();
+    const panel = document.getElementById('favPanel');
+    const back = document.getElementById('panelBackdrop');
+    document.getElementById('settingsPanel').classList.remove('active');
+    panel.classList.toggle('active');
+    back.classList.toggle('active', panel.classList.contains('active'));
+}
+
+// ====== SETTINGS SYSTEM ======
+function toggleSettingsPanel() {
+    const panel = document.getElementById('settingsPanel');
+    const back = document.getElementById('panelBackdrop');
+    document.getElementById('favPanel').classList.remove('active');
+    panel.classList.toggle('active');
+    back.classList.toggle('active', panel.classList.contains('active'));
+}
+
+function closeAllPanels() {
+    document.getElementById('favPanel').classList.remove('active');
+    document.getElementById('settingsPanel').classList.remove('active');
+    document.getElementById('panelBackdrop').classList.remove('active');
+}
+
+function toggleDarkMode(enabled) {
+    document.documentElement.setAttribute('data-theme', enabled ? 'dark' : 'light');
+    localStorage.setItem('darkMode', enabled ? 'dark' : 'light');
+}
+
+function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    document.getElementById('langTH').classList.toggle('active', lang === 'th');
+    document.getElementById('langEN').classList.toggle('active', lang === 'en');
+    // Re-fetch & re-render to apply language
+    if(currentCategory) fetchPlacesByCategory(currentCategory);
+    else fetchPlaces();
+}
+
+function setCardSize(size) {
+    const grid = document.getElementById('placesGrid');
+    grid.classList.remove('size-small', 'size-large');
+    if (size === 'small') grid.classList.add('size-small');
+    if (size === 'large') grid.classList.add('size-large');
+    localStorage.setItem('cardSize', size);
+    ['sizeNormal', 'sizeSmall', 'sizeLarge'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(size === 'normal' ? 'sizeNormal' : size === 'small' ? 'sizeSmall' : 'sizeLarge').classList.add('active');
+}
+
+function applyStoredSettings() {
+    const dark = localStorage.getItem('darkMode');
+    if (dark === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('darkModeToggle').checked = true;
+    }
+    const size = localStorage.getItem('cardSize');
+    if (size) setCardSize(size);
+    const lang = localStorage.getItem('lang') || 'th';
+    setLanguage(lang);
+}
+
+function translateCategory(cat) {
+    if (currentLang === 'en') {
+        if(cat === 'Restaurant') return 'Restaurant';
+        if(cat === 'Cafe') return 'Café';
+        if(cat === 'Study Area') return 'Study Area';
+        return 'Other';
+    }
+    if(cat === 'Restaurant') return 'ร้านอาหาร';
+    if(cat === 'Cafe') return 'คาเฟ่';
+    if(cat === 'Study Area') return 'ที่อ่านหนังสือ';
+    return 'ทั่วไป';
+}
 
 // API Calls
 async function fetchPlaces() {
@@ -157,18 +330,20 @@ function renderPlaces(places) {
     placesGrid.innerHTML = places.map((place, index) => {
         const img = (place.images && place.images.length > 0) ? place.images[0] : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
         const tagsHtml = (place.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
-        
-        // Translating category for ui
-        let catText = 'ทั่วไป';
-        if(place.category === 'Restaurant') catText = 'ร้านอาหาร';
-        if(place.category === 'Cafe') catText = 'คาเฟ่';
-        if(place.category === 'Study Area') catText = 'ที่อ่านหนังสือ';
-        
-        const delay = index * 0.08; // Stagger animation
+        const catText = translateCategory(place.category);
+        const delay = index * 0.08;
+        const isFav = favorites.some(f => f.id === place.id);
         
         return `
             <div class="place-card" style="animation-delay: ${delay}s">
-                <img src="${img}" alt="${place.name}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';">
+                <div class="card-img-wrapper">
+                    <img src="${img}" alt="${place.name}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';">
+                    <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${place.id}" 
+                        onclick="toggleFavorite('${place.id}', '${place.name}', '${img}', '${place.category}')"
+                        title="${isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด'}">
+                        <i class='bx ${isFav ? 'bxs-heart' : 'bx-heart'}'></i>
+                    </button>
+                </div>
                 <div class="card-content">
                     <div class="card-category">${catText}</div>
                     <h3 class="card-title">${place.name}</h3>
