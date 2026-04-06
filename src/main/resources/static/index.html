@@ -172,38 +172,208 @@
                 <div class="map-container">
 
                     <div class="building-info-panel" id="buildingInfoPanel">
-                        <button class="close-panel-btn" onclick="closeBuildingInfo()"><i class='bx bx-x'></i></button>
+                        <div class="panel-header">
+                            <span class="panel-tag" id="panelBldgTag">อาคารเรียน</span>
+                            <div style="display:flex;gap:0.5rem">
+                                <button class="panel-icon-btn" id="panelEditBtn" onclick="toggleBuildingEdit()" title="แก้ไขข้อมูล">
+                                    <i class='bx bx-edit'></i>
+                                </button>
+                                <button class="panel-icon-btn" onclick="closeBuildingInfo()" title="ปิด">
+                                    <i class='bx bx-x'></i>
+                                </button>
+                            </div>
+                        </div>
                         <img src="" alt="Building" class="panel-bldg-img" id="panelBldgImg">
-                        <div class="panel-bldg-content">
+
+                        <!-- VIEW MODE -->
+                        <div class="panel-bldg-content" id="panelViewMode">
                             <h3 id="panelBldgName">ชื่ออาคาร</h3>
-                            <p id="panelBldgDesc">รายละเอียด...</p>
+                            <p id="panelBldgDesc" style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6;margin-bottom:1rem">รายละเอียด...</p>
+                            <div class="panel-detail-grid">
+                                <div class="panel-detail-row">
+                                    <i class='bx bx-layer'></i>
+                                    <span class="pd-label">จำนวนชั้น</span>
+                                    <span class="pd-val" id="pdFloors">—</span>
+                                </div>
+                                <div class="panel-detail-row">
+                                    <i class='bx bx-book-open'></i>
+                                    <span class="pd-label">คณะ / หน่วยงาน</span>
+                                    <span class="pd-val" id="pdFaculty">—</span>
+                                </div>
+                                <div class="panel-detail-row">
+                                    <i class='bx bx-time'></i>
+                                    <span class="pd-label">เวลาเปิด</span>
+                                    <span class="pd-val" id="pdHours">—</span>
+                                </div>
+                                <div class="panel-detail-row">
+                                    <i class='bx bx-cog'></i>
+                                    <span class="pd-label">สิ่งอำนวยความสะดวก</span>
+                                    <span class="pd-val" id="pdFacilities">—</span>
+                                </div>
+                            </div>
                             <div style="flex:1"></div>
-                            <button class="btn-primary full-width" id="panelBldgSearchBtn" onclick="searchFromPanel()"><i class='bx bx-search'></i> ดูสถานที่และร้านค้าในตึกนี้</button>
+                            <button class="btn-primary full-width" id="panelBldgSearchBtn" onclick="searchFromPanel()">
+                                <i class='bx bx-search'></i> ดูสถานที่และร้านค้าในตึกนี้
+                            </button>
+                        </div>
+
+                        <!-- EDIT MODE -->
+                        <div class="panel-bldg-content" id="panelEditMode" style="display:none">
+                            <div class="pedit-group">
+                                <label class="pedit-label">ชื่ออาคาร</label>
+                                <input type="text" id="peTitle" class="pedit-input" placeholder="เช่น อาคาร 9 (คณะมนุษยศาสตร์)">
+                            </div>
+                            <div class="pedit-group">
+                                <label class="pedit-label">คำอธิบาย</label>
+                                <textarea id="peDesc" class="pedit-input" rows="3" placeholder="รายละเอียดอาคาร..."></textarea>
+                            </div>
+                            <div class="pedit-group">
+                                <label class="pedit-label">URL รูปอาคาร</label>
+                                <input type="url" id="peImage" class="pedit-input" placeholder="https://...">
+                            </div>
+                            <div class="pedit-row">
+                                <div class="pedit-group">
+                                    <label class="pedit-label">จำนวนชั้น</label>
+                                    <input type="text" id="peFloors" class="pedit-input" placeholder="เช่น 8 ชั้น">
+                                </div>
+                                <div class="pedit-group">
+                                    <label class="pedit-label">เวลาเปิด</label>
+                                    <input type="text" id="peHours" class="pedit-input" placeholder="เช่น 07:00 – 20:00">
+                                </div>
+                            </div>
+                            <div class="pedit-group">
+                                <label class="pedit-label">คณะ / หน่วยงาน</label>
+                                <input type="text" id="peFaculty" class="pedit-input" placeholder="เช่น คณะบริหารธุรกิจ">
+                            </div>
+                            <div class="pedit-group">
+                                <label class="pedit-label">สิ่งอำนวยความสะดวก</label>
+                                <input type="text" id="peFacilities" class="pedit-input" placeholder="เช่น ห้องประชุม, ATM, ร้านค้า">
+                            </div>
+                            <div class="pedit-row" style="margin-top:0.75rem">
+                                <button class="btn-secondary" onclick="toggleBuildingEdit()">ยกเลิก</button>
+                                <button class="btn-primary" style="flex:1" onclick="saveBuildingEdit()">
+                                    <i class='bx bx-save'></i> บันทึก
+                                </button>
+                            </div>
                         </div>
                     </div>
-
-
-                    <img src="campus-map.jpg" alt="UTCC Campus Map" class="campus-map-img">
+                    <img src="UTCC_MAP.jpg" alt="UTCC Campus Map" class="campus-map-img">
                     
 
-                    <div class="map-hotspot" style="top: 15%; left: 53.5%;" onclick="openBuildingInfo('อาคาร 24')">
+                    <!-- Building hotspots — positions calibrated to yellow number labels on map -->
+
+                    <!-- อาคาร 24 (ตึกเรือใบ) — top center -->
+                    <div class="map-hotspot" style="top: 11%; left: 51%;" onclick="openBuildingInfo('อาคาร 24')">
                         <div class="hotspot-pulse"></div>
                         <i class='bx bxs-map-pin hotspot-icon'></i>
                         <span class="hotspot-tooltip">อาคาร 24 (ตึกเรือใบ)</span>
                     </div>
 
-
-                    <div class="map-hotspot" style="top: 72%; left: 34.5%;" onclick="openBuildingInfo('อาคาร 10')">
+                    <!-- อาคาร 5 — upper right -->
+                    <div class="map-hotspot" style="top: 25%; left: 65%;" onclick="openBuildingInfo('อาคาร 5')">
                         <div class="hotspot-pulse"></div>
                         <i class='bx bxs-map-pin hotspot-icon'></i>
-                        <span class="hotspot-tooltip">อาคาร 10</span>
+                        <span class="hotspot-tooltip">อาคาร 5</span>
                     </div>
 
-                    <div class="map-hotspot" style="top: 62.5%; left: 60.5%;" onclick="openBuildingInfo('อาคาร 9')">
+                    <!-- อาคาร 8 — upper left-center -->
+                    <div class="map-hotspot" style="top: 31%; left: 40%;" onclick="openBuildingInfo('อาคาร 8')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 8</span>
+                    </div>
+
+                    <!-- อาคาร 25 — center left of building 24 -->
+                    <div class="map-hotspot" style="top: 34%; left: 44%;" onclick="openBuildingInfo('อาคาร 25')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 25</span>
+                    </div>
+
+                    <!-- อาคาร 18 — center-left -->
+                    <div class="map-hotspot" style="top: 39%; left: 39%;" onclick="openBuildingInfo('อาคาร 18')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 18</span>
+                    </div>
+
+                    <!-- อาคาร 1 — center-left lower -->
+                    <div class="map-hotspot" style="top: 60%; left: 30%;" onclick="openBuildingInfo('อาคาร 1')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 1</span>
+                    </div>
+
+                    <!-- อาคาร 14 — far left middle -->
+                    <div class="map-hotspot" style="top: 50%; left: 21%;" onclick="openBuildingInfo('อาคาร 14')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 14</span>
+                    </div>
+
+                    <!-- อาคาร 21 — center-right -->
+                    <div class="map-hotspot" style="top: 46%; left: 65%;" onclick="openBuildingInfo('อาคาร 21')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 21</span>
+                    </div>
+
+                    <!-- อาคาร 9 — center -->
+                    <div class="map-hotspot" style="top: 51%; left: 57%;" onclick="openBuildingInfo('อาคาร 9')">
                         <div class="hotspot-pulse"></div>
                         <i class='bx bxs-map-pin hotspot-icon'></i>
                         <span class="hotspot-tooltip">อาคาร 9</span>
                     </div>
+
+                    <!-- อาคาร 22 — right of 9 -->
+                    <div class="map-hotspot" style="top: 52%; left: 72%;" onclick="openBuildingInfo('อาคาร 22')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 22</span>
+                    </div>
+
+                    <!-- อาคาร 23 — below 9 -->
+                    <div class="map-hotspot" style="top: 57%; left: 62%;" onclick="openBuildingInfo('อาคาร 23')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 23</span>
+                    </div>
+
+                    <!-- อาคาร 7 — center lower -->
+                    <div class="map-hotspot" style="top: 61%; left: 56%;" onclick="openBuildingInfo('อาคาร 7')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 7</span>
+                    </div>
+
+                    <!-- อาคาร 3 — lower center -->
+                    <div class="map-hotspot" style="top: 63%; left: 45%;" onclick="openBuildingInfo('อาคาร 3')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 3</span>
+                    </div>
+
+                    <!-- อาคาร 20 — lower left -->
+                    <div class="map-hotspot" style="top: 70%; left: 27%;" onclick="openBuildingInfo('อาคาร 20')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 20</span>
+                    </div>
+
+                    <!-- อาคาร 15 — bottom center -->
+                    <div class="map-hotspot" style="top: 77%; left: 57%;" onclick="openBuildingInfo('อาคาร 15')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 15</span>
+                    </div>
+
+                    <!-- อาคาร 19 — bottom right -->
+                    <div class="map-hotspot" style="top: 79%; left: 73%;" onclick="openBuildingInfo('อาคาร 19')">
+                        <div class="hotspot-pulse"></div>
+                        <i class='bx bxs-map-pin hotspot-icon'></i>
+                        <span class="hotspot-tooltip">อาคาร 19</span>
+                    </div>
+
                 </div>
             </div>
 

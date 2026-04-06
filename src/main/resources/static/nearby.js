@@ -523,4 +523,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('darkBtn').innerHTML = "<i class='bx bx-sun'></i>";
     }
     renderCards(PLACES);
+
+    // FAB color: flip to accent when overlapping dark footer
+    const fab = document.getElementById('adminFab');
+    const footer = document.querySelector('.nearby-footer');
+    if (fab && footer) {
+        window.addEventListener('scroll', () => {
+            const footerTop = footer.getBoundingClientRect().top;
+            const winH = window.innerHeight;
+            // FAB sits at bottom:32px, so ~88px from bottom
+            const fabY = winH - 88;
+            fab.classList.toggle('on-dark', footerTop < fabY);
+        }, { passive: true });
+    }
 });

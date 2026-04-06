@@ -814,21 +814,38 @@ body {
     border-radius: 50%;
     background: var(--primary);
     color: white;
-    border: none;
+    border: 3px solid rgba(255,255,255,0.3);
     font-size: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(11,26,69,0.4);
+    box-shadow: 0 6px 20px rgba(11,26,69,0.45), 0 0 0 0 rgba(251,191,36,0);
     z-index: 500;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .admin-fab:hover {
     transform: scale(1.12) rotate(90deg);
     background: var(--primary-light);
-    box-shadow: 0 10px 30px rgba(11,26,69,0.5);
+    border-color: rgba(255,255,255,0.6);
+    box-shadow: 0 10px 30px rgba(11,26,69,0.55);
+}
+
+/* When FAB is over dark footer — flip to bright accent */
+.admin-fab.on-dark {
+    background: #fbbf24;
+    color: #0b1a45;
+    border-color: rgba(255,255,255,0.8);
+    box-shadow: 0 6px 24px rgba(251,191,36,0.55), 0 0 0 4px rgba(251,191,36,0.2);
+}
+
+.admin-fab.on-dark:hover {
+    background: #f59e0b;
+    color: #0b1a45;
+    border-color: white;
+    box-shadow: 0 10px 32px rgba(251,191,36,0.7);
+    transform: scale(1.12) rotate(90deg);
 }
 
 /* ==============================

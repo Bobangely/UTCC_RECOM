@@ -15,42 +15,225 @@ const addPlaceBtn = document.getElementById('addPlaceBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const addPlaceForm = document.getElementById('addPlaceForm');
 
-// Map Building Static Data 
-const BUILDING_DATA = {
-    'อาคาร 24': {
-        title: 'อาคาร 24 (สัญลักษณ์ ม.)',
-        desc: 'อาคารเรียนรวมมโหฒาร ศูนย์รวมนักศึกษา คาเฟ่ชื่อดัง และห้องสมุดที่ทันสมัยที่สุดในแคมปัส พิกัดหลักสำหรับการนัดเจอเพื่อนๆ!',
+// Map Building Static Data  (merged with localStorage edits)
+const DEFAULT_BUILDING_DATA = {
+    'อาคาร 1': {
+        title: 'อาคาร 1',
+        desc: 'อาคารเรียนรวมสำหรับนักศึกษาชั้นปีต้น มีห้องเรียนขนาดใหญ่สำหรับวิชาพื้นฐาน',
+        floors: '5 ชั้น', faculty: 'เรียนรวม / วิชาพื้นฐาน', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียนขนาดใหญ่, ห้องน้ำ',
         image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
     },
-    'อาคาร 10': {
-        title: 'อาคาร 10 (อเนกประสงค์)',
-        desc: 'ตึกเรียนสำหรับวิชาพื้นฐาน มีโรงอาหารขนาดย่อม และจุดนั่งทำงานหรืออ่านหนังสือใต้ตึกที่เย็นสบาย',
+    'อาคาร 3': {
+        title: 'อาคาร 3',
+        desc: 'อาคารเรียนและสำนักงานคณะต่างๆ มีลานกิจกรรมด้านหน้าสำหรับนักศึกษา',
+        floors: '6 ชั้น', faculty: 'คณะต่างๆ', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียน, ลานกิจกรรม, ห้องน้ำ',
         image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 5': {
+        title: 'อาคาร 5',
+        desc: 'อาคารสูงฝั่งขวาของแคมปัส ใช้เป็นที่ตั้งของหน่วยงานสนับสนุนการเรียนการสอน',
+        floors: '8 ชั้น', faculty: 'หน่วยงานสนับสนุน', hours: '08:00 – 18:00',
+        facilities: 'ห้องประชุม, ห้องน้ำ, ลิฟต์',
+        image: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 7': {
+        title: 'อาคาร 7',
+        desc: 'อาคารเรียนกลางแคมปัส เชื่อมต่อกับอาคาร 9 ผ่านทางเดินสะพานลอย',
+        floors: '6 ชั้น', faculty: 'หลายคณะ', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียน, สะพานลอย, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 8': {
+        title: 'อาคาร 8',
+        desc: 'อาคารเรียนฝั่งซ้าย มีห้องปฏิบัติการและห้องสัมมนาขนาดย่อม',
+        floors: '7 ชั้น', faculty: 'คณะวิทยาศาสตร์และเทคโนโลยี', hours: '07:30 – 19:00',
+        facilities: 'Lab คอมพิวเตอร์, ห้องสัมมนา, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600'
     },
     'อาคาร 9': {
         title: 'อาคาร 9',
         desc: 'ศูนย์รวมของคณะทางด้านศิลปะและภาษา มีมุมถ่ายรูปสวยๆ เยอะมาก',
+        floors: '8 ชั้น', faculty: 'คณะมนุษยศาสตร์และประยุกต์ศิลป์', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียน, ลานกิจกรรม, ร้านกาแฟ, ห้องน้ำ',
         image: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 14': {
+        title: 'อาคาร 14',
+        desc: 'อาคารฝั่งซ้ายสุดของแคมปัส ใช้สำหรับการเรียนการสอนและที่จอดรถ',
+        floors: '4 ชั้น', faculty: 'ที่จอดรถ / หน่วยงาน', hours: '06:00 – 22:00',
+        facilities: 'ที่จอดรถ, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 15': {
+        title: 'อาคาร 15',
+        desc: 'อาคารกีฬาและสระว่ายน้ำ ศูนย์รวมกีฬาของมหาวิทยาลัย',
+        floors: '3 ชั้น', faculty: 'ศูนย์กีฬา', hours: '06:00 – 21:00',
+        facilities: 'สระว่ายน้ำ, โรงยิม, ห้องฟิตเนส, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 18': {
+        title: 'อาคาร 18',
+        desc: 'อาคารเรียนและสำนักงานส่วนกลาง มีลานอเนกประสงค์ใต้ตึก',
+        floors: '6 ชั้น', faculty: 'สำนักงานส่วนกลาง', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียน, ลาน, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 19': {
+        title: 'อาคาร 19',
+        desc: 'อาคารฝั่งล่างขวาของแคมปัส ใกล้สระว่ายน้ำและลานกีฬากลางแจ้ง',
+        floors: '4 ชั้น', faculty: 'คณะนิติศาสตร์', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียน, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 20': {
+        title: 'อาคาร 20',
+        desc: 'อาคารจอดรถหลักของมหาวิทยาลัย บริเวณทางเข้าฝั่งซ้าย',
+        floors: '8 ชั้น', faculty: 'อาคารจอดรถ', hours: '06:00 – 22:00',
+        facilities: 'ที่จอดรถหลายร้อยคัน, บันไดเลื่อน',
+        image: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 21': {
+        title: 'อาคาร 21',
+        desc: 'อาคารด้านขวากลาง เชื่อมกับอาคาร 22 มีห้องเรียนและห้องปฏิบัติการ',
+        floors: '7 ชั้น', faculty: 'คณะบริหารธุรกิจ', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียน, Lab, ห้องน้ำ, ลิฟต์',
+        image: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 22': {
+        title: 'อาคาร 22',
+        desc: 'อาคารฝั่งขวา มีห้องสัมมนา ห้องประชุม และสำนักงานคณาจารย์',
+        floors: '6 ชั้น', faculty: 'คณะบัญชี', hours: '07:30 – 19:30',
+        facilities: 'ห้องสัมมนา, ห้องประชุม, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 23': {
+        title: 'อาคาร 23',
+        desc: 'อาคารกลางฝั่งขวา ใช้เป็นที่เรียนและจัดกิจกรรมนักศึกษา',
+        floors: '5 ชั้น', faculty: 'คณะเศรษฐศาสตร์', hours: '07:00 – 20:00',
+        facilities: 'ห้องเรียน, ลานกิจกรรม, ห้องน้ำ',
+        image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 24': {
+        title: 'อาคาร 24 (ตึกเรือใบ)',
+        desc: 'อาคารสัญลักษณ์ของ ม.หอการค้าไทย ทรงเรือใบโดดเด่น เป็นที่ตั้งสำนักทะเบียน ห้องสมุด และคาเฟ่ชื่อดัง',
+        floors: '12 ชั้น', faculty: 'สำนักทะเบียน / ห้องสมุด', hours: '07:00 – 21:00',
+        facilities: 'ห้องสมุด, คาเฟ่, ATM, สำนักทะเบียน, ลิฟต์',
+        image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
+    },
+    'อาคาร 25': {
+        title: 'อาคาร 25',
+        desc: 'อาคารเรียนติดกับตึกเรือใบ ใช้เป็นห้องเรียนบรรยายขนาดใหญ่และห้องสอบ',
+        floors: '8 ชั้น', faculty: 'เรียนรวม / ห้องสอบ', hours: '07:00 – 20:00',
+        facilities: 'ห้องบรรยาย, ห้องสอบ, ห้องน้ำ, ลิฟต์',
+        image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=600'
     }
 };
 
-let currentSelectedBuilding = '';
+// Merge with any user-saved edits from localStorage
+function loadBuildingData() {
+    const saved = localStorage.getItem('utcc_building_data');
+    if (!saved) return JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
+    const overrides = JSON.parse(saved);
+    const merged = JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
+    Object.keys(overrides).forEach(k => { merged[k] = { ...merged[k], ...overrides[k] }; });
+    return merged;
+}
 
-// Map Interaction
+let BUILDING_DATA = loadBuildingData();
+let currentSelectedBuilding = '';
+let buildingEditMode = false;
+
+// ── Building Panel ─────────────────────────
 function openBuildingInfo(buildingKey) {
     const data = BUILDING_DATA[buildingKey];
-    if(!data) return;
-    
     currentSelectedBuilding = buildingKey;
-    document.getElementById('panelBldgName').innerText = data.title;
-    document.getElementById('panelBldgDesc').innerText = data.desc;
-    document.getElementById('panelBldgImg').src = data.image;
-    
+
+    // If no data yet, create a blank entry so user can fill it in
+    if (!data) {
+        BUILDING_DATA[buildingKey] = {
+            title: buildingKey, desc: '', floors: '', faculty: '',
+            hours: '', facilities: '',
+            image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
+        };
+    }
+
+    populateBuildingPanel(buildingKey);
+    // Show view mode
+    showBuildingViewMode();
     document.getElementById('buildingInfoPanel').classList.add('active');
+}
+
+function populateBuildingPanel(key) {
+    const d = BUILDING_DATA[key];
+    document.getElementById('panelBldgName').textContent = d.title || key;
+    document.getElementById('panelBldgDesc').textContent = d.desc || 'ยังไม่มีข้อมูล กดปุ่มแก้ไขเพื่อเพิ่มรายละเอียด';
+    document.getElementById('panelBldgImg').src = d.image || '';
+    document.getElementById('panelBldgTag').textContent = d.faculty || 'อาคารมหาวิทยาลัย';
+    document.getElementById('pdFloors').textContent = d.floors || '—';
+    document.getElementById('pdFaculty').textContent = d.faculty || '—';
+    document.getElementById('pdHours').textContent = d.hours || '—';
+    document.getElementById('pdFacilities').textContent = d.facilities || '—';
+}
+
+function showBuildingViewMode() {
+    buildingEditMode = false;
+    document.getElementById('panelViewMode').style.display = 'flex';
+    document.getElementById('panelEditMode').style.display = 'none';
+    document.getElementById('panelEditBtn').innerHTML = "<i class='bx bx-edit'></i>";
+}
+
+function toggleBuildingEdit() {
+    if (!buildingEditMode) {
+        // Enter edit mode
+        buildingEditMode = true;
+        const d = BUILDING_DATA[currentSelectedBuilding];
+        document.getElementById('peTitle').value = d.title || '';
+        document.getElementById('peDesc').value = d.desc || '';
+        document.getElementById('peImage').value = d.image || '';
+        document.getElementById('peFloors').value = d.floors || '';
+        document.getElementById('peHours').value = d.hours || '';
+        document.getElementById('peFaculty').value = d.faculty || '';
+        document.getElementById('peFacilities').value = d.facilities || '';
+        document.getElementById('panelViewMode').style.display = 'none';
+        document.getElementById('panelEditMode').style.display = 'flex';
+        document.getElementById('panelEditBtn').innerHTML = "<i class='bx bx-x'></i>";
+    } else {
+        showBuildingViewMode();
+    }
+}
+
+function saveBuildingEdit() {
+    const key = currentSelectedBuilding;
+    const updated = {
+        title: document.getElementById('peTitle').value.trim() || key,
+        desc: document.getElementById('peDesc').value.trim(),
+        image: document.getElementById('peImage').value.trim() || BUILDING_DATA[key].image,
+        floors: document.getElementById('peFloors').value.trim(),
+        hours: document.getElementById('peHours').value.trim(),
+        faculty: document.getElementById('peFaculty').value.trim(),
+        facilities: document.getElementById('peFacilities').value.trim()
+    };
+    BUILDING_DATA[key] = { ...BUILDING_DATA[key], ...updated };
+
+    // Persist overrides
+    const saved = JSON.parse(localStorage.getItem('utcc_building_data') || '{}');
+    saved[key] = updated;
+    localStorage.setItem('utcc_building_data', JSON.stringify(saved));
+
+    populateBuildingPanel(key);
+    showBuildingViewMode();
+    // Small toast-like feedback
+    const btn = document.getElementById('panelEditBtn');
+    btn.innerHTML = "<i class='bx bx-check'></i>";
+    btn.style.color = '#10b981';
+    setTimeout(() => { btn.innerHTML = "<i class='bx bx-edit'></i>"; btn.style.color = ''; }, 2000);
 }
 
 function closeBuildingInfo() {
     document.getElementById('buildingInfoPanel').classList.remove('active');
+    buildingEditMode = false;
 }
 
 function searchFromPanel() {
