@@ -6,7 +6,6 @@
     <title>UTCC Places Recommender</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- Boxicons for modern icons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
@@ -33,7 +32,7 @@
         </div>
     </nav>
 
-    <!-- ====== Favorites Side Panel ====== -->
+
     <div class="side-panel" id="favPanel">
         <div class="side-panel-header">
             <div class="side-panel-title">
@@ -51,7 +50,7 @@
         </div>
     </div>
 
-    <!-- ====== Settings Side Panel ====== -->
+
     <div class="side-panel" id="settingsPanel">
         <div class="side-panel-header">
             <div class="side-panel-title">
@@ -61,7 +60,7 @@
             <button class="close-panel-btn" onclick="toggleSettingsPanel()"><i class='bx bx-x'></i></button>
         </div>
         <div class="side-panel-body">
-            <!-- Dark Mode -->
+            <!-- โหมดมืด -->
             <div class="settings-section">
                 <div class="settings-section-title"><i class='bx bx-moon'></i> ธีม</div>
                 <div class="settings-row">
@@ -75,7 +74,7 @@
                     </label>
                 </div>
             </div>
-            <!-- Language -->
+            <!-- เปลี่ยนภาษา -->
             <div class="settings-section">
                 <div class="settings-section-title"><i class='bx bx-globe'></i> ภาษา</div>
                 <div class="settings-row">
@@ -86,7 +85,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Card Size -->
+
             <div class="settings-section">
                 <div class="settings-section-title"><i class='bx bx-grid-alt'></i> การแสดงการ์ด</div>
                 <div class="settings-row" style="flex-wrap:wrap; gap:0.5rem;">
@@ -96,7 +95,7 @@
                     <button class="size-btn" id="sizeLarge" onclick="setCardSize('large')">ใหญ่</button>
                 </div>
             </div>
-            <!-- About -->
+
             <div class="settings-section">
                 <div class="settings-section-title"><i class='bx bx-info-circle'></i> เกี่ยวกับ</div>
                 <p class="settings-desc" style="line-height:1.8">
@@ -107,13 +106,13 @@
             </div>
         </div>
     </div>
-    <!-- Panel Backdrop -->
+
     <div class="panel-backdrop" id="panelBackdrop" onclick="closeAllPanels()"></div>
 
 
     <main class="container">
 
-        <!-- ====== FULL-SCREEN HERO LANDING (utcc.ac.th style) ====== -->
+
         <section class="hero-landing" id="heroLanding">
             <div class="hero-bg-overlay"></div>
             <div class="hero-landing-content">
@@ -145,27 +144,33 @@
                         <span class="hero-stat-label">หมวดหมู่</span>
                     </div>
                 </div>
-                <a href="#mapSection" class="hero-cta-btn" onclick="document.getElementById('mapSection').scrollIntoView({behavior:'smooth'})">
-                    <i class='bx bx-map-alt'></i>
-                    ดูแผนผังมหาวิทยาลัย
-                </a>
+                <div class="hero-cta-group">
+                    <a href="#mapSection" class="hero-cta-btn" onclick="document.getElementById('mapSection').scrollIntoView({behavior:'smooth'})">
+                        <i class='bx bx-map-alt'></i>
+                        ดูแผนผังมหาวิทยาลัย
+                    </a>
+                    <a href="nearby.html" class="hero-cta-btn hero-cta-outline">
+                        <i class='bx bx-current-location'></i>
+                        สถานที่รอบมหาลัย
+                    </a>
+                </div>
             </div>
             <div class="hero-scroll-indicator" onclick="document.getElementById('mapSection').scrollIntoView({behavior:'smooth'})">
                 <span>เลื่อนลงดูแผนที่</span>
                 <i class='bx bx-chevron-down bx-fade-down'></i>
             </div>
         </section>
-        <!-- ========================================================== -->
+
 
         <section id="mapSection">
         <header class="hero">
             <h2 class="section-title-map">🗺️ แผนผังมหาวิทยาลัยหอการค้าไทย</h2>
             <p class="section-sub-map">คลิกที่หมุดอาคารเพื่อดูรายละเอียดและร้านค้าในบริเวณนั้น</p>
             
-            <!-- ====== Interactive Campus Map ====== -->
+
             <div class="campus-map-wrapper">
                 <div class="map-container">
-                    <!-- Map Information Side Panel -->
+
                     <div class="building-info-panel" id="buildingInfoPanel">
                         <button class="close-panel-btn" onclick="closeBuildingInfo()"><i class='bx bx-x'></i></button>
                         <img src="" alt="Building" class="panel-bldg-img" id="panelBldgImg">
@@ -177,24 +182,23 @@
                         </div>
                     </div>
 
-                    <!-- UTCC Campus Map Image -->
+
                     <img src="campus-map.jpg" alt="UTCC Campus Map" class="campus-map-img">
                     
-                    <!-- Hotspot: Building 24 (Yellow circle 24) -->
+
                     <div class="map-hotspot" style="top: 15%; left: 53.5%;" onclick="openBuildingInfo('อาคาร 24')">
                         <div class="hotspot-pulse"></div>
                         <i class='bx bxs-map-pin hotspot-icon'></i>
                         <span class="hotspot-tooltip">อาคาร 24 (ตึกเรือใบ)</span>
                     </div>
 
-                    <!-- Hotspot: Building 10 (Yellow circle 10) -->
+
                     <div class="map-hotspot" style="top: 72%; left: 34.5%;" onclick="openBuildingInfo('อาคาร 10')">
                         <div class="hotspot-pulse"></div>
                         <i class='bx bxs-map-pin hotspot-icon'></i>
                         <span class="hotspot-tooltip">อาคาร 10</span>
                     </div>
 
-                    <!-- Hotspot: Building 9 (Yellow circle 9) -->
                     <div class="map-hotspot" style="top: 62.5%; left: 60.5%;" onclick="openBuildingInfo('อาคาร 9')">
                         <div class="hotspot-pulse"></div>
                         <i class='bx bxs-map-pin hotspot-icon'></i>
@@ -202,7 +206,6 @@
                     </div>
                 </div>
             </div>
-            <!-- =================================== -->
 
             <div class="search-bar">
                 <i class='bx bx-search'></i>
@@ -219,15 +222,15 @@
         </header>
 
         <section class="places-grid" id="placesGrid">
-            <!-- Places will be generated here by JavaScript -->
+
             <div class="loading">
                 <i class='bx bx-loader-alt bx-spin'></i> กำลังโหลดข้อมูล...
             </div>
         </section>
-        </section><!-- end mapSection -->
+        </section>
     </main>
 
-    <!-- Add Place Modal -->
+
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header">

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สถานที่รอบ ม.หอการค้าไทย | UTCC Nearby</title>
+    <meta name="description" content="แนะนำร้านอาหาร คาเฟ่ หอพัก และสถานที่น่าสนใจรอบมหาวิทยาลัยหอการค้าไทย">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="nearby.css">
+</head>
+<body>
+
+    <!-- ====== Navbar ====== -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="index.html" class="back-btn">
+                <i class='bx bx-arrow-back'></i>
+                <span>กลับหน้าหลัก</span>
+            </a>
+            <div class="logo">
+                <i class='bx bx-map-alt'></i>
+                <span>UTCC Nearby</span>
+            </div>
+            <div class="nav-right">
+                <button class="nav-icon-btn admin-indicator" id="adminBadge" onclick="toggleAdminOff()" title="ออกจาก Admin Mode" style="display:none">
+                    <i class='bx bx-shield-quarter'></i>
+                    <span style="font-size:0.78rem;font-weight:600;">Admin</span>
+                </button>
+                <button class="nav-icon-btn nav-admin-btn" onclick="openAdminLogin()" id="adminLoginBtn" title="เข้าสู่ระบบ Admin">
+                    <i class='bx bx-lock-alt'></i>
+                    <span class="nav-btn-label">Admin</span>
+                </button>
+                <button class="nav-icon-btn" onclick="toggleDark()" id="darkBtn" title="เปลี่ยนธีม">
+                    <i class='bx bx-moon'></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ====== Admin Login Modal ====== -->
+    <div class="modal-overlay" id="adminLoginModal">
+        <div class="modal admin-modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class='bx bx-shield-alt-2'></i> Admin Login</div>
+                <button class="close-panel-btn" onclick="closeAdminLogin()"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem;">กรอกรหัสผ่าน Admin เพื่อเข้าจัดการข้อมูล</p>
+                <div class="form-group">
+                    <label class="form-label">รหัสผ่าน</label>
+                    <input type="password" id="adminPass" class="form-input" placeholder="กรอกรหัสผ่าน Admin..."
+                           onkeydown="if(event.key==='Enter') doAdminLogin()">
+                </div>
+                <div id="adminLoginErr" style="color:#ef4444;font-size:0.85rem;margin-top:0.5rem;display:none">
+                    <i class='bx bx-error-circle'></i> รหัสผ่านไม่ถูกต้อง
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAdminLogin()">ยกเลิก</button>
+                <button class="btn-primary" onclick="doAdminLogin()">
+                    <i class='bx bx-log-in'></i> เข้าสู่ระบบ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== Add / Edit Place Modal ====== -->
+    <div class="modal-overlay" id="placeModal">
+        <div class="modal admin-modal">
+            <div class="modal-header">
+                <div class="modal-title" id="placeModalTitle"><i class='bx bx-plus-circle'></i> เพิ่มสถานที่</div>
+                <button class="close-panel-btn" onclick="closePlaceModal()"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="placeModalId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">ชื่อสถานที่ <span class="req">*</span></label>
+                        <input type="text" id="pm_name" class="form-input" placeholder="เช่น สุกี้นายพัน">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">หมวดหมู่ <span class="req">*</span></label>
+                        <select id="pm_cat" class="form-input">
+                            <option value="restaurant">🍜 ร้านอาหาร</option>
+                            <option value="cafe">☕ คาเฟ่</option>
+                            <option value="internet">💻 ร้านอินเทอร์เน็ต</option>
+                            <option value="dorm">🏠 หอพัก</option>
+                            <option value="convenience">🏪 ร้านสะดวกซื้อ</option>
+                            <option value="transport">🚌 ขนส่ง</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">คำอธิบาย</label>
+                    <textarea id="pm_desc" class="form-input" rows="3" placeholder="คำอธิบายสถานที่..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL รูปภาพ</label>
+                    <input type="url" id="pm_image" class="form-input" placeholder="https://images.unsplash.com/...">
+                    <div id="pm_img_preview" style="margin-top:0.5rem;height:120px;border-radius:8px;background:var(--bg);overflow:hidden;display:none">
+                        <img id="pm_img_el" style="width:100%;height:100%;object-fit:cover;" src="" alt="">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">ระยะทาง</label>
+                        <input type="text" id="pm_distance" class="form-input" placeholder="เช่น ~100 ม.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">คะแนน (1-5)</label>
+                        <input type="number" id="pm_rating" class="form-input" min="1" max="5" step="0.1" placeholder="4.5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">แท็ก <span style="color:var(--muted);font-size:0.8rem">(คั่นด้วยจุลภาค)</span></label>
+                    <input type="text" id="pm_tags" class="form-input" placeholder="เช่น ราคาถูก, เปิดดึก, Wi-Fi">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Google Maps URL</label>
+                    <input type="url" id="pm_maps" class="form-input" placeholder="https://maps.google.com/?q=...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closePlaceModal()">ยกเลิก</button>
+                <button class="btn-primary" onclick="savePlaceModal()">
+                    <i class='bx bx-save'></i> บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== Comment Modal ====== -->
+    <div class="modal-overlay" id="commentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class='bx bx-chat'></i> <span id="commentModalTitle">ความคิดเห็น</span></div>
+                <button class="close-panel-btn" onclick="closeCommentModal()"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="commentList" class="comment-list"></div>
+                <div class="comment-add-box">
+                    <div class="form-group">
+                        <label class="form-label">ชื่อผู้แสดงความเห็น</label>
+                        <input type="text" id="commentAuthor" class="form-input" placeholder="ชื่อเล่นหรือชื่อจริง...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ความคิดเห็น</label>
+                        <textarea id="commentText" class="form-input" rows="3" placeholder="แชร์ประสบการณ์ของคุณ..."></textarea>
+                    </div>
+                    <div class="star-select-row">
+                        <label class="form-label">ให้คะแนน: </label>
+                        <div class="star-select" id="starSelect">
+                            <span data-v="1">☆</span>
+                            <span data-v="2">☆</span>
+                            <span data-v="3">☆</span>
+                            <span data-v="4">☆</span>
+                            <span data-v="5">☆</span>
+                        </div>
+                        <span id="starLabel" style="color:var(--muted);font-size:0.85rem">ยังไม่ได้เลือก</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeCommentModal()">ปิด</button>
+                <button class="btn-primary" onclick="submitComment()">
+                    <i class='bx bx-send'></i> ส่งความเห็น
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== Delete Confirm Modal ====== -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="max-width:380px">
+            <div class="modal-body" style="text-align:center;padding:2rem">
+                <i class='bx bx-trash' style="font-size:3rem;color:#ef4444;margin-bottom:1rem;display:block"></i>
+                <div style="font-weight:700;font-size:1.1rem;color:var(--text);margin-bottom:0.5rem">ลบสถานที่นี้?</div>
+                <p style="color:var(--muted);font-size:0.9rem" id="deleteModalName"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDeleteModal()">ยกเลิก</button>
+                <button class="btn-danger" onclick="confirmDelete()"><i class='bx bx-trash'></i> ลบ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== Modal Backdrop ====== -->
+    <div class="modal-backdrop" id="modalBackdrop" onclick="closeAllModals()"></div>
+
+    <!-- ====== Hero ====== -->
+    <section class="nearby-hero">
+        <div class="hero-overlay"></div>
+        <div class="nearby-hero-content">
+            <div class="hero-tag"><i class='bx bx-current-location'></i> บริเวณรอบมหาวิทยาลัย</div>
+            <h1>สถานที่น่าสนใจ<br><span class="accent">รอบ ม.หอการค้าไทย</span></h1>
+            <p>ร้านอาหาร คาเฟ่ หอพัก และบริการต่างๆ ในระยะเดินถึง</p>
+            <div class="hero-location">
+                <i class='bx bx-map-pin'></i>
+                ถนนวิภาวดีรังสิต ดินแดง กรุงเทพฯ
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== Category Bar ====== -->
+    <div class="category-bar-wrapper">
+        <div class="category-bar" id="categoryBar">
+            <button class="cat-chip active" data-cat="all" onclick="filterCat('all', this)">
+                <i class='bx bx-grid-alt'></i> ทั้งหมด
+            </button>
+            <button class="cat-chip" data-cat="restaurant" onclick="filterCat('restaurant', this)">
+                <i class='bx bx-restaurant'></i> ร้านอาหาร
+            </button>
+            <button class="cat-chip" data-cat="cafe" onclick="filterCat('cafe', this)">
+                <i class='bx bx-coffee'></i> คาเฟ่
+            </button>
+            <button class="cat-chip" data-cat="internet" onclick="filterCat('internet', this)">
+                <i class='bx bx-desktop'></i> ร้านอินเทอร์เน็ต
+            </button>
+            <button class="cat-chip" data-cat="dorm" onclick="filterCat('dorm', this)">
+                <i class='bx bx-building-house'></i> หอพัก
+            </button>
+            <button class="cat-chip" data-cat="convenience" onclick="filterCat('convenience', this)">
+                <i class='bx bx-store'></i> ร้านสะดวกซื้อ
+            </button>
+            <button class="cat-chip" data-cat="transport" onclick="filterCat('transport', this)">
+                <i class='bx bx-bus'></i> ขนส่ง / MRT
+            </button>
+        </div>
+    </div>
+
+    <main class="main-content">
+
+        <!-- Google Maps -->
+        <section class="map-section">
+            <div class="section-header">
+                <h2><i class='bx bx-map'></i> แผนที่บริเวณโดยรอบ</h2>
+                <a href="https://maps.google.com/?q=มหาวิทยาลัยหอการค้าไทย" target="_blank" class="open-maps-btn">
+                    <i class='bx bx-link-external'></i> เปิดใน Google Maps
+                </a>
+            </div>
+            <div class="map-embed-wrapper">
+                <iframe
+                    src="https://maps.google.com/maps?q=มหาวิทยาลัยหอการค้าไทย&z=16&output=embed"
+                    width="100%" height="420" style="border:0;" allowfullscreen=""
+                    loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                    title="แผนที่รอบมหาวิทยาลัยหอการค้าไทย">
+                </iframe>
+            </div>
+        </section>
+
+        <!-- Places Grid -->
+        <section class="places-section">
+            <div class="section-header">
+                <h2><i class='bx bx-star'></i> สถานที่แนะนำรอบมหาลัย</h2>
+                <span class="result-count" id="resultCount">0 สถานที่</span>
+            </div>
+            <div class="nearby-grid" id="nearbyGrid"></div>
+        </section>
+
+    </main>
+
+    <!-- Admin FAB -->
+    <button class="admin-fab" id="adminFab" onclick="openAddPlace()" title="เพิ่มสถานที่" style="display:none">
+        <i class='bx bx-plus'></i>
+    </button>
+
+    <footer class="nearby-footer">
+        <div class="footer-content">
+            <div class="footer-logo"><i class='bx bx-map-alt'></i> UTCC Nearby</div>
+            <p>ข้อมูลสถานที่รอบมหาวิทยาลัยหอการค้าไทย สำหรับนักศึกษาและบุคลากร</p>
+            <!-- Hidden admin trigger -->
+            <a href="index.html" class="footer-back-btn"><i class='bx bx-home'></i> กลับหน้าหลัก</a>
+        </div>
+    </footer>
+
+    <script src="nearby.js"></script>
+</body>
+</html>

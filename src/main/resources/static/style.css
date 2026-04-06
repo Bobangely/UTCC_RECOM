@@ -360,6 +360,30 @@ body {
     transform: translateY(-3px);
 }
 
+/* Side-by-side CTA buttons */
+.hero-cta-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Outline / Ghost variant */
+.hero-cta-outline {
+    background: transparent;
+    color: #ffffff;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: none;
+}
+
+.hero-cta-outline:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: white;
+    color: white;
+    box-shadow: none;
+    transform: translateY(-3px);
+}
+
 .hero-scroll-indicator {
     position: absolute;
     bottom: 2rem;
@@ -1009,7 +1033,7 @@ body {
     pointer-events: all;
 }
 
-/* Favorites list items */
+/* Favorites list  */
 .fav-empty {
     display: flex;
     flex-direction: column;
