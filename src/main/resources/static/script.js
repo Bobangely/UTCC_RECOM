@@ -131,17 +131,52 @@ const DEFAULT_BUILDING_DATA = {
     }
 };
 
-// Merge with any user-saved edits from localStorage
-function loadBuildingData() {
-    const saved = localStorage.getItem('utcc_building_data');
-    if (!saved) return JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
-    const overrides = JSON.parse(saved);
-    const merged = JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
-    Object.keys(overrides).forEach(k => { merged[k] = { ...merged[k], ...overrides[k] }; });
-    return merged;
+let BUILDING_DATA = JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
+
+// Fetch from API and merge
+async function loadBuildingData() {
+    try {
+        const res = await fetch('/api/buildings');
+        if (res.ok) {
+            const buildingsFromApi = await res.json();
+            // Merge API data over default data
+            buildingsFromApi.forEach(b => {
+                if (b.buildingKey) {
+                    BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
+                }
+            });
+            // After loading, update photo badges on tooltips
+            updatePhotoBadges();
+        }
+    } catch (e) {
+        console.error('Failed to load buildings from API, falling back to local defaults', e);
+    }
 }
 
-let BUILDING_DATA = loadBuildingData();
+function updatePhotoBadges() {
+    // Update all hotspot-tooltip spans to show photo count badge
+    document.querySelectorAll('.map-hotspot').forEach(hotspot => {
+        const tooltip = hotspot.querySelector('.hotspot-tooltip');
+        if (!tooltip) return;
+        // get the building key from the onclick attribute
+        const onclick = hotspot.getAttribute('onclick') || '';
+        const match = onclick.match(/openBuildingInfo\('([^']+)'\)/);
+        if (!match) return;
+        const key = match[1];
+        const d = BUILDING_DATA[key];
+        if (!d) return;
+        const count = (d.images && d.images.length > 0) ? d.images.length : (d.image ? 1 : 0);
+        // Remove existing badge
+        const existingBadge = tooltip.querySelector('.hotspot-photo-badge');
+        if (existingBadge) existingBadge.remove();
+        if (count > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'hotspot-photo-badge';
+            badge.innerHTML = `🖼️${count}`;
+            tooltip.appendChild(badge);
+        }
+    });
+}
 let currentSelectedBuilding = '';
 let buildingEditMode = false;
 
@@ -155,7 +190,8 @@ function openBuildingInfo(buildingKey) {
         BUILDING_DATA[buildingKey] = {
             title: buildingKey, desc: '', floors: '', faculty: '',
             hours: '', facilities: '',
-            image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
+            image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600',
+            images: []
         };
     }
 
@@ -169,7 +205,29 @@ function populateBuildingPanel(key) {
     const d = BUILDING_DATA[key];
     document.getElementById('panelBldgName').textContent = d.title || key;
     document.getElementById('panelBldgDesc').textContent = d.desc || 'ยังไม่มีข้อมูล กดปุ่มแก้ไขเพื่อเพิ่มรายละเอียด';
-    document.getElementById('panelBldgImg').src = d.image || '';
+    
+    // Render Gallery
+    const gallery = document.getElementById('panelBldgGallery');
+    gallery.innerHTML = '';
+    const imagesToRender = [];
+    if (d.images && d.images.length > 0) {
+        imagesToRender.push(...d.images);
+    } else if (d.image) {
+        imagesToRender.push(d.image);
+    }
+    
+    if (imagesToRender.length > 0) {
+        imagesToRender.forEach((imgUrl, idx) => {
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.className = 'panel-gallery-img';
+            img.title = 'กดเพื่อดูรูปขนาดใหญ่';
+            img.onerror = function() { this.src = 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'; };
+            img.onclick = () => openLightbox(imagesToRender, idx);
+            gallery.appendChild(img);
+        });
+    }
+
     document.getElementById('panelBldgTag').textContent = d.faculty || 'อาคารมหาวิทยาลัย';
     document.getElementById('pdFloors').textContent = d.floors || '—';
     document.getElementById('pdFaculty').textContent = d.faculty || '—';
@@ -191,6 +249,7 @@ function toggleBuildingEdit() {
         const d = BUILDING_DATA[currentSelectedBuilding];
         document.getElementById('peTitle').value = d.title || '';
         document.getElementById('peDesc').value = d.desc || '';
+        document.getElementById('peImageFile').value = '';
         document.getElementById('peImage').value = d.image || '';
         document.getElementById('peFloors').value = d.floors || '';
         document.getElementById('peHours').value = d.hours || '';
@@ -199,36 +258,111 @@ function toggleBuildingEdit() {
         document.getElementById('panelViewMode').style.display = 'none';
         document.getElementById('panelEditMode').style.display = 'flex';
         document.getElementById('panelEditBtn').innerHTML = "<i class='bx bx-x'></i>";
+        renderImageManager(currentSelectedBuilding);
     } else {
         showBuildingViewMode();
     }
 }
 
-function saveBuildingEdit() {
+function renderImageManager(key) {
+    const d = BUILDING_DATA[key];
+    const imgs = d.images && d.images.length > 0 ? d.images : (d.image ? [d.image] : []);
+    const manager = document.getElementById('peImgManager');
+    document.getElementById('peImgCount').textContent = imgs.length;
+    manager.innerHTML = '';
+    imgs.forEach((url, idx) => {
+        const item = document.createElement('div');
+        item.className = 'img-manager-item';
+        item.innerHTML = `
+            <img src="${url}" onerror="this.src='https://via.placeholder.com/80'">
+            <button class="img-manager-delete" onclick="deleteBuildingImage('${key}', ${idx})" title="ลบรูปนี้"><i class='bx bx-x'></i></button>
+        `;
+        manager.appendChild(item);
+    });
+}
+
+function deleteBuildingImage(key, idx) {
+    const d = BUILDING_DATA[key];
+    let imgs = d.images && d.images.length > 0 ? [...d.images] : (d.image ? [d.image] : []);
+    imgs.splice(idx, 1);
+    BUILDING_DATA[key].images = imgs;
+    BUILDING_DATA[key].image = imgs.length > 0 ? imgs[0] : '';
+    renderImageManager(key);
+}
+
+async function saveBuildingEdit() {
     const key = currentSelectedBuilding;
+    const btn = document.getElementById('panelEditBtn');
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
+    
+    // Upload multiple images if files selected
+    const fileInput = document.getElementById('peImageFile');
+    let uploadedUrls = [];
+    const hasFiles = fileInput.files && fileInput.files.length > 0;
+    
+    if (hasFiles) {
+        try {
+            uploadedUrls = await uploadMultipleImages(fileInput);
+        } catch (err) {
+            btn.innerHTML = originalIcon;
+            alert('⚠️ ' + err.message + '\n\nกรุณาตรวจสอบว่าสร้าง Bucket ชื่อ "images" ใน Supabase Storage แล้วหรือยัง');
+            return;
+        }
+    }
+    
+    // Merge: start with current (possibly edited) images from manager, then add newly uploaded
+    const currentImages = BUILDING_DATA[key].images && BUILDING_DATA[key].images.length > 0
+        ? [...BUILDING_DATA[key].images]
+        : (BUILDING_DATA[key].image ? [BUILDING_DATA[key].image] : []);
+    
+    let mergedImages;
+    if (uploadedUrls && uploadedUrls.length > 0) {
+        mergedImages = [...currentImages, ...uploadedUrls];
+    } else if (document.getElementById('peImage').value.trim()) {
+        const urlVal = document.getElementById('peImage').value.trim();
+        mergedImages = currentImages.includes(urlVal) ? currentImages : [...currentImages, urlVal];
+    } else {
+        mergedImages = currentImages;
+    }
+    
+    const singleImageFallback = mergedImages.length > 0 ? mergedImages[0] : BUILDING_DATA[key].image;
+
     const updated = {
         title: document.getElementById('peTitle').value.trim() || key,
         desc: document.getElementById('peDesc').value.trim(),
-        image: document.getElementById('peImage').value.trim() || BUILDING_DATA[key].image,
+        image: singleImageFallback,
+        images: mergedImages,
         floors: document.getElementById('peFloors').value.trim(),
         hours: document.getElementById('peHours').value.trim(),
         faculty: document.getElementById('peFaculty').value.trim(),
         facilities: document.getElementById('peFacilities').value.trim()
     };
-    BUILDING_DATA[key] = { ...BUILDING_DATA[key], ...updated };
-
-    // Persist overrides
-    const saved = JSON.parse(localStorage.getItem('utcc_building_data') || '{}');
-    saved[key] = updated;
-    localStorage.setItem('utcc_building_data', JSON.stringify(saved));
-
-    populateBuildingPanel(key);
-    showBuildingViewMode();
-    // Small toast-like feedback
-    const btn = document.getElementById('panelEditBtn');
-    btn.innerHTML = "<i class='bx bx-check'></i>";
-    btn.style.color = '#10b981';
-    setTimeout(() => { btn.innerHTML = "<i class='bx bx-edit'></i>"; btn.style.color = ''; }, 2000);
+    
+    try {
+        const res = await fetch(`/api/buildings/key/${encodeURIComponent(key)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updated)
+        });
+        
+        if (res.ok) {
+            BUILDING_DATA[key] = { ...BUILDING_DATA[key], ...updated };
+            populateBuildingPanel(key);
+            showBuildingViewMode();
+            
+            // Success toast
+            btn.innerHTML = "<i class='bx bx-check'></i>";
+            btn.style.color = '#10b981';
+            setTimeout(() => { btn.innerHTML = "<i class='bx bx-edit'></i>"; btn.style.color = ''; }, 2000);
+        } else {
+            alert('บันทึกข้อมูลไม่สำเร็จ');
+            btn.innerHTML = originalIcon;
+        }
+    } catch (error) {
+        alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
+        btn.innerHTML = originalIcon;
+    }
 }
 
 function closeBuildingInfo() {
@@ -244,7 +378,8 @@ function searchFromPanel() {
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadBuildingData();
     fetchPlaces();
     updateFavBadge();
     applyStoredSettings();
@@ -394,6 +529,30 @@ function translateCategory(cat) {
     return 'ทั่วไป';
 }
 
+// URL Upload Helper (Multiple) — returns {urls:[...]} or throws with message
+async function uploadMultipleImages(fileInput) {
+    if (!fileInput.files || fileInput.files.length === 0) return [];
+    
+    const formData = new FormData();
+    for (const file of fileInput.files) {
+        formData.append('files', file);
+    }
+    
+    const res = await fetch('/api/upload/multiple', {
+        method: 'POST',
+        body: formData
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+        const errMsg = data.error || `HTTP ${res.status}`;
+        throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + errMsg);
+    }
+    
+    return data.urls || [];
+}
+
 // API Calls
 async function fetchPlaces() {
     showLoading();
@@ -435,17 +594,35 @@ async function fetchPlacesByCategory(cat) {
 async function handleAddPlace(e) {
     e.preventDefault();
     
+    const submitBtn = document.querySelector('#addPlaceForm button[type="submit"]');
+    const origText = submitBtn.innerHTML;
+    submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> กำลังบันทึกข้อมูล...";
+    submitBtn.disabled = true;
+
+    // Handle internal file upload if present
+    const fileInput = document.getElementById('pImageFile');
+    let uploadedUrls = await uploadMultipleImages(fileInput);
+    
     // Convert tags string to array
     const tagsRaw = document.getElementById('pTags').value;
     const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
     
-    // Provide a default image if empty
-    let imageUrl = document.getElementById('pImage').value;
-    if(!imageUrl) {
-        const cat = document.getElementById('pCategory').value;
-        if(cat === 'Restaurant') imageUrl = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600';
-        else if(cat === 'Cafe') imageUrl = 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600';
-        else imageUrl = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+    // Merge images
+    let finalImages = [];
+    if (uploadedUrls && uploadedUrls.length > 0) {
+        finalImages = uploadedUrls;
+    } else {
+        const urlInput = document.getElementById('pImage').value;
+        if (urlInput) {
+            finalImages = [urlInput];
+        } else {
+            const cat = document.getElementById('pCategory').value;
+            let defaultImg;
+            if(cat === 'Restaurant') defaultImg = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600';
+            else if(cat === 'Cafe') defaultImg = 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600';
+            else defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+            finalImages = [defaultImg];
+        }
     }
 
     const newPlace = {
@@ -453,7 +630,7 @@ async function handleAddPlace(e) {
         description: document.getElementById('pDesc').value,
         category: document.getElementById('pCategory').value,
         address: document.getElementById('pAddress').value,
-        images: [imageUrl],
+        images: finalImages,
         tags: tagsArray
     };
 
@@ -467,6 +644,7 @@ async function handleAddPlace(e) {
         if(res.ok) {
             addModal.classList.remove('active');
             addPlaceForm.reset();
+            document.getElementById('pImageFile').value = '';
             // Refresh list dynamically depending on current view
             if(currentCategory) fetchPlacesByCategory(currentCategory);
             else fetchPlaces();
@@ -475,6 +653,9 @@ async function handleAddPlace(e) {
         }
     } catch (err) {
         alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่');
+    } finally {
+        submitBtn.innerHTML = origText;
+        submitBtn.disabled = false;
     }
 }
 
@@ -551,4 +732,60 @@ function showLoading() {
 
 function showError(msg) {
     placesGrid.innerHTML = `<div class="loading" style="color: #ef4444;"><i class='bx bx-error-circle'></i> ${msg}</div>`;
+}
+
+// ── Lightbox ──────────────────────────────────────────
+let _lbImages = [];
+let _lbIndex = 0;
+
+function openLightbox(images, startIndex) {
+    _lbImages = images;
+    _lbIndex = startIndex;
+    _renderLightbox();
+    document.getElementById('lightboxOverlay').classList.add('active');
+    document.addEventListener('keydown', _lightboxKeyHandler);
+}
+
+function closeLightbox() {
+    document.getElementById('lightboxOverlay').classList.remove('active');
+    document.removeEventListener('keydown', _lightboxKeyHandler);
+}
+
+function lightboxClickOutside(e) {
+    if (e.target === document.getElementById('lightboxOverlay')) closeLightbox();
+}
+
+function lightboxNext() {
+    _lbIndex = (_lbIndex + 1) % _lbImages.length;
+    _renderLightbox();
+}
+
+function lightboxPrev() {
+    _lbIndex = (_lbIndex - 1 + _lbImages.length) % _lbImages.length;
+    _renderLightbox();
+}
+
+function _lightboxKeyHandler(e) {
+    if (e.key === 'ArrowRight') lightboxNext();
+    else if (e.key === 'ArrowLeft') lightboxPrev();
+    else if (e.key === 'Escape') closeLightbox();
+}
+
+function _renderLightbox() {
+    const img = document.getElementById('lightboxImg');
+    img.style.opacity = '0';
+    setTimeout(() => {
+        img.src = _lbImages[_lbIndex];
+        img.style.opacity = '1';
+    }, 120);
+    document.getElementById('lightboxCounter').textContent = `${_lbIndex + 1} / ${_lbImages.length}`;
+
+    const dotsEl = document.getElementById('lightboxDots');
+    dotsEl.innerHTML = '';
+    _lbImages.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'lightbox-dot' + (i === _lbIndex ? ' active' : '');
+        dot.onclick = () => { _lbIndex = i; _renderLightbox(); };
+        dotsEl.appendChild(dot);
+    });
 }

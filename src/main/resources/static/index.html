@@ -183,7 +183,9 @@
                                 </button>
                             </div>
                         </div>
-                        <img src="" alt="Building" class="panel-bldg-img" id="panelBldgImg">
+                        <div class="panel-bldg-gallery" id="panelBldgGallery">
+                            <!-- Images injected via JS -->
+                        </div>
 
                         <!-- VIEW MODE -->
                         <div class="panel-bldg-content" id="panelViewMode">
@@ -228,8 +230,11 @@
                                 <textarea id="peDesc" class="pedit-input" rows="3" placeholder="รายละเอียดอาคาร..."></textarea>
                             </div>
                             <div class="pedit-group">
-                                <label class="pedit-label">URL รูปอาคาร</label>
-                                <input type="url" id="peImage" class="pedit-input" placeholder="https://...">
+                                <label class="pedit-label">รูปภาพปัจจุบัน (<span id="peImgCount">0</span> รูป)</label>
+                                <div class="img-manager" id="peImgManager"></div>
+                                <label class="pedit-label">เพิ่มรูปใหม่ (หลายรูปได้) หรือใส่ URL หลัก</label>
+                                <input type="file" id="peImageFile" class="pedit-input" accept="image/*" multiple style="margin-bottom:0.5rem; padding:0.4rem">
+                                <input type="url" id="peImage" class="pedit-input" placeholder="หรือใส่ URL (https://...)">
                             </div>
                             <div class="pedit-row">
                                 <div class="pedit-group">
@@ -274,20 +279,6 @@
                         <div class="hotspot-pulse"></div>
                         <i class='bx bxs-map-pin hotspot-icon'></i>
                         <span class="hotspot-tooltip">อาคาร 5</span>
-                    </div>
-
-                    <!-- อาคาร 16 — upper right -->
-                    <div class="map-hotspot" style="top: 39%; left: 81.3%;" onclick="openBuildingInfo('อาคาร 5')">
-                        <div class="hotspot-pulse"></div>
-                        <i class='bx bxs-map-pin hotspot-icon'></i>
-                        <span class="hotspot-tooltip">อาคาร 16</span>
-                    </div>
-
-                    <!-- อาคาร 17 — upper right -->
-                    <div class="map-hotspot" style="top: 49%; left: 82.5%;" onclick="openBuildingInfo('อาคาร 5')">
-                        <div class="hotspot-pulse"></div>
-                        <i class='bx bxs-map-pin hotspot-icon'></i>
-                        <span class="hotspot-tooltip">อาคาร 17</span>
                     </div>
 
                     <!-- อาคาร 8 — upper left-center -->
@@ -447,8 +438,9 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>ลิงก์รูปภาพ (URL)</label>
-                        <input type="url" id="pImage" placeholder="https://example.com/image.jpg">
+                        <label>รูปภาพสถานที่ (อัปโหลดหลายรูปได้ หรือ ใส่ URL)</label>
+                        <input type="file" id="pImageFile" accept="image/*" multiple style="margin-bottom:0.5rem; width:100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.5rem;">
+                        <input type="url" id="pImage" placeholder="หรือใส่ URL (https://...)">
                     </div>
                     <div class="form-group">
                         <label>แท็ก (คั่นด้วยลูกน้ำ ,)</label>
@@ -457,6 +449,20 @@
                     <button type="submit" class="btn-primary full-width">บันทึกข้อมูล</button>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox-overlay" id="lightboxOverlay" onclick="lightboxClickOutside(event)">
+        <button class="lightbox-close" onclick="closeLightbox()"><i class='bx bx-x'></i></button>
+        <img class="lightbox-img" id="lightboxImg" src="" alt="">
+        <div class="lightbox-controls">
+            <button class="lightbox-btn" onclick="lightboxPrev()"><i class='bx bx-chevron-left'></i></button>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+                <span class="lightbox-counter" id="lightboxCounter">1 / 1</span>
+                <div class="lightbox-dots" id="lightboxDots"></div>
+            </div>
+            <button class="lightbox-btn" onclick="lightboxNext()"><i class='bx bx-chevron-right'></i></button>
         </div>
     </div>
 

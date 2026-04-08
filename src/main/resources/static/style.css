@@ -576,8 +576,8 @@ body {
 .building-info-panel {
     position: fixed;
     top: 0;
-    right: -440px;
-    width: 400px;
+    right: -520px;
+    width: 480px;
     height: 100vh;
     background: var(--card-bg, #fff);
     backdrop-filter: blur(10px);
@@ -635,6 +635,196 @@ body {
     object-fit: cover;
     background: #e2e8f0;
     flex-shrink: 0;
+}
+
+.panel-bldg-gallery {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.panel-bldg-gallery::-webkit-scrollbar {
+    height: 6px;
+}
+.panel-bldg-gallery::-webkit-scrollbar-track {
+    background: transparent;
+}
+.panel-bldg-gallery::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.panel-gallery-img {
+    width: 340px;
+    height: 210px;
+    object-fit: cover;
+    border-radius: 8px;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    cursor: zoom-in;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.panel-gallery-img:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-md);
+}
+
+/* ── Lightbox ─────────────────────────── */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.lightbox-overlay.active {
+    display: flex;
+}
+
+.lightbox-img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    transition: opacity 0.25s ease;
+}
+
+.lightbox-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.lightbox-btn {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    backdrop-filter: blur(4px);
+}
+
+.lightbox-btn:hover { background: rgba(255,255,255,0.3); }
+
+.lightbox-close {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.5rem;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    backdrop-filter: blur(4px);
+}
+
+.lightbox-close:hover { background: rgba(239,68,68,0.6); }
+
+.lightbox-counter {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.lightbox-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.lightbox-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.lightbox-dot.active { background: white; }
+
+/* Image Manager (edit mode) */
+.img-manager {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.img-manager-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.img-manager-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.img-manager-delete {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(239,68,68,0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    padding: 0;
+}
+
+.img-manager-delete:hover { background: #ef4444; }
+
+/* Photo count badge on tooltip */
+.hotspot-photo-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0 5px;
+    margin-left: 4px;
+    vertical-align: middle;
 }
 
 .panel-bldg-content {

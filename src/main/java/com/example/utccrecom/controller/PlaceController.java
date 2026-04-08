@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 //http://localhost:8080/api/places
@@ -25,7 +26,7 @@ public class PlaceController {
 
     // Fetch a single place by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Place> getPlaceById(@PathVariable String id) {
+    public ResponseEntity<Place> getPlaceById(@PathVariable UUID id) {
         Optional<Place> place = placeService.getPlaceById(id);
         if (place.isPresent()) {
             return ResponseEntity.ok(place.get());
@@ -54,7 +55,7 @@ public class PlaceController {
 
     // Update an existing place
     @PutMapping("/{id}")
-    public ResponseEntity<Place> updatePlace(@PathVariable String id, @RequestBody Place placeDetails) {
+    public ResponseEntity<Place> updatePlace(@PathVariable UUID id, @RequestBody Place placeDetails) {
         Optional<Place> optionalPlace = placeService.getPlaceById(id);
         if (optionalPlace.isPresent()) {
             Place existingPlace = optionalPlace.get();
@@ -76,7 +77,7 @@ public class PlaceController {
 
     // Delete a place
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePlace(@PathVariable String id) {
+    public ResponseEntity<Void> deletePlace(@PathVariable UUID id) {
         placeService.deletePlace(id);
         return ResponseEntity.noContent().build();
     }

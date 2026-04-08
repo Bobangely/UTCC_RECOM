@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PlaceService {
@@ -18,7 +19,7 @@ public class PlaceService {
         return placeRepository.findAll();
     }
 
-    public Optional<Place> getPlaceById(String id) {
+    public Optional<Place> getPlaceById(UUID id) {
         return placeRepository.findById(id);
     }
 
@@ -26,7 +27,7 @@ public class PlaceService {
         return placeRepository.save(place);
     }
 
-    public void deletePlace(String id) {
+    public void deletePlace(UUID id) {
         placeRepository.deleteById(id);
     }
 

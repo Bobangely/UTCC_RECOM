@@ -1,12 +1,14 @@
 package com.example.utccrecom.entity;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.*;
+import java.util.UUID;
 
-@Document(collection = "reviews")
+@Entity
+@Table(name = "reviews")
 public class Review {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     private String userId; 
     private String placeId; 
     private int rating;
@@ -14,11 +16,11 @@ public class Review {
 
     public Review() {}
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

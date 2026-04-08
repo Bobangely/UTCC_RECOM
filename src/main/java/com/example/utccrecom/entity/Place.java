@@ -1,30 +1,52 @@
 package com.example.utccrecom.entity;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
-@Document(collection = "places")
+@Entity
+@Table(name = "places")
 public class Place {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    
     private String name;
+    
+    @Column(columnDefinition = "TEXT")
     private String description;
+    
+    @Column(columnDefinition = "TEXT")
     private String address;
+    
     private Double latitude;
     private Double longitude;
     
     private String category;
+    
+    private String distance;
+    private Double rating;
+    
+    @Column(columnDefinition = "TEXT")
+    private String mapsUrl;
+    
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "place_tags", joinColumns = @JoinColumn(name = "place_id"))
+    @Column(name = "tag")
     private List<String> tags;
+    
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "place_images", joinColumns = @JoinColumn(name = "place_id"))
+    @Column(name = "image_url")
     private List<String> images;
 
     public Place() {}
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -90,5 +112,29 @@ public class Place {
 
     public void setImages(List<String> images) {
         this.images = images;
+    }
+
+    public String getDistance() {
+        return distance;
+    }
+
+    public void setDistance(String distance) {
+        this.distance = distance;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+
+    public String getMapsUrl() {
+        return mapsUrl;
+    }
+
+    public void setMapsUrl(String mapsUrl) {
+        this.mapsUrl = mapsUrl;
     }
 }
