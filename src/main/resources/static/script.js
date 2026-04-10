@@ -692,7 +692,24 @@ function renderPlaces(places) {
     }
 
     placesGrid.innerHTML = places.map((place, index) => {
-        const img = (place.images && place.images.length > 0) ? place.images[0] : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+        const imagesList = (place.images && place.images.length > 0) ? place.images : ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600'];
+        const img = imagesList[0];
+        
+        // Build gallery HTML string
+        let galleryHtml = '';
+        if (imagesList.length > 1) {
+            // Escape URLs for JS onclick strings
+            const jsonArray = JSON.stringify(imagesList).replace(/"/g, '&quot;');
+            galleryHtml = `
+                <div class="card-gallery-slider">
+                    ${imagesList.map((url, i) => `<img src="${url}" class="card-img slide-item" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';" onclick="openLightbox(${jsonArray}, ${i})" title="กดเพื่อดูรูปขนาดใหญ่">`).join('')}
+                </div>
+                <div class="card-photo-count"><i class='bx bx-images'></i> ${imagesList.length}</div>
+            `;
+        } else {
+            galleryHtml = `<img src="${img}" alt="${place.name}" class="card-img single" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';" onclick="openLightbox(['${img}'], 0)" title="กดเพื่อดูรูปขนาดใหญ่">`;
+        }
+
         const tagsHtml = (place.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
         const catText = translateCategory(place.category);
         const delay = index * 0.08;
@@ -701,7 +718,7 @@ function renderPlaces(places) {
         return `
             <div class="place-card" style="animation-delay: ${delay}s">
                 <div class="card-img-wrapper">
-                    <img src="${img}" alt="${place.name}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';">
+                    ${galleryHtml}
                     <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${place.id}" 
                         onclick="toggleFavorite('${place.id}', '${place.name}', '${img}', '${place.category}')"
                         title="${isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด'}">
@@ -717,6 +734,7 @@ function renderPlaces(places) {
                         <span><i class='bx bx-map'></i> ${place.address || 'ไม่ระบุพิกัด'}</span>
                         <div style="display:flex; gap:0.5rem;">
                             <button class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="alert('ระบบรีวิวกำลังพัฒนา!')"><i class='bx bx-comment-detail'></i> รีวิว</button>
+                            <button class="btn-edit-place" onclick="openEditPlaceModal('${place.id}')" title="แก้ไขข้อมูล"><i class='bx bx-edit'></i></button>
                             <button class="btn-danger" onclick="deletePlace('${place.id}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
                         </div>
                     </div>
@@ -732,6 +750,135 @@ function showLoading() {
 
 function showError(msg) {
     placesGrid.innerHTML = `<div class="loading" style="color: #ef4444;"><i class='bx bx-error-circle'></i> ${msg}</div>`;
+}
+
+// ── Edit Place Modal ───────────────────────────────────
+let _editingPlace = null;  // holds the full place object while editing
+
+async function openEditPlaceModal(placeId) {
+    try {
+        const res = await fetch(`${API_BASE}/${placeId}`);
+        if (!res.ok) throw new Error('Not found');
+        _editingPlace = await res.json();
+    } catch (e) {
+        alert('ไม่สามารถโหลดข้อมูลสถานที่ได้');
+        return;
+    }
+
+    const p = _editingPlace;
+    document.getElementById('epId').value = p.id;
+    document.getElementById('epName').value = p.name || '';
+    document.getElementById('epDesc').value = p.description || '';
+    document.getElementById('epAddress').value = p.address || '';
+    document.getElementById('epTags').value = (p.tags || []).join(', ');
+    document.getElementById('epImageFile').value = '';
+    document.getElementById('epImageUrl').value = '';
+
+    // Set category select
+    const catSel = document.getElementById('epCategory');
+    for (let opt of catSel.options) {
+        opt.selected = (opt.value === p.category);
+    }
+
+    renderEditPlaceImages();
+    document.getElementById('editPlaceModal').classList.add('active');
+}
+
+function closeEditPlaceModal() {
+    document.getElementById('editPlaceModal').classList.remove('active');
+    _editingPlace = null;
+}
+
+function renderEditPlaceImages() {
+    if (!_editingPlace) return;
+    const imgs = _editingPlace.images && _editingPlace.images.length > 0 ? _editingPlace.images : [];
+    document.getElementById('epImgCount').textContent = imgs.length;
+    const manager = document.getElementById('epImgManager');
+    manager.innerHTML = '';
+    imgs.forEach((url, idx) => {
+        const item = document.createElement('div');
+        item.className = 'img-manager-item';
+        item.innerHTML = `
+            <img src="${url}" onerror="this.src='https://via.placeholder.com/80'">
+            <button class="img-manager-delete" onclick="deleteEditPlaceImage(${idx})" title="\u0e25\u0e1a\u0e23\u0e39\u0e1b\u0e19\u0e35\u0e49"><i class='bx bx-x'></i></button>
+        `;
+        manager.appendChild(item);
+    });
+}
+
+function deleteEditPlaceImage(idx) {
+    if (!_editingPlace) return;
+    _editingPlace.images.splice(idx, 1);
+    renderEditPlaceImages();
+}
+
+async function saveEditPlace() {
+    if (!_editingPlace) return;
+    const btn = document.getElementById('epSaveBtn');
+    const origText = btn.innerHTML;
+    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> \u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01...";
+    btn.disabled = true;
+
+    // Upload new images if any
+    const fileInput = document.getElementById('epImageFile');
+    let uploadedUrls = [];
+    if (fileInput.files && fileInput.files.length > 0) {
+        try {
+            uploadedUrls = await uploadMultipleImages(fileInput);
+        } catch (err) {
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            alert('⚠️ ' + err.message);
+            return;
+        }
+    }
+
+    // Merge: current manager images + newly uploaded
+    let mergedImages = [...(_editingPlace.images || [])];
+    if (uploadedUrls.length > 0) {
+        mergedImages = [...mergedImages, ...uploadedUrls];
+    }
+    // Also handle single URL input
+    const urlInput = document.getElementById('epImageUrl').value.trim();
+    if (urlInput && !mergedImages.includes(urlInput)) {
+        mergedImages.push(urlInput);
+    }
+    // Fallback if empty
+    if (mergedImages.length === 0) {
+        mergedImages = _editingPlace.images || [];
+    }
+
+    const tagsRaw = document.getElementById('epTags').value;
+    const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+
+    const payload = {
+        name: document.getElementById('epName').value.trim() || _editingPlace.name,
+        description: document.getElementById('epDesc').value.trim(),
+        category: document.getElementById('epCategory').value,
+        address: document.getElementById('epAddress').value.trim(),
+        images: mergedImages,
+        tags: tagsArray
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/${_editingPlace.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            closeEditPlaceModal();
+            if (currentCategory) fetchPlacesByCategory(currentCategory);
+            else fetchPlaces();
+        } else {
+            alert('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07');
+        }
+    } catch (e) {
+        alert('\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49');
+    } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    }
 }
 
 // ── Lightbox ──────────────────────────────────────────
