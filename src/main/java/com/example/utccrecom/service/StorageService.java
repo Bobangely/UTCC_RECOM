@@ -21,7 +21,7 @@ public class StorageService {
     @Value("${supabase.url}")
     private String supabaseUrl;
 
-    @Value("${supabase.key}")
+    @Value("${supabase.anon-key}") // <-- FIXED: Changed from supabase.key to supabase.anon-key
     private String supabaseKey;
 
     private final String BUCKET_NAME = "images";

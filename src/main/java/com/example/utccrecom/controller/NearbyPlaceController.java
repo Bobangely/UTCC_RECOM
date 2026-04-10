@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -16,48 +17,45 @@ public class NearbyPlaceController {
     @Autowired
     private NearbyPlaceService nearbyPlaceService;
 
-
     @GetMapping
-    public List<NearbyPlace> getAll() {
+    public List<NearbyPlace> getAllNearbyPlaces() {
         return nearbyPlaceService.getAllNearbyPlaces();
     }
 
-
     @GetMapping("/{id}")
-    public ResponseEntity<NearbyPlace> getById(@PathVariable UUID id) {
-        return nearbyPlaceService.getNearbyPlaceById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<NearbyPlace> getNearbyPlaceById(@PathVariable UUID id) {
+        Optional<NearbyPlace> place = nearbyPlaceService.getNearbyPlaceById(id);
+        return place.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
     @GetMapping("/search")
-    public List<NearbyPlace> search(@RequestParam String name) {
+    public List<NearbyPlace> searchNearbyPlaces(@RequestParam String name) {
         return nearbyPlaceService.searchByName(name);
     }
 
-    @GetMapping("/category")
-    public List<NearbyPlace> getByCategory(@RequestParam String category) {
-        return nearbyPlaceService.getByCategory(category);
+    @GetMapping("/category/{category}")
+    public List<NearbyPlace> getNearbyPlacesByCategory(@PathVariable String category) {
+        return nearbyPlaceService.getNearbyPlacesByCategory(category);
     }
 
     @PostMapping
-    public NearbyPlace create(@RequestBody NearbyPlace place) {
+    public NearbyPlace createNearbyPlace(@RequestBody NearbyPlace place) {
         return nearbyPlaceService.saveNearbyPlace(place);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NearbyPlace> update(@PathVariable UUID id,
-                                               @RequestBody NearbyPlace details) {
+    public ResponseEntity<NearbyPlace> updateNearbyPlace(@PathVariable UUID id, @RequestBody NearbyPlace details) {
         try {
-            return ResponseEntity.ok(nearbyPlaceService.updateNearbyPlace(id, details));
+            NearbyPlace updatedPlace = nearbyPlaceService.updateNearbyPlace(id, details);
+            return ResponseEntity.ok(updatedPlace);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteNearbyPlace(@PathVariable UUID id) {
         nearbyPlaceService.deleteNearbyPlace(id);
         return ResponseEntity.noContent().build();
     }
