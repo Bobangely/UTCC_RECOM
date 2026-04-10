@@ -16,8 +16,6 @@ public class NearbyPlaceService {
     @Autowired
     private NearbyPlaceRepository nearbyPlaceRepository;
 
-    // ── Read ─────────────────────────────────────────────────
-
     public List<NearbyPlace> getAllNearbyPlaces() {
         return nearbyPlaceRepository.findAll();
     }
@@ -26,15 +24,16 @@ public class NearbyPlaceService {
         return nearbyPlaceRepository.findById(id);
     }
 
-    public List<NearbyPlace> searchByName(String name) {
-        return nearbyPlaceRepository.findByNameContainingIgnoreCase(name);
-    }
-
-    public List<NearbyPlace> getByCategory(String category) {
+    public List<NearbyPlace> getNearbyPlacesByCategory(String category) {
+        if ("all".equalsIgnoreCase(category)) {
+            return nearbyPlaceRepository.findAll();
+        }
         return nearbyPlaceRepository.findByCategory(category);
     }
 
-    // ── Write ─────────────────────────────────────────────────
+    public List<NearbyPlace> searchByName(String name) {
+        return nearbyPlaceRepository.findByNameContainingIgnoreCase(name);
+    }
 
     @Transactional
     public NearbyPlace saveNearbyPlace(NearbyPlace place) {
@@ -44,7 +43,7 @@ public class NearbyPlaceService {
     @Transactional
     public NearbyPlace updateNearbyPlace(UUID id, NearbyPlace details) {
         NearbyPlace existing = nearbyPlaceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("NearbyPlace not found: " + id));
+                .orElseThrow(() -> new RuntimeException("Place not found with id: " + id));
 
         existing.setName(details.getName());
         existing.setDescription(details.getDescription());
@@ -52,7 +51,6 @@ public class NearbyPlaceService {
         existing.setDistance(details.getDistance());
         existing.setRating(details.getRating());
         existing.setMapsUrl(details.getMapsUrl());
-
         if (details.getTags() != null) {
             existing.getTags().clear();
             existing.getTags().addAll(details.getTags());
@@ -65,7 +63,6 @@ public class NearbyPlaceService {
         return nearbyPlaceRepository.save(existing);
     }
 
-    @Transactional
     public void deleteNearbyPlace(UUID id) {
         nearbyPlaceRepository.deleteById(id);
     }

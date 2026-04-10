@@ -1,7 +1,12 @@
-const API_BASE = '/api/places';
+const API_UNIVERSITY_ITEMS = '/api/university/items'; // New API endpoint
+const API_PLACES = '/api/places'; // API for places
+const API_BUILDINGS = '/api/buildings'; // API for buildings
+
 let currentCategory = '';
+let currentSearchQuery = ''; // Track current search query
 let currentLang = localStorage.getItem('lang') || 'th';
 let favorites = JSON.parse(localStorage.getItem('utcc_favorites') || '[]');
+let allUniversityItems = []; // Store all fetched items for client-side filtering
 
 // DOM Elements
 const placesGrid = document.getElementById('placesGrid');
@@ -16,6 +21,7 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const addPlaceForm = document.getElementById('addPlaceForm');
 
 // Map Building Static Data  (merged with localStorage edits)
+// This data is now primarily for map hotspots, actual building data comes from API
 const DEFAULT_BUILDING_DATA = {
     'อาคาร 1': {
         title: 'อาคาร 1',
@@ -136,16 +142,17 @@ let BUILDING_DATA = JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
 // Fetch from API and merge
 async function loadBuildingData() {
     try {
-        const res = await fetch('/api/buildings');
+        // This now fetches all university items, not just buildings
+        const res = await fetch(API_UNIVERSITY_ITEMS);
         if (res.ok) {
-            const buildingsFromApi = await res.json();
-            // Merge API data over default data
-            buildingsFromApi.forEach(b => {
-                if (b.buildingKey) {
-                    BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
+            const itemsFromApi = await res.json();
+            // Filter for buildings and merge their data into BUILDING_DATA for map hotspots
+            itemsFromApi.filter(item => item.type === 'building').forEach(b => {
+                // Assuming 'title' can act as a key for buildings
+                if (b.title) {
+                    BUILDING_DATA[b.title] = { ...BUILDING_DATA[b.title], ...b };
                 }
             });
-            // After loading, update photo badges on tooltips
             updatePhotoBadges();
         }
     } catch (e) {
@@ -379,9 +386,8 @@ function searchFromPanel() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadBuildingData();
-    // Fetch and show ALL buildings on page load
-    fetchAllBuildings();
+    await loadBuildingData(); // Load building data for map hotspots
+    await fetchAllUniversityItems(); // Fetch all items for the main grid
     updateFavBadge();
     applyStoredSettings();
 });
@@ -401,13 +407,7 @@ filterTags.forEach(tag => {
         filterTags.forEach(t => t.classList.remove('active'));
         tag.classList.add('active');
         currentCategory = tag.dataset.category;
-        
-        if (currentCategory) {
-            fetchPlacesByCategory(currentCategory);
-        } else {
-            // When "All" is clicked, fetch all buildings
-            fetchAllBuildings();
-        }
+        applyFiltersAndSearch(); // Apply filters and search query
     });
 });
 
@@ -493,9 +493,8 @@ function setLanguage(lang) {
     localStorage.setItem('lang', lang);
     document.getElementById('langTH').classList.toggle('active', lang === 'th');
     document.getElementById('langEN').classList.toggle('active', lang === 'en');
-    // Re-fetch & re-render to apply language
-    if(currentCategory) fetchPlacesByCategory(currentCategory);
-    else handleSearch();
+    // Re-render to apply language
+    applyFiltersAndSearch();
 }
 
 function setCardSize(size) {
@@ -525,11 +524,17 @@ function translateCategory(cat) {
         if(cat === 'Restaurant') return 'Restaurant';
         if(cat === 'Cafe') return 'Café';
         if(cat === 'Study Area') return 'Study Area';
-        return 'Other';
+        if(cat === 'หอพัก') return 'Dormitory';
+        if(cat === 'Other') return 'Other';
+        if(cat === 'Transport') return 'Transport';
+        return 'General';
     }
     if(cat === 'Restaurant') return 'ร้านอาหาร';
     if(cat === 'Cafe') return 'คาเฟ่';
     if(cat === 'Study Area') return 'ที่อ่านหนังสือ';
+    if(cat === 'หอพัก') return 'หอพัก';
+    if(cat === 'Other') return 'ร้านสะดวกซื้อ';
+    if(cat === 'Transport') return 'ขนส่ง / MRT';
     return 'ทั่วไป';
 }
 
@@ -558,100 +563,67 @@ async function uploadMultipleImages(fileInput) {
 }
 
 // API Calls — main page (CAMPUS places only)
-async function fetchPlaces() {
+async function fetchAllUniversityItems() {
     showLoading();
     try {
-        const res = await fetch(API_BASE);
-        const data = await res.json();
-        renderPlaces(data);
+        const res = await fetch(API_UNIVERSITY_ITEMS);
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        allUniversityItems = await res.json();
+        applyFiltersAndSearch(); // Apply filters and search query after fetching all items
     } catch (err) {
         showError('ไม่สามารถดึงข้อมูลได้ กรุณาลองตรวจสอบเซิร์ฟเวอร์');
         console.error(err);
     }
 }
 
-// Fetch all buildings from Supabase directly
-async function fetchAllBuildings() {
-    showLoading();
-    try {
-        // Calling search with empty query to trigger findAllLocations in controller
-        const res = await fetch('/api/search', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ query: '' }),
+function applyFiltersAndSearch() {
+    let filteredItems = [...allUniversityItems];
+
+    // Apply category filter
+    if (currentCategory && currentCategory !== 'all') {
+        filteredItems = filteredItems.filter(item => {
+            // For buildings, use faculty as category. For places, use category.
+            const itemCategory = item.type === 'building' ? item.faculty : item.category;
+            return itemCategory && itemCategory.toLowerCase().includes(currentCategory.toLowerCase());
         });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data.error || `HTTP error! status: ${res.status}`);
-        }
-
-        // เรียงลำดับข้อมูล ก-ฮ ตามชื่อของสถานที่
-        const sortedData = data.sort((a, b) => {
-            const nameA = a.name || a.title || '';
-            const nameB = b.name || b.title || '';
-            return nameA.localeCompare(nameB, 'th');
-        });
-
-        renderPlaces(sortedData);
-    } catch (err) {
-        console.error('Error fetching buildings:', err);
-        showError('โหลดข้อมูลตึกไม่สำเร็จ: ' + err.message);
     }
+
+    // Apply search query filter
+    if (currentSearchQuery) {
+        const query = currentSearchQuery.toLowerCase();
+        filteredItems = filteredItems.filter(item => {
+            const name = item.name || item.title || '';
+            const description = item.description || item.desc || '';
+            const tags = (item.tags || []).join(' ');
+            const faculty = item.faculty || '';
+            const facilities = item.facilities || '';
+
+            return name.toLowerCase().includes(query) ||
+                   description.toLowerCase().includes(query) ||
+                   tags.toLowerCase().includes(query) ||
+                   faculty.toLowerCase().includes(query) ||
+                   facilities.toLowerCase().includes(query);
+        });
+    }
+
+    // Sort data A-Z by name/title
+    const sortedData = filteredItems.sort((a, b) => {
+        const nameA = a.name || a.title || '';
+        const nameB = b.name || b.title || '';
+        return nameA.localeCompare(nameB, 'th');
+    });
+
+    renderPlaces(sortedData);
 }
 
-// UPDATE: Changed handleSearch to use the AI endpoint from SearchController
+
 async function handleSearch() {
-    const q = searchInput.value.trim();
-
-    if (!q) {
-        return fetchAllBuildings();
-    }
-
-    showLoading();
-    try {
-        // Now calling the AI-powered search endpoint
-        const res = await fetch('/api/search', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ query: q }),
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok) {
-            throw new Error(data.error || `HTTP error! status: ${res.status}`);
-        }
-        
-        // เรียงลำดับข้อมูล ก-ฮ ตามชื่อของสถานที่
-        const sortedData = data.sort((a, b) => {
-            const nameA = a.name || a.title || '';
-            const nameB = b.name || b.title || '';
-            return nameA.localeCompare(nameB, 'th');
-        });
-
-        renderPlaces(sortedData);
-    } catch (err) {
-        console.error('Search error:', err);
-        showError('ค้นหาข้อมูลล้มเหลว: ' + err.message);
-    }
+    currentSearchQuery = searchInput.value.trim();
+    applyFiltersAndSearch();
 }
 
-async function fetchPlacesByCategory(cat) {
-    showLoading();
-    try {
-        const res = await fetch(`${API_BASE}/category?category=${encodeURIComponent(cat)}`);
-        const data = await res.json();
-        renderPlaces(data);
-    } catch (err) {
-        showError('กรองข้อมูลล้มเหลว');
-    }
-}
 
 async function handleAddPlace(e) {
     e.preventDefault();
@@ -690,14 +662,20 @@ async function handleAddPlace(e) {
     const newPlace = {
         name: document.getElementById('pName').value,
         description: document.getElementById('pDesc').value,
-        category: document.getElementById('pCategory').value,
         address: document.getElementById('pAddress').value,
+        category: document.getElementById('pCategory').value,
         images: finalImages,
-        tags: tagsArray
+        tags: tagsArray,
+        // Add default values for other fields in Place entity
+        latitude: 0.0,
+        longitude: 0.0,
+        distance: '~0 ม.',
+        rating: 0.0,
+        mapsUrl: 'https://maps.google.com/?q=' + encodeURIComponent(document.getElementById('pName').value)
     };
 
     try {
-        const res = await fetch(API_BASE, {
+        const res = await fetch(API_PLACES, { // Use the correct API for places
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newPlace)
@@ -707,11 +685,11 @@ async function handleAddPlace(e) {
             addModal.classList.remove('active');
             addPlaceForm.reset();
             document.getElementById('pImageFile').value = '';
-            // Refresh list dynamically depending on current view
-            if(currentCategory) fetchPlacesByCategory(currentCategory);
-            else handleSearch();
+            // Refresh all items after adding a new one
+            await fetchAllUniversityItems();
         } else {
-            alert('เพิ่มข้อมูลไม่สำเร็จ อาจเกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์');
+            const errorData = await res.json();
+            alert('เพิ่มข้อมูลไม่สำเร็จ: ' + (errorData.message || 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์'));
         }
     } catch (err) {
         alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่');
@@ -722,16 +700,25 @@ async function handleAddPlace(e) {
 }
 
 // Delete Data
-async function deletePlace(id) {
+async function deletePlace(id, type) {
     if (!confirm('ยืนยันที่จะลบข้อมูลสถานที่นี้?')) return;
+    let apiUrl = '';
+    if (type === 'building') {
+        apiUrl = `${API_BUILDINGS}/${id}`; // API for deleting buildings
+    } else if (type === 'place') {
+        apiUrl = `${API_PLACES}/${id}`; // API for deleting places
+    } else {
+        alert('ไม่สามารถระบุประเภทที่จะลบได้');
+        return;
+    }
+
     try {
-        const res = await fetch(`${API_BASE}/${id}`, {
+        const res = await fetch(apiUrl, {
             method: 'DELETE'
         });
         if(res.ok) {
             // Refresh list
-            if(currentCategory) fetchPlacesByCategory(currentCategory);
-            else handleSearch();
+            await fetchAllUniversityItems();
         } else {
             alert('ลบข้อมูลไม่สำเร็จ');
         }
@@ -740,7 +727,7 @@ async function deletePlace(id) {
     }
 }
 
-// UI Rendering - Updated to handle the Location object format from SearchController
+// UI Rendering - Updated to handle the UniversityItem object format
 function renderPlaces(places) {
     if (!places || places.length === 0) {
         placesGrid.innerHTML = `
@@ -753,20 +740,8 @@ function renderPlaces(places) {
         return;
     }
 
-    placesGrid.innerHTML = places.map((place, index) => {
-<<<<<<< HEAD
-        // Handle both formats: 'Place' entity (from /api/places) and 'Location' entity (from /api/search)
-        const name = place.name || place.title;
-        const description = place.description || place.desc;
-        const id = place.id;
-        
-        let img = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
-        if (place.images && place.images.length > 0) {
-            img = place.images[0];
-        } else if (place.imageUrl) {
-            img = place.imageUrl;
-=======
-        const imagesList = (place.images && place.images.length > 0) ? place.images : ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600'];
+    placesGrid.innerHTML = places.map((item, index) => {
+        const imagesList = (item.images && item.images.length > 0) ? item.images : (item.imageUrl ? [item.imageUrl] : ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600']);
         const img = imagesList[0];
         
         // Build gallery HTML string
@@ -781,54 +756,43 @@ function renderPlaces(places) {
                 <div class="card-photo-count"><i class='bx bx-images'></i> ${imagesList.length}</div>
             `;
         } else {
-            galleryHtml = `<img src="${img}" alt="${place.name}" class="card-img single" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';" onclick="openLightbox(['${img}'], 0)" title="กดเพื่อดูรูปขนาดใหญ่">`;
->>>>>>> 64424eb2b838ca6e92e3d85a34236a5301322b3b
+            galleryHtml = `<img src="${img}" alt="${item.title || item.name}" class="card-img single" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';" onclick="openLightbox(['${img}'], 0)" title="กดเพื่อดูรูปขนาดใหญ่">`;
         }
 
-        const tagsHtml = (place.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
+        const tagsHtml = (item.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
         
         // Handle category logic for both entity types
         let catText = 'ทั่วไป';
-        if (place.category) {
-            catText = translateCategory(place.category);
-        } else if (place.faculty) {
-            catText = place.faculty; // Use faculty as category for buildings
+        if (item.type === 'building') {
+            catText = item.faculty || 'อาคารมหาวิทยาลัย';
+        } else if (item.type === 'place') {
+            catText = translateCategory(item.category);
         }
 
         const delay = index * 0.08;
-        const isFav = favorites.some(f => f.id === id);
+        const isFav = favorites.some(f => f.id === item.id);
         
         return `
             <div class="place-card" style="animation-delay: ${delay}s">
                 <div class="card-img-wrapper">
-<<<<<<< HEAD
-                    <img src="${img}" alt="${name}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';">
-                    <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${id}" 
-                        onclick="toggleFavorite('${id}', '${name}', '${img}', '${place.category || 'อาคาร'}')"
-=======
                     ${galleryHtml}
-                    <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${place.id}" 
-                        onclick="toggleFavorite('${place.id}', '${place.name}', '${img}', '${place.category}')"
->>>>>>> 64424eb2b838ca6e92e3d85a34236a5301322b3b
+                    <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${item.id}" 
+                        onclick="toggleFavorite('${item.id}', '${item.title || item.name}', '${img}', '${item.category || item.faculty}')"
                         title="${isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด'}">
                         <i class='bx ${isFav ? 'bxs-heart' : 'bx-heart'}'></i>
                     </button>
                 </div>
                 <div class="card-content">
                     <div class="card-category">${catText}</div>
-                    <h3 class="card-title">${name}</h3>
-                    <p class="card-desc">${description || '-'}</p>
+                    <h3 class="card-title">${item.title || item.name}</h3>
+                    <p class="card-desc">${item.description || item.desc || '-'}</p>
                     <div class="card-tags">${tagsHtml}</div>
                     <div class="card-footer">
-                        <span><i class='bx bx-map'></i> ${place.address || place.floors || 'มหาวิทยาลัยหอการค้าไทย'}</span>
+                        <span><i class='bx bx-map'></i> ${item.address || item.floors || 'มหาวิทยาลัยหอการค้าไทย'}</span>
                         <div style="display:flex; gap:0.5rem;">
                             <button class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="alert('ระบบรีวิวกำลังพัฒนา!')"><i class='bx bx-comment-detail'></i> รีวิว</button>
-<<<<<<< HEAD
-                            <button class="btn-danger" onclick="deletePlace('${id}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
-=======
-                            <button class="btn-edit-place" onclick="openEditPlaceModal('${place.id}')" title="แก้ไขข้อมูล"><i class='bx bx-edit'></i></button>
-                            <button class="btn-danger" onclick="deletePlace('${place.id}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
->>>>>>> 64424eb2b838ca6e92e3d85a34236a5301322b3b
+                            <button class="btn-edit-place" onclick="openEditPlaceModal('${item.id}', '${item.type}')" title="แก้ไขข้อมูล"><i class='bx bx-edit'></i></button>
+                            <button class="btn-danger" onclick="deletePlace('${item.id}', '${item.type}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
                         </div>
                     </div>
                 </div>
@@ -847,12 +811,24 @@ function showError(msg) {
 
 // ── Edit Place Modal ───────────────────────────────────
 let _editingPlace = null;  // holds the full place object while editing
+let _editingPlaceType = null; // holds the type ('building' or 'place')
 
-async function openEditPlaceModal(placeId) {
+async function openEditPlaceModal(id, type) {
+    let apiUrl = '';
+    if (type === 'building') {
+        apiUrl = `${API_BUILDINGS}/${id}`;
+    } else if (type === 'place') {
+        apiUrl = `${API_PLACES}/${id}`;
+    } else {
+        alert('ไม่สามารถระบุประเภทที่จะแก้ไขได้');
+        return;
+    }
+
     try {
-        const res = await fetch(`${API_BASE}/${placeId}`);
+        const res = await fetch(apiUrl);
         if (!res.ok) throw new Error('Not found');
         _editingPlace = await res.json();
+        _editingPlaceType = type;
     } catch (e) {
         alert('ไม่สามารถโหลดข้อมูลสถานที่ได้');
         return;
@@ -860,17 +836,22 @@ async function openEditPlaceModal(placeId) {
 
     const p = _editingPlace;
     document.getElementById('epId').value = p.id;
-    document.getElementById('epName').value = p.name || '';
-    document.getElementById('epDesc').value = p.description || '';
-    document.getElementById('epAddress').value = p.address || '';
-    document.getElementById('epTags').value = (p.tags || []).join(', ');
+    document.getElementById('epName').value = p.name || p.title || '';
+    document.getElementById('epDesc').value = p.description || p.desc || '';
+    document.getElementById('epAddress').value = p.address || ''; // Only for places
+    document.getElementById('epTags').value = (p.tags || []).join(', '); // Only for places
     document.getElementById('epImageFile').value = '';
     document.getElementById('epImageUrl').value = '';
 
-    // Set category select
+    // Set category select (only for places)
     const catSel = document.getElementById('epCategory');
-    for (let opt of catSel.options) {
-        opt.selected = (opt.value === p.category);
+    if (type === 'place') {
+        catSel.style.display = 'block'; // Show category for places
+        for (let opt of catSel.options) {
+            opt.selected = (opt.value === p.category);
+        }
+    } else {
+        catSel.style.display = 'none'; // Hide category for buildings
     }
 
     renderEditPlaceImages();
@@ -880,11 +861,12 @@ async function openEditPlaceModal(placeId) {
 function closeEditPlaceModal() {
     document.getElementById('editPlaceModal').classList.remove('active');
     _editingPlace = null;
+    _editingPlaceType = null;
 }
 
 function renderEditPlaceImages() {
     if (!_editingPlace) return;
-    const imgs = _editingPlace.images && _editingPlace.images.length > 0 ? _editingPlace.images : [];
+    const imgs = _editingPlace.images && _editingPlace.images.length > 0 ? _editingPlace.images : (_editingPlace.imageUrl ? [_editingPlace.imageUrl] : []);
     document.getElementById('epImgCount').textContent = imgs.length;
     const manager = document.getElementById('epImgManager');
     manager.innerHTML = '';
@@ -941,33 +923,47 @@ async function saveEditPlace() {
         mergedImages = _editingPlace.images || [];
     }
 
-    const tagsRaw = document.getElementById('epTags').value;
-    const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+    let payload = {};
+    let apiUrl = '';
 
-    const payload = {
-        name: document.getElementById('epName').value.trim() || _editingPlace.name,
-        description: document.getElementById('epDesc').value.trim(),
-        category: document.getElementById('epCategory').value,
-        address: document.getElementById('epAddress').value.trim(),
-        images: mergedImages,
-        tags: tagsArray
-    };
+    if (_editingPlaceType === 'building') {
+        apiUrl = `${API_BUILDINGS}/${_editingPlace.id}`;
+        payload = {
+            title: document.getElementById('epName').value.trim() || _editingPlace.title,
+            desc: document.getElementById('epDesc').value.trim(),
+            image: mergedImages.length > 0 ? mergedImages[0] : '',
+            images: mergedImages,
+            // Add other building specific fields if they were editable
+        };
+    } else if (_editingPlaceType === 'place') {
+        apiUrl = `${API_PLACES}/${_editingPlace.id}`;
+        const tagsRaw = document.getElementById('epTags').value;
+        const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+        payload = {
+            ..._editingPlace, // Start with existing data to preserve fields like lat/lng
+            name: document.getElementById('epName').value.trim() || _editingPlace.name,
+            description: document.getElementById('epDesc').value.trim(),
+            category: document.getElementById('epCategory').value,
+            address: document.getElementById('epAddress').value.trim(),
+            images: mergedImages,
+            tags: tagsArray
+        };
+    }
 
     try {
-        const res = await fetch(`${API_BASE}/${_editingPlace.id}`, {
+        const res = await fetch(apiUrl, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if (res.ok) {
             closeEditPlaceModal();
-            if (currentCategory) fetchPlacesByCategory(currentCategory);
-            else fetchPlaces();
+            await fetchAllUniversityItems(); // Refresh all items after editing
         } else {
             alert('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07');
         }
     } catch (e) {
-        alert('\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49');
+        alert('\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49');
     } finally {
         btn.innerHTML = origText;
         btn.disabled = false;

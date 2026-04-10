@@ -202,7 +202,7 @@ async function fetchPlacesFromApi(cat) {
     try {
         const url = (!cat || cat === 'all')
             ? NEARBY_API
-            : `${NEARBY_API}/category?category=${encodeURIComponent(cat)}`;
+            : `${NEARBY_API}/category/${encodeURIComponent(cat)}`; // Corrected URL
         const res = await fetch(url);
         if (!res.ok) throw new Error('API error ' + res.status);
         const data = await res.json();
@@ -303,30 +303,13 @@ function getAverageRating(placeId, defaultRating) {
 
 function filterCat(cat, btn) {
     currentCat = cat;
-<<<<<<< HEAD
-    
-    // Update active button state if a button was clicked
-    if (btn) {
-        document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-    }
-    
-    reRender();
-}
-
-function handleSearch() {
-    const searchInput = document.getElementById('nearbySearchInput');
-    currentSearchTerm = searchInput.value.toLowerCase().trim();
-    reRender();
-=======
     document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     fetchPlacesFromApi(cat).then(() => reRender());
->>>>>>> 64424eb2b838ca6e92e3d85a34236a5301322b3b
 }
 
 function reRender() {
-    let filtered = currentCat === 'all' ? PLACES : PLACES.filter(p => p.cat === currentCat);
+    let filtered = PLACES; // Start with all places fetched for the current category
     
     // Apply text search if there is a search term
     if (currentSearchTerm) {
@@ -653,30 +636,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 2. Load place cards
     await fetchPlacesFromApi('all');
-    renderCards(PLACES);
+    reRender();
 
-<<<<<<< HEAD
     // Setup Search input listeners
     const searchInput = document.getElementById('nearbySearchInput');
     const searchBtn = document.getElementById('nearbySearchBtn');
     
     if (searchInput && searchBtn) {
         // Trigger search on input change (live search)
-        searchInput.addEventListener('input', handleSearch);
+        searchInput.addEventListener('input', () => {
+            currentSearchTerm = searchInput.value.toLowerCase().trim();
+            reRender();
+        });
         // Trigger search on button click
-        searchBtn.addEventListener('click', handleSearch);
+        searchBtn.addEventListener('click', () => {
+            currentSearchTerm = searchInput.value.toLowerCase().trim();
+            reRender();
+        });
         // Trigger search on Enter key
         searchInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                handleSearch();
+                currentSearchTerm = searchInput.value.toLowerCase().trim();
+                reRender();
             }
         });
     }
 
     // FAB color: flip to accent when overlapping dark footer
-=======
-    // FAB colour: flip to accent when overlapping dark footer
->>>>>>> 64424eb2b838ca6e92e3d85a34236a5301322b3b
     const fab = document.getElementById('adminFab');
     const footer = document.querySelector('.nearby-footer');
     if (fab && footer) {
