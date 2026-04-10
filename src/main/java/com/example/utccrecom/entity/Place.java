@@ -29,7 +29,7 @@ public class Place {
     
     @Column(columnDefinition = "TEXT")
     private String mapsUrl;
-    
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "place_tags", joinColumns = @JoinColumn(name = "place_id"))
     @Column(name = "tag")

@@ -41,7 +41,7 @@ public class PlaceController {
         return placeService.searchPlacesByName(name);
     }
 
-    // Filter places by category (e.g., /api/places/category?category=Restaurant)
+    // Filter places by category
     @GetMapping("/category")
     public List<Place> getPlacesByCategory(@RequestParam String category) {
         return placeService.getPlacesByCategory(category);
@@ -56,21 +56,10 @@ public class PlaceController {
     // Update an existing place
     @PutMapping("/{id}")
     public ResponseEntity<Place> updatePlace(@PathVariable UUID id, @RequestBody Place placeDetails) {
-        Optional<Place> optionalPlace = placeService.getPlaceById(id);
-        if (optionalPlace.isPresent()) {
-            Place existingPlace = optionalPlace.get();
-            existingPlace.setName(placeDetails.getName());
-            existingPlace.setDescription(placeDetails.getDescription());
-            existingPlace.setAddress(placeDetails.getAddress());
-            existingPlace.setLatitude(placeDetails.getLatitude());
-            existingPlace.setLongitude(placeDetails.getLongitude());
-            existingPlace.setCategory(placeDetails.getCategory());
-            existingPlace.setTags(placeDetails.getTags());
-            existingPlace.setImages(placeDetails.getImages());
-            
-            Place updatedPlace = placeService.savePlace(existingPlace);
+        try {
+            Place updatedPlace = placeService.updatePlaceData(id, placeDetails);
             return ResponseEntity.ok(updatedPlace);
-        } else {
+        } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }

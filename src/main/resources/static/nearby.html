@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สถานที่รอบ ม.หอการค้าไทย | UTCC Nearby</title>
+    <title>สถานที่รอบ ม.หอการค้าไทย | UTCC Recom</title>
     <meta name="description" content="แนะนำร้านอาหาร คาเฟ่ หอพัก และสถานที่น่าสนใจรอบมหาวิทยาลัยหอการค้าไทย">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -20,7 +20,7 @@
             </a>
             <div class="logo">
                 <i class='bx bx-map-alt'></i>
-                <span>UTCC Nearby</span>
+                <span>UTCC Recom</span>
             </div>
             <div class="nav-right">
                 <button class="nav-icon-btn admin-indicator" id="adminBadge" onclick="toggleAdminOff()" title="ออกจาก Admin Mode" style="display:none">
@@ -202,30 +202,15 @@
         </div>
     </section>
 
-    <!-- ====== Category Bar ====== -->
+    <!-- ====== Category Bar (populated dynamically from /api/nearby-categories) ====== -->
     <div class="category-bar-wrapper">
         <div class="category-bar" id="categoryBar">
-            <button class="cat-chip active" data-cat="all" onclick="filterCat('all', this)">
-                <i class='bx bx-grid-alt'></i> ทั้งหมด
-            </button>
-            <button class="cat-chip" data-cat="restaurant" onclick="filterCat('restaurant', this)">
-                <i class='bx bx-restaurant'></i> ร้านอาหาร
-            </button>
-            <button class="cat-chip" data-cat="cafe" onclick="filterCat('cafe', this)">
-                <i class='bx bx-coffee'></i> คาเฟ่
-            </button>
-            <button class="cat-chip" data-cat="internet" onclick="filterCat('internet', this)">
-                <i class='bx bx-desktop'></i> ร้านอินเทอร์เน็ต
-            </button>
-            <button class="cat-chip" data-cat="dorm" onclick="filterCat('dorm', this)">
-                <i class='bx bx-building-house'></i> หอพัก
-            </button>
-            <button class="cat-chip" data-cat="convenience" onclick="filterCat('convenience', this)">
-                <i class='bx bx-store'></i> ร้านสะดวกซื้อ
-            </button>
-            <button class="cat-chip" data-cat="transport" onclick="filterCat('transport', this)">
-                <i class='bx bx-bus'></i> ขนส่ง / MRT
-            </button>
+            <!-- Filter buttons are loaded dynamically from Supabase via nearby.js -->
+            <div class="cat-chip-skeleton"></div>
+            <div class="cat-chip-skeleton"></div>
+            <div class="cat-chip-skeleton"></div>
+            <div class="cat-chip-skeleton"></div>
+            <div class="cat-chip-skeleton"></div>
         </div>
     </div>
 
@@ -275,7 +260,7 @@
 
     <footer class="nearby-footer">
         <div class="footer-content">
-            <div class="footer-logo"><i class='bx bx-map-alt'></i> UTCC Nearby</div>
+            <div class="footer-logo"><i class='bx bx-map-alt'></i> UTCC Recom</div>
             <p>ข้อมูลสถานที่รอบมหาวิทยาลัยหอการค้าไทย สำหรับนักศึกษาและบุคลากร</p>
             <!-- Hidden admin trigger -->
             <a href="index.html" class="footer-back-btn"><i class='bx bx-home'></i> กลับหน้าหลัก</a>

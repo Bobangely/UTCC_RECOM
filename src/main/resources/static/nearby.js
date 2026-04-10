@@ -119,14 +119,41 @@ const CAT_LABELS = {
     dorm: 'หอพัก', convenience: 'ร้านสะดวกซื้อ', transport: 'ขนส่ง'
 };
 
-// ─── LocalStorage Helpers ───────────────────
-function loadPlaces() {
-    const saved = localStorage.getItem('utcc_nearby_places');
-    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_PLACES));
+// ─── API Config ──────────────────────────────
+const NEARBY_API      = '/api/nearby-places';
+const CATEGORIES_API  = '/api/nearby-categories';
+
+// ─── Convert API Place → local format ────────
+function apiToLocal(p) {
+    return {
+        id: p.id,
+        cat: p.category || 'restaurant',
+        name: p.name || '',
+        desc: p.description || '',
+        image: (p.images && p.images.length > 0) ? p.images[0] : '',
+        images: p.images || [],
+        tags: p.tags || [],
+        distance: p.distance || 'N/A',
+        rating: p.rating || 4.0,
+        mapsUrl: p.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(p.name || '')}`
+    };
 }
-function savePlaces(places) {
-    localStorage.setItem('utcc_nearby_places', JSON.stringify(places));
+
+// ─── Convert local format → API payload ─────
+function localToApi(data, existingImages) {
+    return {
+        name: data.name,
+        description: data.desc,
+        category: data.cat,
+        distance: data.distance,
+        rating: data.rating,
+        mapsUrl: data.mapsUrl,
+        tags: data.tags,
+        images: existingImages || (data.image ? [data.image] : [])
+    };
 }
+
+// ─── Comments still in localStorage ─────────
 function loadComments() {
     const saved = localStorage.getItem('utcc_nearby_comments');
     return saved ? JSON.parse(saved) : {};
@@ -135,10 +162,56 @@ function saveComments(comments) {
     localStorage.setItem('utcc_nearby_comments', JSON.stringify(comments));
 }
 
-let PLACES = loadPlaces();
+let PLACES = [];   // filled after DOMContentLoaded
 let COMMENTS = loadComments();
 let currentCat = 'all';
 let currentSearchTerm = '';
+
+// ─── Load & Render Category Filter Buttons ──────────────────
+async function loadCategories() {
+    const bar = document.getElementById('categoryBar');
+    try {
+        const res = await fetch(CATEGORIES_API);
+        if (!res.ok) throw new Error('categories API error');
+        const cats = await res.json();   // sorted by sortOrder
+
+        bar.innerHTML = cats.map((c, i) => {
+            const isAll  = c.name === 'all';
+            const active = isAll ? ' active' : '';
+            const icon   = c.icon ? `<i class='bx ${c.icon}'></i> ` : '';
+            return `<button class="cat-chip${active}" data-cat="${c.name}"
+                        onclick="filterCat('${c.name}', this)">
+                        ${icon}${c.label}
+                    </button>`;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load categories, using fallback', e);
+        // Hardcoded fallback so UI doesn't break if API is down
+        bar.innerHTML = `
+            <button class="cat-chip active" data-cat="all" onclick="filterCat('all',this)"><i class='bx bx-grid-alt'></i> ทั้งหมด</button>
+            <button class="cat-chip" data-cat="Restaurant" onclick="filterCat('Restaurant',this)"><i class='bx bx-restaurant'></i> ร้านอาหาร</button>
+            <button class="cat-chip" data-cat="Cafe" onclick="filterCat('Cafe',this)"><i class='bx bx-coffee'></i> คาเฟ่</button>
+            <button class="cat-chip" data-cat="หอพัก" onclick="filterCat('หอพัก',this)"><i class='bx bx-building-house'></i> หอพัก</button>
+        `;
+    }
+}
+
+// ─── Fetch Places from API ───────────────────
+// cat = 'all' | any category name stored in DB (e.g. 'Restaurant', 'Cafe', 'หอพัก')
+async function fetchPlacesFromApi(cat) {
+    try {
+        const url = (!cat || cat === 'all')
+            ? NEARBY_API
+            : `${NEARBY_API}/category?category=${encodeURIComponent(cat)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        PLACES = data.map(apiToLocal);
+    } catch (e) {
+        console.error('Failed to load from API, using defaults', e);
+        PLACES = DEFAULT_PLACES.map(p => ({ ...p }));
+    }
+}
 
 // ─── Render ─────────────────────────────────
 function renderCards(places) {
@@ -230,6 +303,7 @@ function getAverageRating(placeId, defaultRating) {
 
 function filterCat(cat, btn) {
     currentCat = cat;
+<<<<<<< HEAD
     
     // Update active button state if a button was clicked
     if (btn) {
@@ -244,6 +318,11 @@ function handleSearch() {
     const searchInput = document.getElementById('nearbySearchInput');
     currentSearchTerm = searchInput.value.toLowerCase().trim();
     reRender();
+=======
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    fetchPlacesFromApi(cat).then(() => reRender());
+>>>>>>> 64424eb2b838ca6e92e3d85a34236a5301322b3b
 }
 
 function reRender() {
@@ -338,7 +417,7 @@ function openEditPlace(placeId) {
 
 function closePlaceModal() { closeAllModals(); }
 
-function savePlaceModal() {
+async function savePlaceModal() {
     const name = document.getElementById('pm_name').value.trim();
     const cat = document.getElementById('pm_cat').value;
     if (!name) { showToast('กรุณากรอกชื่อสถานที่', 'error'); return; }
@@ -355,21 +434,35 @@ function savePlaceModal() {
         mapsUrl: document.getElementById('pm_maps').value.trim() || `https://maps.google.com/?q=${encodeURIComponent(name)}`
     };
 
-    if (id) {
-        // Edit
-        const idx = PLACES.findIndex(p => p.id === id);
-        if (idx !== -1) PLACES[idx] = { ...PLACES[idx], ...data };
-        showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
-    } else {
-        // Add
-        data.id = 'place_' + Date.now();
-        PLACES.push(data);
-        showToast('✅ เพิ่มสถานที่สำเร็จ', 'success');
+    try {
+        if (id) {
+            // Edit — PUT to API
+            const existing = PLACES.find(p => p.id === id);
+            const payload = localToApi(data, existing ? existing.images : undefined);
+            const res = await fetch(`${NEARBY_API}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error('PUT failed');
+            showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
+        } else {
+            // Add — POST to API
+            const payload = localToApi(data, data.image ? [data.image] : []);
+            const res = await fetch(NEARBY_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error('POST failed');
+            showToast('✅ เพิ่มสถานที่สำเร็จ', 'success');
+        }
+        closeAllModals();
+        await fetchPlacesFromApi(currentCat);
+        reRender();
+    } catch (e) {
+        showToast('❌ บันทึกไม่สำเร็จ: ' + e.message, 'error');
     }
-
-    savePlaces(PLACES);
-    closeAllModals();
-    reRender();
 }
 
 // Image preview
@@ -390,7 +483,6 @@ function previewImage(url) {
     }
 }
 
-// ─── Delete ──────────────────────────────────
 function openDeleteModal(placeId) {
     const p = PLACES.find(x => x.id === placeId);
     if (!p) return;
@@ -399,15 +491,20 @@ function openDeleteModal(placeId) {
     showModal('deleteModal');
 }
 function closeDeleteModal() { closeAllModals(); deletePendingId = null; }
-function confirmDelete() {
+async function confirmDelete() {
     if (!deletePendingId) return;
-    PLACES = PLACES.filter(p => p.id !== deletePendingId);
-    savePlaces(PLACES);
-    delete COMMENTS[deletePendingId];
-    saveComments(COMMENTS);
-    closeAllModals();
-    reRender();
-    showToast('🗑️ ลบสถานที่แล้ว', 'info');
+    try {
+        const res = await fetch(`${NEARBY_API}/${deletePendingId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('DELETE failed');
+        delete COMMENTS[deletePendingId];
+        saveComments(COMMENTS);
+        closeAllModals();
+        await fetchPlacesFromApi(currentCat);
+        reRender();
+        showToast('🗑️ ลบสถานที่แล้ว', 'info');
+    } catch (e) {
+        showToast('❌ ลบไม่สำเร็จ', 'error');
+    }
     deletePendingId = null;
 }
 
@@ -544,14 +641,21 @@ function toggleDark() {
 }
 
 // ─── Init ────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const saved = localStorage.getItem('nearby_dark') || localStorage.getItem('darkMode');
     if (saved === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         document.getElementById('darkBtn').innerHTML = "<i class='bx bx-sun'></i>";
     }
+
+    // 1. Load category filter buttons from Supabase
+    await loadCategories();
+
+    // 2. Load place cards
+    await fetchPlacesFromApi('all');
     renderCards(PLACES);
 
+<<<<<<< HEAD
     // Setup Search input listeners
     const searchInput = document.getElementById('nearbySearchInput');
     const searchBtn = document.getElementById('nearbySearchBtn');
@@ -570,15 +674,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // FAB color: flip to accent when overlapping dark footer
+=======
+    // FAB colour: flip to accent when overlapping dark footer
+>>>>>>> 64424eb2b838ca6e92e3d85a34236a5301322b3b
     const fab = document.getElementById('adminFab');
     const footer = document.querySelector('.nearby-footer');
     if (fab && footer) {
         window.addEventListener('scroll', () => {
             const footerTop = footer.getBoundingClientRect().top;
             const winH = window.innerHeight;
-            // FAB sits at bottom:32px, so ~88px from bottom
-            const fabY = winH - 88;
-            fab.classList.toggle('on-dark', footerTop < fabY);
+            fab.classList.toggle('on-dark', footerTop < winH - 88);
         }, { passive: true });
     }
 });

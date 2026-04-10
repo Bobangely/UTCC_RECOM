@@ -389,12 +389,22 @@
             </div>
             
             <div class="filter-tags">
-                <span class="filter-tag active" data-category="">ทั้งหมด</span>
-                <span class="filter-tag" data-category="Restaurant">ร้านอาหาร</span>
-                <span class="filter-tag" data-category="Cafe">คาเฟ่</span>
-                <span class="filter-tag" data-category="Study Area">ที่อ่านหนังสือ</span>
+                <span class="filter-tag active" data-category=""><i class='bx bx-grid-alt'></i> ทั้งหมด</span>
+                <span class="filter-tag" data-category="Restaurant"><i class='bx bx-restaurant'></i> ร้านอาหาร</span>
+                <span class="filter-tag" data-category="Cafe"><i class='bx bx-coffee'></i> คาเฟ่</span>
+                <span class="filter-tag" data-category="Study Area"><i class='bx bx-book-open'></i> ที่อ่านหนังสือ</span>
             </div>
         </header>
+
+        <div class="places-section-header">
+            <div class="places-section-title">
+                <i class='bx bx-map-alt'></i>
+                <div>
+                    <h2>สถานที่แนะนำ</h2>
+                    <p>ร้านอาหาร คาเฟ่ และสถานที่เรียนภายในมหาวิทยาลัยหอการค้าไทย</p>
+                </div>
+            </div>
+        </div>
 
         <section class="places-grid" id="placesGrid">
 
@@ -409,7 +419,7 @@
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>เพิ่มสถานที่ใหม่</h2>
+                <h2><i class='bx bx-map-pin'></i> เพิ่มสถานที่ใหม่</h2>
                 <button class="close-btn" id="closeModalBtn"><i class='bx bx-x'></i></button>
             </div>
             <div class="modal-body">
@@ -438,16 +448,74 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>รูปภาพสถานที่ (อัปโหลดหลายรูปได้ หรือ ใส่ URL)</label>
-                        <input type="file" id="pImageFile" accept="image/*" multiple style="margin-bottom:0.5rem; width:100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.5rem;">
-                        <input type="url" id="pImage" placeholder="หรือใส่ URL (https://...)">
+                        <label>รูปภาพสถานที่</label>
+                        <div class="file-upload-zone">
+                            <input type="file" id="pImageFile" accept="image/*" multiple>
+                            <i class='bx bx-cloud-upload'></i>
+                            <p>ลากเป้าไฟล์มาวาง หรือกดเพื่อเลือกไฟล์</p>
+                            <small>เลือกได้หลายไฟล์พร้อมกัน รองรับ JPG, PNG, WEBP</small>
+                        </div>
+                        <input type="url" id="pImage" placeholder="หรือวาง URL รูป (https://...)" style="margin-top:0.5rem">
                     </div>
                     <div class="form-group">
                         <label>แท็ก (คั่นด้วยลูกน้ำ ,)</label>
                         <input type="text" id="pTags" placeholder="แอร์เย็น, ปลั๊กเยอะ, อร่อย">
                     </div>
-                    <button type="submit" class="btn-primary full-width">บันทึกข้อมูล</button>
+                    <button type="submit" class="btn-modal-save"><i class='bx bx-save'></i> บันทึกข้อมูล</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Place Modal -->
+    <div class="modal-overlay" id="editPlaceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class='bx bx-edit'></i> แก้ไขข้อมูลสถานที่</h2>
+                <button class="close-btn" onclick="closeEditPlaceModal()"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="epId">
+                <div class="form-group">
+                    <label>ชื่อสถานที่</label>
+                    <input type="text" id="epName" placeholder="เช่น ร้านข้าวป้าศรี">
+                </div>
+                <div class="form-group">
+                    <label>รายละเอียด</label>
+                    <textarea id="epDesc" rows="3" placeholder="รายละเอียดสถานที่..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>หมวดหมู่</label>
+                        <select id="epCategory">
+                            <option value="Restaurant">ร้านอาหาร</option>
+                            <option value="Cafe">คาเฟ่</option>
+                            <option value="Study Area">ที่อ่านหนังสือ</option>
+                            <option value="Other">อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ที่อยู่ / โซน</label>
+                        <input type="text" id="epAddress" placeholder="ซอยวิภาวดี 2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>รูปภาพปัจจุบัน (<span id="epImgCount">0</span> รูป)</label>
+                    <div class="img-manager" id="epImgManager"></div>
+                    <label style="margin-top:0.75rem; display:block">เพิ่มรูปใหม่</label>
+                    <div class="file-upload-zone">
+                        <input type="file" id="epImageFile" accept="image/*" multiple>
+                        <i class='bx bx-cloud-upload'></i>
+                        <p>ลากเป้าไฟล์มาวาง หรือกดเพื่อเลือก</p>
+                        <small>เลือกได้หลายไฟล์พร้อมกัน</small>
+                    </div>
+                    <input type="url" id="epImageUrl" placeholder="หรือวาง URL รูป (https://...)" style="margin-top:0.5rem">
+                </div>
+                <div class="form-group">
+                    <label>แท็ก <span style="font-weight:400;text-transform:none;font-size:0.78rem;color:var(--text-muted);">(คั่นด้วยลูกน้ำ ,)</span></label>
+                    <input type="text" id="epTags" placeholder="แอร์เย็น, ปลั๊กเยอะ, อร่อย">
+                </div>
+                <button class="btn-modal-save" onclick="saveEditPlace()" id="epSaveBtn"><i class='bx bx-save'></i> บันทึกการแก้ไข</button>
             </div>
         </div>
     </div>
