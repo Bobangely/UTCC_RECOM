@@ -165,6 +165,7 @@ function saveComments(comments) {
 let PLACES = [];   // filled after DOMContentLoaded
 let COMMENTS = loadComments();
 let currentCat = 'all';
+let searchQuery = '';
 
 // ─── Load & Render Category Filter Buttons ──────────────────
 async function loadCategories() {
@@ -178,19 +179,19 @@ async function loadCategories() {
             const isAll  = c.name === 'all';
             const active = isAll ? ' active' : '';
             const icon   = c.icon ? `<i class='bx ${c.icon}'></i> ` : '';
-            return `<button class="cat-chip${active}" data-cat="${c.name}"
+            return `<span class="filter-tag${active}" data-cat="${c.name}"
                         onclick="filterCat('${c.name}', this)">
                         ${icon}${c.label}
-                    </button>`;
+                    </span>`;
         }).join('');
     } catch (e) {
         console.error('Failed to load categories, using fallback', e);
         // Hardcoded fallback so UI doesn't break if API is down
         bar.innerHTML = `
-            <button class="cat-chip active" data-cat="all" onclick="filterCat('all',this)"><i class='bx bx-grid-alt'></i> ทั้งหมด</button>
-            <button class="cat-chip" data-cat="Restaurant" onclick="filterCat('Restaurant',this)"><i class='bx bx-restaurant'></i> ร้านอาหาร</button>
-            <button class="cat-chip" data-cat="Cafe" onclick="filterCat('Cafe',this)"><i class='bx bx-coffee'></i> คาเฟ่</button>
-            <button class="cat-chip" data-cat="หอพัก" onclick="filterCat('หอพัก',this)"><i class='bx bx-building-house'></i> หอพัก</button>
+            <span class="filter-tag active" data-cat="all" onclick="filterCat('all',this)"><i class='bx bx-grid-alt'></i> ทั้งหมด</span>
+            <span class="filter-tag" data-cat="Restaurant" onclick="filterCat('Restaurant',this)"><i class='bx bx-restaurant'></i> ร้านอาหาร</span>
+            <span class="filter-tag" data-cat="Cafe" onclick="filterCat('Cafe',this)"><i class='bx bx-coffee'></i> คาเฟ่</span>
+            <span class="filter-tag" data-cat="หอพัก" onclick="filterCat('หอพัก',this)"><i class='bx bx-building-house'></i> หอพัก</span>
         `;
     }
 }
@@ -295,13 +296,30 @@ function getAverageRating(placeId, defaultRating) {
 
 function filterCat(cat, btn) {
     currentCat = cat;
-    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.filter-tag').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     fetchPlacesFromApi(cat).then(() => reRender());
 }
 
+function doSearch() {
+    const input = document.getElementById('searchInput');
+    if (input) {
+        searchQuery = input.value.trim().toLowerCase();
+        reRender();
+    }
+}
+
 function reRender() {
-    const filtered = currentCat === 'all' ? PLACES : PLACES.filter(p => p.cat === currentCat);
+    let filtered = currentCat === 'all' ? PLACES : PLACES.filter(p => p.cat === currentCat);
+    
+    if (searchQuery) {
+        filtered = filtered.filter(p => 
+            (p.name && p.name.toLowerCase().includes(searchQuery)) || 
+            (p.desc && p.desc.toLowerCase().includes(searchQuery)) ||
+            (p.tags && p.tags.some(t => t.toLowerCase().includes(searchQuery)))
+        );
+    }
+    
     renderCards(filtered);
 }
 

@@ -1016,3 +1016,175 @@ body {
 .toast-success { background: #10b981; color: white; }
 .toast-error { background: #ef4444; color: white; }
 .toast-info { background: var(--primary); color: white; }
+
+/* =========================================
+   SEARCH BAR & FILTER TAGS
+   ========================================= */
+
+/* Search Bar */
+.search-bar {
+    display: flex;
+    max-width: 640px;
+    margin: 0 auto 1.25rem auto;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 0.35rem 0.35rem 0.35rem 1rem;
+    box-shadow: 0 4px 24px rgba(11,26,69,0.10), 0 1px 4px rgba(11,26,69,0.06);
+    border: 1.5px solid var(--border);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.search-bar:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 4px 24px rgba(37,99,235,0.15), 0 0 0 3px rgba(37,99,235,0.08);
+}
+
+.search-bar i {
+    font-size: 1.15rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    margin-right: 0.25rem;
+}
+
+.search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+    background: transparent;
+    color: var(--text);
+    font-family: inherit;
+}
+
+.search-bar input::placeholder { color: #94a3b8; }
+
+.search-bar button {
+    background: linear-gradient(135deg, #0b1a45 0%, #1e3a8a 100%);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.6rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+}
+
+.search-bar button:hover {
+    background: linear-gradient(135deg, #162c6d 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+}
+
+/* Filter Tags */
+.filter-tags {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.filter-tag {
+    padding: 0.45rem 1.2rem;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.filter-tag:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    background: #eff6ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.15);
+}
+
+.filter-tag.active {
+    background: linear-gradient(135deg, #0b1a45 0%, #1e3a8a 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(11,26,69,0.3);
+    transform: translateY(-1px);
+}
+
+/* Places Section Header */
+.places-section-header {
+    max-width: 1200px;
+    margin: 1.5rem auto 0;
+    padding: 0 2rem;
+}
+
+.places-section-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+    border-radius: 14px;
+    border: 1px solid #bfdbfe;
+    width: 100%;
+}
+
+.places-section-title > i {
+    font-size: 2.2rem;
+    color: #1e3a8a;
+    flex-shrink: 0;
+    background: white;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(11,26,69,0.12);
+}
+
+.places-section-title h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0b1a45;
+    margin: 0 0 0.15rem 0;
+}
+
+.places-section-title p {
+    font-size: 0.82rem;
+    color: #475569;
+    margin: 0;
+}
+
+/* Dark mode adjustments for new tags/headers */
+[data-theme="dark"] .places-section-title {
+    background: #1e293b;
+    border-color: #334155;
+}
+[data-theme="dark"] .places-section-title > i {
+    background: #0f172a;
+    color: #38bdf8;
+}
+[data-theme="dark"] .places-section-title h2 {
+    color: #f8fafc;
+}
+[data-theme="dark"] .places-section-title p {
+    color: #94a3b8;
+}
+[data-theme="dark"] .filter-tag:hover {
+    background: #1e293b;
+    color: #38bdf8;
+    border-color: #38bdf8;
+}
+[data-theme="dark"] .search-bar { background: var(--card); }
