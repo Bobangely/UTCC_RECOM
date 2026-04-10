@@ -201,18 +201,7 @@
             </div>
         </div>
     </section>
-
-    <!-- ====== Category Bar (populated dynamically from /api/nearby-categories) ====== -->
-    <div class="category-bar-wrapper">
-        <div class="category-bar" id="categoryBar">
-            <!-- Filter buttons are loaded dynamically from Supabase via nearby.js -->
-            <div class="cat-chip-skeleton"></div>
-            <div class="cat-chip-skeleton"></div>
-            <div class="cat-chip-skeleton"></div>
-            <div class="cat-chip-skeleton"></div>
-            <div class="cat-chip-skeleton"></div>
-        </div>
-    </div>
+    <!-- Category filter moved to places-section header -->
 
     <main class="main-content">
 
@@ -236,6 +225,7 @@
 
         <!-- Places Grid -->
         <section class="places-section">
+<<<<<<< Xkaroy
             <div class="section-header">
                 <h2><i class='bx bx-star'></i> สถานที่แนะนำรอบมหาลัย</h2>
                 <div class="search-and-count" style="display:flex; align-items:center; gap: 1rem; flex-wrap: wrap;">
@@ -246,10 +236,36 @@
                         </button>
                     </div>
                     <span class="result-count" id="resultCount">0 สถานที่</span>
+=======
+            
+            <div class="search-bar" style="margin: 0 auto 1.5rem; max-width: 800px;">
+                <i class='bx bx-search'></i>
+                <input type="text" id="searchInput" placeholder="ค้นหาสถานที่, ร้านอาหาร, คาเฟ่, หอพัก..." onkeyup="if(event.key==='Enter') doSearch()">
+                <button id="searchBtn" onclick="doSearch()">ค้นหา</button>
+            </div>
+            
+            <div class="filter-tags" id="categoryBar">
+                <!-- Filter buttons are loaded dynamically from Supabase via nearby.js -->
+                <span class="filter-tag" style="opacity:0.6"><i class='bx bx-loader-alt bx-spin'></i> กำลังโหลด...</span>
+            </div>
+
+            <div class="places-section-header">
+                <div class="places-section-title">
+                    <i class='bx bx-star'></i>
+                    <div style="flex:1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                        <div>
+                            <h2>สถานที่แนะนำรอบมหาลัย</h2>
+                            <p>ร้านอาหาร คาเฟ่ หอพัก และบริการต่างๆ ในระยะเดินถึง</p>
+                        </div>
+                        <span class="result-count" id="resultCount" style="color:var(--primary-color); font-size: 0.95rem; font-weight:600; padding:0.4rem 0.8rem; background:white; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.06); border: 1px solid var(--border-color);">0 สถานที่</span>
+                    </div>
+>>>>>>> master
                 </div>
             </div>
+
             <div class="nearby-grid" id="nearbyGrid"></div>
         </section>
+
 
     </main>
 
