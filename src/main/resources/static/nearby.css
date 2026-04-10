@@ -274,6 +274,21 @@ body {
     box-shadow: 0 4px 12px rgba(11,26,69,0.3);
 }
 
+/* Skeleton placeholder while categories load from API */
+@keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+.cat-chip-skeleton {
+    display: inline-block;
+    width: 90px;
+    height: 34px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--border) 25%, rgba(255,255,255,0.6) 50%, var(--border) 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.2s infinite linear;
+}
+
 
 .main-content {
     max-width: 1300px;

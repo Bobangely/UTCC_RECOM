@@ -553,7 +553,7 @@ async function uploadMultipleImages(fileInput) {
     return data.urls || [];
 }
 
-// API Calls
+// API Calls — main page (CAMPUS places only)
 async function fetchPlaces() {
     showLoading();
     try {

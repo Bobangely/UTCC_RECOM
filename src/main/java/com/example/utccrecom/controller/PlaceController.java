@@ -41,7 +41,7 @@ public class PlaceController {
         return placeService.searchPlacesByName(name);
     }
 
-    // Filter places by category (e.g., /api/places/category?category=Restaurant)
+    // Filter places by category
     @GetMapping("/category")
     public List<Place> getPlacesByCategory(@RequestParam String category) {
         return placeService.getPlacesByCategory(category);
