@@ -138,19 +138,27 @@ function saveComments(comments) {
 let PLACES = loadPlaces();
 let COMMENTS = loadComments();
 let currentCat = 'all';
+let currentSearchTerm = '';
 
 // ─── Render ─────────────────────────────────
 function renderCards(places) {
+    // เรียงลำดับข้อมูลตามชื่อ ก-ฮ
+    const sortedPlaces = [...places].sort((a, b) => {
+        const nameA = a.name || '';
+        const nameB = b.name || '';
+        return nameA.localeCompare(nameB, 'th');
+    });
+
     const grid = document.getElementById('nearbyGrid');
     const count = document.getElementById('resultCount');
-    count.textContent = `${places.length} สถานที่`;
+    count.textContent = `${sortedPlaces.length} สถานที่`;
 
-    if (places.length === 0) {
-        grid.innerHTML = `<div class="empty-state"><i class='bx bx-search-alt'></i><p>ไม่พบสถานที่ในหมวดนี้</p></div>`;
+    if (sortedPlaces.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><i class='bx bx-search-alt'></i><p>ไม่พบสถานที่ที่คุณค้นหา</p></div>`;
         return;
     }
 
-    grid.innerHTML = places.map((p, i) => {
+    grid.innerHTML = sortedPlaces.map((p, i) => {
         const ratings = getAverageRating(p.id, p.rating);
         const stars = renderStars(ratings.avg);
         const color = CAT_COLORS[p.cat] || '#64748b';
@@ -222,14 +230,34 @@ function getAverageRating(placeId, defaultRating) {
 
 function filterCat(cat, btn) {
     currentCat = cat;
-    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    const filtered = cat === 'all' ? PLACES : PLACES.filter(p => p.cat === cat);
-    renderCards(filtered);
+    
+    // Update active button state if a button was clicked
+    if (btn) {
+        document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    
+    reRender();
+}
+
+function handleSearch() {
+    const searchInput = document.getElementById('nearbySearchInput');
+    currentSearchTerm = searchInput.value.toLowerCase().trim();
+    reRender();
 }
 
 function reRender() {
-    const filtered = currentCat === 'all' ? PLACES : PLACES.filter(p => p.cat === currentCat);
+    let filtered = currentCat === 'all' ? PLACES : PLACES.filter(p => p.cat === currentCat);
+    
+    // Apply text search if there is a search term
+    if (currentSearchTerm) {
+        filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(currentSearchTerm) || 
+            p.desc.toLowerCase().includes(currentSearchTerm) ||
+            (p.tags && p.tags.some(tag => tag.toLowerCase().includes(currentSearchTerm)))
+        );
+    }
+    
     renderCards(filtered);
 }
 
@@ -523,6 +551,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('darkBtn').innerHTML = "<i class='bx bx-sun'></i>";
     }
     renderCards(PLACES);
+
+    // Setup Search input listeners
+    const searchInput = document.getElementById('nearbySearchInput');
+    const searchBtn = document.getElementById('nearbySearchBtn');
+    
+    if (searchInput && searchBtn) {
+        // Trigger search on input change (live search)
+        searchInput.addEventListener('input', handleSearch);
+        // Trigger search on button click
+        searchBtn.addEventListener('click', handleSearch);
+        // Trigger search on Enter key
+        searchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+    }
 
     // FAB color: flip to accent when overlapping dark footer
     const fab = document.getElementById('adminFab');

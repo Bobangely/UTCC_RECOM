@@ -42,8 +42,10 @@ public class SearchController {
                 // ใช้ GeminiService ดึงข้อมูลผ่าน REST API โดยตรง!
                 String keywords = geminiService.extractKeywords(promptText);
 
-                if (keywords == null || keywords.trim().isEmpty()) {
-                    return ResponseEntity.ok(List.of()); 
+                // หาก keywords ไม่มีข้อมูล หรือยาวเกินไป (เช่น เป็นประโยค Error) ให้ใช้คำที่ผู้ใช้พิมพ์มาค้นหาเลย
+                if (keywords == null || keywords.trim().isEmpty() || keywords.length() > 50) {
+                     // ปิดข้อความ Log Fallback ทิ้งเพื่อความสะอาด
+                     keywords = searchTerm;
                 }
 
                 // ค้นหาใน Supabase ด้วย keywords ที่ได้มา

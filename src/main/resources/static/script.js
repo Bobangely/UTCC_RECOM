@@ -380,10 +380,13 @@ function searchFromPanel() {
 // Event Listeners
 document.addEventListener('DOMContentLoaded', async () => {
     await loadBuildingData();
-    fetchPlaces();
+    // Fetch and show ALL buildings on page load
+    fetchAllBuildings();
     updateFavBadge();
     applyStoredSettings();
 });
+
+// Update the search functionality to use AI endpoint
 searchBtn.addEventListener('click', handleSearch);
 searchInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSearch(); });
 
@@ -402,7 +405,8 @@ filterTags.forEach(tag => {
         if (currentCategory) {
             fetchPlacesByCategory(currentCategory);
         } else {
-            fetchPlaces();
+            // When "All" is clicked, fetch all buildings
+            fetchAllBuildings();
         }
     });
 });
@@ -491,7 +495,7 @@ function setLanguage(lang) {
     document.getElementById('langEN').classList.toggle('active', lang === 'en');
     // Re-fetch & re-render to apply language
     if(currentCategory) fetchPlacesByCategory(currentCategory);
-    else fetchPlaces();
+    else handleSearch();
 }
 
 function setCardSize(size) {
@@ -566,17 +570,75 @@ async function fetchPlaces() {
     }
 }
 
-async function handleSearch() {
-    const q = searchInput.value.trim();
-    if (!q) return fetchPlaces();
-    
+// Fetch all buildings from Supabase directly
+async function fetchAllBuildings() {
     showLoading();
     try {
-        const res = await fetch(`${API_BASE}/search?name=${encodeURIComponent(q)}`);
+        // Calling search with empty query to trigger findAllLocations in controller
+        const res = await fetch('/api/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: '' }),
+        });
+
         const data = await res.json();
-        renderPlaces(data);
+
+        if (!res.ok) {
+            throw new Error(data.error || `HTTP error! status: ${res.status}`);
+        }
+
+        // เรียงลำดับข้อมูล ก-ฮ ตามชื่อของสถานที่
+        const sortedData = data.sort((a, b) => {
+            const nameA = a.name || a.title || '';
+            const nameB = b.name || b.title || '';
+            return nameA.localeCompare(nameB, 'th');
+        });
+
+        renderPlaces(sortedData);
     } catch (err) {
-        showError('ค้นหาข้อมูลล้มเหลว');
+        console.error('Error fetching buildings:', err);
+        showError('โหลดข้อมูลตึกไม่สำเร็จ: ' + err.message);
+    }
+}
+
+// UPDATE: Changed handleSearch to use the AI endpoint from SearchController
+async function handleSearch() {
+    const q = searchInput.value.trim();
+
+    if (!q) {
+        return fetchAllBuildings();
+    }
+
+    showLoading();
+    try {
+        // Now calling the AI-powered search endpoint
+        const res = await fetch('/api/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: q }),
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+            throw new Error(data.error || `HTTP error! status: ${res.status}`);
+        }
+        
+        // เรียงลำดับข้อมูล ก-ฮ ตามชื่อของสถานที่
+        const sortedData = data.sort((a, b) => {
+            const nameA = a.name || a.title || '';
+            const nameB = b.name || b.title || '';
+            return nameA.localeCompare(nameB, 'th');
+        });
+
+        renderPlaces(sortedData);
+    } catch (err) {
+        console.error('Search error:', err);
+        showError('ค้นหาข้อมูลล้มเหลว: ' + err.message);
     }
 }
 
@@ -647,7 +709,7 @@ async function handleAddPlace(e) {
             document.getElementById('pImageFile').value = '';
             // Refresh list dynamically depending on current view
             if(currentCategory) fetchPlacesByCategory(currentCategory);
-            else fetchPlaces();
+            else handleSearch();
         } else {
             alert('เพิ่มข้อมูลไม่สำเร็จ อาจเกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์');
         }
@@ -669,7 +731,7 @@ async function deletePlace(id) {
         if(res.ok) {
             // Refresh list
             if(currentCategory) fetchPlacesByCategory(currentCategory);
-            else fetchPlaces();
+            else handleSearch();
         } else {
             alert('ลบข้อมูลไม่สำเร็จ');
         }
@@ -678,46 +740,65 @@ async function deletePlace(id) {
     }
 }
 
-// UI Rendering
+// UI Rendering - Updated to handle the Location object format from SearchController
 function renderPlaces(places) {
     if (!places || places.length === 0) {
         placesGrid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; color: #475569; padding: 4rem;">
                 <i class='bx bx-news' style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
                 <p>ไม่พบข้อมูลในระบบ</p>
-                <p style="font-size:0.85rem; margin-top:0.5rem">ลองเพิ่มสถานที่ใหม่ผ่านเมนูด้านบน</p>
+                <p style="font-size:0.85rem; margin-top:0.5rem">ลองค้นหาด้วยคำอื่น</p>
             </div>
         `;
         return;
     }
 
     placesGrid.innerHTML = places.map((place, index) => {
-        const img = (place.images && place.images.length > 0) ? place.images[0] : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+        // Handle both formats: 'Place' entity (from /api/places) and 'Location' entity (from /api/search)
+        const name = place.name || place.title;
+        const description = place.description || place.desc;
+        const id = place.id;
+        
+        let img = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+        if (place.images && place.images.length > 0) {
+            img = place.images[0];
+        } else if (place.imageUrl) {
+            img = place.imageUrl;
+        }
+
         const tagsHtml = (place.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
-        const catText = translateCategory(place.category);
+        
+        // Handle category logic for both entity types
+        let catText = 'ทั่วไป';
+        if (place.category) {
+            catText = translateCategory(place.category);
+        } else if (place.faculty) {
+            catText = place.faculty; // Use faculty as category for buildings
+        }
+
         const delay = index * 0.08;
-        const isFav = favorites.some(f => f.id === place.id);
+        const isFav = favorites.some(f => f.id === id);
         
         return `
             <div class="place-card" style="animation-delay: ${delay}s">
                 <div class="card-img-wrapper">
-                    <img src="${img}" alt="${place.name}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';">
-                    <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${place.id}" 
-                        onclick="toggleFavorite('${place.id}', '${place.name}', '${img}', '${place.category}')"
+                    <img src="${img}" alt="${name}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';">
+                    <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${id}" 
+                        onclick="toggleFavorite('${id}', '${name}', '${img}', '${place.category || 'อาคาร'}')"
                         title="${isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด'}">
                         <i class='bx ${isFav ? 'bxs-heart' : 'bx-heart'}'></i>
                     </button>
                 </div>
                 <div class="card-content">
                     <div class="card-category">${catText}</div>
-                    <h3 class="card-title">${place.name}</h3>
-                    <p class="card-desc">${place.description || '-'}</p>
+                    <h3 class="card-title">${name}</h3>
+                    <p class="card-desc">${description || '-'}</p>
                     <div class="card-tags">${tagsHtml}</div>
                     <div class="card-footer">
-                        <span><i class='bx bx-map'></i> ${place.address || 'ไม่ระบุพิกัด'}</span>
+                        <span><i class='bx bx-map'></i> ${place.address || place.floors || 'มหาวิทยาลัยหอการค้าไทย'}</span>
                         <div style="display:flex; gap:0.5rem;">
                             <button class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="alert('ระบบรีวิวกำลังพัฒนา!')"><i class='bx bx-comment-detail'></i> รีวิว</button>
-                            <button class="btn-danger" onclick="deletePlace('${place.id}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
+                            <button class="btn-danger" onclick="deletePlace('${id}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 package com.example.utccrecom.service;
 
 import com.example.utccrecom.entity.Location;
-import com.fasterxml.jackson.databind.ObjectMapper; // Import ObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -10,7 +10,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,29 +27,47 @@ public class SupabaseService {
     private String supabaseAnonKey;
 
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper; // Add ObjectMapper
+    private final ObjectMapper objectMapper;
 
-    public SupabaseService(RestTemplate restTemplate, ObjectMapper objectMapper) { // Inject ObjectMapper
+    public SupabaseService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
 
     public List<Location> searchLocations(String keywords) {
+        // ใช้ * แทน % สำหรับการค้นหาด้วย ilike ใน Supabase (PostgREST)
+        // และเพิ่ม URL Encoding ผ่าน UriComponentsBuilder เพื่อไม่ให้ URL มีปัญหาตอนส่งภาษาไทย
         String orQuery = Arrays.stream(keywords.split(","))
                 .map(String::trim)
                 .filter(kw -> !kw.isEmpty())
-                .map(kw -> String.format("title.ilike.%%%s%%,desc.ilike.%%%s%%", kw, kw))
+                .map(kw -> String.format("title.ilike.*%s*,desc.ilike.*%s*", kw, kw))
                 .collect(Collectors.joining(","));
-        String url = String.format("%s/rest/v1/buildings?select=*&or=(%s)", supabaseUrl, orQuery);
+
+        URI url = UriComponentsBuilder.fromHttpUrl(supabaseUrl)
+                .path("/rest/v1/buildings")
+                .queryParam("select", "*")
+                .queryParam("or", "(" + orQuery + ")")
+                .queryParam("order", "title.asc")
+                .build()
+                .encode()
+                .toUri();
+
         return getLocationsFromSupabase(url);
     }
 
     public List<Location> findAllLocations() {
-        String url = String.format("%s/rest/v1/buildings?select=*", supabaseUrl);
+        URI url = UriComponentsBuilder.fromHttpUrl(supabaseUrl)
+                .path("/rest/v1/buildings")
+                .queryParam("select", "*")
+                .queryParam("order", "title.asc")
+                .build()
+                .encode()
+                .toUri();
+                
         return getLocationsFromSupabase(url);
     }
 
-    private List<Location> getLocationsFromSupabase(String url) {
+    private List<Location> getLocationsFromSupabase(URI url) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("apikey", supabaseAnonKey);
         headers.set("Authorization", "Bearer " + supabaseAnonKey);
@@ -55,16 +75,11 @@ public class SupabaseService {
 
         try {
             ResponseEntity<String> rawResponse = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-            
-            System.out.println("==================== RAW SUPABASE RESPONSE ====================");
-            System.out.println(rawResponse.getBody());
-            System.out.println("===============================================================");
 
             if (rawResponse.getBody() != null && !rawResponse.getBody().isEmpty() && !rawResponse.getBody().equals("[]")) {
-                // Use ObjectMapper to convert the raw JSON string to a List of Location objects
                 return Arrays.asList(objectMapper.readValue(rawResponse.getBody(), Location[].class));
             }
-            return List.of(); // Return empty list if body is null or empty
+            return List.of();
             
         } catch (RestClientException e) {
             System.err.println("Error during Supabase request: " + e.getMessage());

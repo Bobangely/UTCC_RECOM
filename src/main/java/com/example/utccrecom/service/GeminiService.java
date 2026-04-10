@@ -23,64 +23,24 @@ public class GeminiService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-    private String resolvedModelName = null;
+
+    // ใช้โมเดล gemini-1.5-flash ที่เป็นมาตรฐาน ปัจจุบัน และเสถียรที่สุดใน v1beta
+    // gemini-2.0-flash-exp เป็นรุ่นทดลอง และไม่มีใน API v1 ปกติ ทำให้เกิด Error 404
+    private final String MODEL_NAME = "gemini-1.5-flash";
 
     public GeminiService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
 
-    // ฟังก์ชันนี้จะดึงรายชื่อ Model ที่ API Key ของคุณมีสิทธิ์ใช้งานโดยอัตโนมัติ
-    private String getAvailableModel() {
-        if (resolvedModelName != null) {
-            return resolvedModelName;
-        }
-
-        String listModelsUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey;
-        try {
-            ResponseEntity<String> response = restTemplate.getForEntity(listModelsUrl, String.class);
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
-            JsonNode models = rootNode.path("models");
-            
-            if (models.isArray()) {
-                for (JsonNode model : models) {
-                    String name = model.path("name").asText();
-                    JsonNode methods = model.path("supportedGenerationMethods");
-                    boolean supportsGenerateContent = false;
-                    
-                    if (methods.isArray()) {
-                        for (JsonNode method : methods) {
-                            if ("generateContent".equals(method.asText())) {
-                                supportsGenerateContent = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // เลือกโมเดลที่มีคำว่า gemini และรองรับการ generateContent
-                    if (supportsGenerateContent && name.contains("gemini")) {
-                        System.out.println("Auto-selected Gemini model: " + name);
-                        resolvedModelName = name;
-                        return name;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error listing models: " + e.getMessage());
-        }
-        
-        // ถ้าหาไม่เจอให้ใช้ค่าเริ่มต้น
-        return "models/gemini-1.5-flash";
-    }
-
     public String extractKeywords(String promptText) {
-        String modelName = getAvailableModel();
-        // url จะมีหน้าตาประมาณ https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
-        String url = "https://generativelanguage.googleapis.com/v1beta/" + modelName + ":generateContent?key=" + apiKey;
+        // ใช้ API version v1beta ซึ่งรองรับโมเดล gemini-1.5-flash แน่นอน
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL_NAME + ":generateContent?key=" + apiKey;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        // โครงสร้าง Request Body (ถูกต้องแล้ว)
         Map<String, Object> textPart = new HashMap<>();
         textPart.put("text", promptText);
 
@@ -97,20 +57,19 @@ public class GeminiService {
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 JsonNode rootNode = objectMapper.readTree(response.getBody());
+                // ดึงข้อมูลออกมาอย่างปลอดภัย (ตรวจสอบ path ก่อนหลีกเลี่ยง NullPointerException)
                 JsonNode candidates = rootNode.path("candidates");
-                if (candidates.isArray() && candidates.size() > 0) {
-                    JsonNode firstCandidate = candidates.get(0);
-                    JsonNode content = firstCandidate.path("content");
-                    JsonNode parts = content.path("parts");
-                    if (parts.isArray() && parts.size() > 0) {
-                        return parts.get(0).path("text").asText().trim();
-                    }
+                if (candidates.isArray() && !candidates.isEmpty()) {
+                     return candidates.get(0)
+                        .path("content").path("parts").get(0)
+                        .path("text").asText().trim();
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error calling Gemini API: " + e.getMessage());
+            // ไม่ปริ้นท์ stack trace ยาวๆ เพื่อให้ Log สะอาด แต่จะบอกสั้นๆ ว่าเกิดอะไรขึ้น
+            System.err.println("Gemini API Request Failed: " + e.getMessage().substring(0, Math.min(e.getMessage().length(), 100)) + "...");
+            return "";
         }
-
         return "";
     }
 }
