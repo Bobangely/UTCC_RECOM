@@ -27,6 +27,9 @@ public class NearbyPlace {
     @Column(columnDefinition = "TEXT")
     private String mapsUrl;
 
+    private Double latitude;
+    private Double longitude;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "nearby_place_tags",
             joinColumns = @JoinColumn(name = "nearby_place_id"))
@@ -69,4 +72,10 @@ public class NearbyPlace {
 
     public List<String> getImages() { return images; }
     public void setImages(List<String> images) { this.images = images; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

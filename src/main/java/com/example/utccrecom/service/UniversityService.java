@@ -45,10 +45,18 @@ public class UniversityService {
         item.setId(building.getId());
         item.setType("building");
         item.setTitle(building.getTitle());
+        item.setBuildingKey(building.getBuildingKey());
         item.setDescription(building.getDesc());
         item.setImageUrl(building.getImage());
         item.setImages(building.getImages());
         item.setCategory("University"); // Buildings are part of the university
+        
+        // Add missing fields
+        item.setFloors(building.getFloors());
+        item.setFaculty(building.getFaculty());
+        item.setHours(building.getHours());
+        item.setFacilities(building.getFacilities());
+
         return item;
     }
 

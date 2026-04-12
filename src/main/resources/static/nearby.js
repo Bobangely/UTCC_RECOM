@@ -10,103 +10,107 @@ let currentCommentPlaceId = null;
 let selectedStars = 0;
 let deletePendingId = null;
 
+// --- Leaflet Map ---
+let map = null;
+let markers = [];
+
 // ─── Default Place Data ────────────────────
 const DEFAULT_PLACES = [
     { id: 'r1', cat: 'restaurant', name: 'สุกี้นายพัน',
       desc: 'ร้านสุกี้ขวัญใจนักศึกษา ม.หอการค้า น้ำจิ้มสูตรกวางตุ้งเด็ดมาก มีหมู ไก่ ทะเล และเมนูทานเล่น ราคานักศึกษา',
       image: 'https://images.unsplash.com/photo-1557872943-16a5ac26437e?auto=format&fit=crop&q=80&w=600',
       tags: ['สุกี้', 'ราคาถูก', 'ขวัญใจนักศึกษา'], distance: '~100 ม.', rating: 4.5,
-      mapsUrl: 'https://maps.google.com/?q=สุกี้นายพัน+มหาวิทยาลัยหอการค้าไทย' },
+      lat: 13.7805, lng: 100.5615, mapsUrl: 'https://maps.google.com/?q=13.7805,100.5615' },
     { id: 'r2', cat: 'restaurant', name: 'ลาบเป็ดนายหนอม',
       desc: 'อาหารอีสานเจ้าประจำย่านนี้ เมนูเด็ด: ลาบเป็ดรสจัดจ้าน คอหมูย่าง ไส้อ่อนย่าง ไก่ย่างนมสด และต้มแซ่บ',
       image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&q=80&w=600',
       tags: ['อีสาน', 'ลาบเป็ด', 'คอหมูย่าง'], distance: '~120 ม.', rating: 4.4,
-      mapsUrl: 'https://maps.google.com/?q=ลาบเป็ดนายหนอม+หอการค้าไทย' },
+      lat: 13.7808, lng: 100.5610, mapsUrl: 'https://maps.google.com/?q=13.7808,100.5610' },
     { id: 'r3', cat: 'restaurant', name: 'ก๋วยเตี๋ยวชาติหน้า 15 เส้น',
       desc: 'ร้านก๋วยเตี๋ยวรถเข็นชื่อดัง คิวยาวเป็นประจำ ชามใหญ่เครื่องแน่น ไก่ตุ๋น หมูสับ กระดูกอ่อน น้ำซุปต้มยำเข้มข้น',
       image: 'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&q=80&w=600',
       tags: ['ก๋วยเตี๋ยว', 'รถเข็น', 'เครื่องแน่น'], distance: '~80 ม.', rating: 4.6,
-      mapsUrl: 'https://maps.google.com/?q=ก๋วยเตี๋ยวชาติหน้า+UTCC' },
+      lat: 13.7795, lng: 100.5605, mapsUrl: 'https://maps.google.com/?q=13.7795,100.5605' },
     { id: 'r4', cat: 'restaurant', name: 'IHere Yakiniku Shabu',
       desc: 'บุฟเฟ่ต์ปิ้งย่างและชาบูในซอยวิภาวดี 2 เหมาะกลุ่มเพื่อน ราคาสบายกระเป๋า เนื้อสด ผักครบ',
       image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600',
       tags: ['ปิ้งย่าง', 'บุฟเฟ่ต์', 'ชาบู'], distance: '~150 ม.', rating: 4.3,
-      mapsUrl: 'https://maps.google.com/?q=IHere+Yakiniku+Shabu+UTCC' },
+      lat: 13.7810, lng: 100.5620, mapsUrl: 'https://maps.google.com/?q=13.7810,100.5620' },
     { id: 'r5', cat: 'restaurant', name: 'Seonmul Korean Hot Pot',
       desc: 'ร้านหม้อไฟเกาหลียอดนิยม รสชาติจัดจ้านแท้เกาหลี มีเมนูข้าวและของทานเล่นสไตล์เกาหลี',
       image: 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&q=80&w=600',
       tags: ['เกาหลี', 'หม้อไฟ', 'Hot Pot'], distance: '~200 ม.', rating: 4.2,
-      mapsUrl: 'https://maps.google.com/?q=Seonmul+Korean+Hot+Pot+UTCC' },
+      lat: 13.7815, lng: 100.5625, mapsUrl: 'https://maps.google.com/?q=13.7815,100.5625' },
     { id: 'r6', cat: 'restaurant', name: 'EZEE GRILL',
       desc: 'ร้านสเต็กราคานักศึกษา เมนูหลากหลาย สเต็กเนื้อ สเต็กไก่ ข้าวหน้าต่างๆ บรรยากาศเป็นกันเอง',
       image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
       tags: ['สเต็ก', 'ราคานักศึกษา', 'หลากหลาย'], distance: '~250 ม.', rating: 4.1,
-      mapsUrl: 'https://maps.google.com/?q=EZEE+GRILL+UTCC+วิภาวดี' },
+      lat: 13.7820, lng: 100.5630, mapsUrl: 'https://maps.google.com/?q=13.7820,100.5630' },
     { id: 'c1', cat: 'cafe', name: 'เพื่อนแท้ 友義 (Peuan Tae)',
       desc: 'คาเฟ่ชิลล์เปิดดึก เหมาะนั่งคุยหลังเลิกเรียน มีทั้งของคาวและของหวาน ไข่กระทะ ขนมปังปิ้ง เครื่องดื่มราคาย่อมเยา',
       image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600',
       tags: ['เปิดดึก', 'ขนมปังปิ้ง', 'ชิลล์'], distance: '~100 ม.', rating: 4.4,
-      mapsUrl: 'https://maps.google.com/?q=เพื่อนแท้+คาเฟ่+UTCC' },
+      lat: 13.7800, lng: 100.5618, mapsUrl: 'https://maps.google.com/?q=13.7800,100.5618' },
     { id: 'c2', cat: 'cafe', name: 'ร้านกาแฟพี่แขก',
       desc: 'ร้านเครื่องดื่มเปิดมานาน ราคาเป็นกันเอง เมนูให้เลือกมากมาย เป็นที่นิยมในหมู่นักศึกษามายาวนาน',
       image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=600',
       tags: ['กาแฟ', 'ราคาถูก', 'เก่าแก่'], distance: '~60 ม.', rating: 4.3,
-      mapsUrl: 'https://maps.google.com/?q=ร้านกาแฟพี่แขก+หอการค้าไทย' },
+      lat: 13.7785, lng: 100.5608, mapsUrl: 'https://maps.google.com/?q=13.7785,100.5608' },
     { id: 'c3', cat: 'cafe', name: 'Inthanin Coffee (ปั้มบางจาก)',
       desc: 'กาแฟสดจากดอยอินทนนท์ ราคาเป็นมิตร บรรยากาศสบาย เดินถึงได้จากมหาลัย',
       image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=600',
       tags: ['กาแฟไทย', 'อินทนิล', 'ราคาดี'], distance: '~200 ม.', rating: 4.0,
-      mapsUrl: 'https://maps.google.com/?q=Inthanin+Coffee+วิภาวดีรังสิต' },
+      lat: 13.7770, lng: 100.5620, mapsUrl: 'https://maps.google.com/?q=13.7770,100.5620' },
     { id: 'i1', cat: 'internet', name: 'True Space (หน้า ม.หอการค้าไทย)',
       desc: 'Co-working Space ของ True เป็นที่นิยมมาก มีพื้นที่นั่งทำงาน ห้องประชุม และอินเทอร์เน็ตความเร็วสูง',
       image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?auto=format&fit=crop&q=80&w=600',
       tags: ['Co-working', 'Wi-Fi เร็ว', 'ห้องประชุม'], distance: '~50 ม.', rating: 4.2,
-      mapsUrl: 'https://maps.google.com/?q=True+Space+มหาวิทยาลัยหอการค้าไทย' },
+      lat: 13.7792, lng: 100.5602, mapsUrl: 'https://maps.google.com/?q=13.7792,100.5602' },
     { id: 'i2', cat: 'internet', name: 'ร้านถ่ายเอกสาร / Print ใกล้มหาลัย',
       desc: 'ร้านถ่ายเอกสาร พรินต์งาน เข้าเล่มรายงาน มีให้เลือกหลายร้านรอบซอยวิภาวดี 2',
       image: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&q=80&w=600',
       tags: ['ถ่ายเอกสาร', 'พรินต์', 'เข้าเล่ม'], distance: '~30 ม.', rating: 4.1,
-      mapsUrl: 'https://maps.google.com/?q=ร้านถ่ายเอกสาร+ซอยวิภาวดี+2' },
+      lat: 13.7788, lng: 100.5600, mapsUrl: 'https://maps.google.com/?q=13.7788,100.5600' },
     { id: 'd1', cat: 'dorm', name: 'หอพักสตรีบ้านวิภาวดี',
       desc: 'หอพักสตรีที่ใกล้มหาวิทยาลัยที่สุดแห่งหนึ่ง ระยะเดินเพียง 36 เมตร มีสิ่งอำนวยความสะดวกพร้อม',
       image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=600',
       tags: ['หอพักสตรี', 'ใกล้มาก', '36 เมตร'], distance: '36 ม.', rating: 4.2,
-      mapsUrl: 'https://maps.google.com/?q=หอพักสตรีบ้านวิภาวดี+UTCC' },
+      lat: 13.7791, lng: 100.5605, mapsUrl: 'https://maps.google.com/?q=13.7791,100.5605' },
     { id: 'd2', cat: 'dorm', name: 'หอพักสตรีดวงพร',
       desc: 'หอพักสตรีระยะ 150 เมตรจากมหาวิทยาลัย ปลอดภัย มีรปภ. พร้อมสิ่งอำนวยความสะดวกครบ',
       image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=600',
       tags: ['หอพักสตรี', 'ปลอดภัย', 'รปภ.'], distance: '150 ม.', rating: 4.1,
-      mapsUrl: 'https://maps.google.com/?q=หอพักสตรีดวงพร+UTCC' },
+      lat: 13.7800, lng: 100.5595, mapsUrl: 'https://maps.google.com/?q=13.7800,100.5595' },
     { id: 'd3', cat: 'dorm', name: 'หอพักสตรีกรีนเฮ้าส์',
       desc: 'หอพักสตรีในระยะ 200 เมตร บรรยากาศร่มรื่น สะอาด มีระบบรักษาความปลอดภัย',
       image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=600',
       tags: ['หอพักสตรี', 'สะอาด', 'ร่มรื่น'], distance: '200 ม.', rating: 4.0,
-      mapsUrl: 'https://maps.google.com/?q=หอพักกรีนเฮ้าส์+วิภาวดี+UTCC' },
+      lat: 13.7805, lng: 100.5590, mapsUrl: 'https://maps.google.com/?q=13.7805,100.5590' },
     { id: 'd4', cat: 'dorm', name: 'หอพักสตรีสามัคคี 99',
       desc: 'หอพักสตรีที่ได้รับใบรับรองจากมหาวิทยาลัย ระยะ 250 เมตร มีกล้องวงจรปิดและคีย์การ์ด',
       image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=600',
       tags: ['หอพักสตรี', 'คีย์การ์ด', 'CCTV'], distance: '250 ม.', rating: 4.0,
-      mapsUrl: 'https://maps.google.com/?q=หอพักสามัคคี+99+UTCC' },
+      lat: 13.7810, lng: 100.5585, mapsUrl: 'https://maps.google.com/?q=13.7810,100.5585' },
     { id: 'd5', cat: 'dorm', name: 'หอพักสตรีบ้านดวงโรจน์',
       desc: 'หอพักสตรีแนะนำจากมหาวิทยาลัย ระยะ 260 เมตร ราคาย่อมเยา เหมาะนักศึกษาชั้นปีต้นๆ',
       image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=600',
       tags: ['หอพักสตรี', 'ราคาย่อมเยา', 'แนะนำ'], distance: '260 ม.', rating: 3.9,
-      mapsUrl: 'https://maps.google.com/?q=หอพักบ้านดวงโรจน์+UTCC' },
+      lat: 13.7815, lng: 100.5580, mapsUrl: 'https://maps.google.com/?q=13.7815,100.5580' },
     { id: 's1', cat: 'convenience', name: '7-Eleven (หน้า ม.หอการค้าไทย)',
       desc: 'เซเว่นอีเลฟเว่นสาขาหน้าซอยวิภาวดี 2 เปิด 24 ชั่วโมง มีตู้ ATM จ่ายบิล ขนม เครื่องดื่มครบ',
       image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&q=80&w=600',
       tags: ['24 ชม.', 'ATM', 'จ่ายบิล'], distance: '~30 ม.', rating: 4.2,
-      mapsUrl: 'https://maps.google.com/?q=7-Eleven+ซอยวิภาวดีรังสิต+2' },
+      lat: 13.7789, lng: 100.5603, mapsUrl: 'https://maps.google.com/?q=13.7789,100.5603' },
     { id: 't1', cat: 'transport', name: 'ป้ายรถเมล์หน้า ม.หอการค้าไทย',
       desc: 'ป้ายรถประจำทางหน้ามหาวิทยาลัย มีหลายสายผ่าน เช่น สาย 26, 52, 114 และ BRT วิภาวดีรังสิต',
       image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=600',
       tags: ['รถเมล์', 'BRT', 'สาย 26/52/114'], distance: '~20 ม.', rating: 3.8,
-      mapsUrl: 'https://maps.google.com/?q=ป้ายรถเมล์+ถนนวิภาวดีรังสิต' },
+      lat: 13.7785, lng: 100.5600, mapsUrl: 'https://maps.google.com/?q=13.7785,100.5600' },
     { id: 't2', cat: 'transport', name: 'จุดจอด Grab / รถตู้',
       desc: 'จุดขึ้น-ลงรถ Grab Taxi และรถตู้ ใช้ได้สะดวก บริเวณหน้าซอยวิภาวดี 2',
       image: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80&w=600',
       tags: ['Grab', 'Taxi', 'รถตู้'], distance: '~50 ม.', rating: 4.0,
-      mapsUrl: 'https://maps.google.com/?q=มหาวิทยาลัยหอการค้าไทย+ซอยวิภาวดี+2' }
+      lat: 13.7793, lng: 100.5600, mapsUrl: 'https://maps.google.com/?q=13.7793,100.5600' }
 ];
 
 // ─── Category Meta ──────────────────────────
@@ -135,7 +139,9 @@ function apiToLocal(p) {
         tags: p.tags || [],
         distance: p.distance || 'N/A',
         rating: p.rating || 4.0,
-        mapsUrl: p.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(p.name || '')}`
+        lat: p.latitude,
+        lng: p.longitude,
+        mapsUrl: p.mapsUrl || (p.latitude && p.longitude ? `https://maps.google.com/?q=${p.latitude},${p.longitude}` : `https://maps.google.com/?q=${encodeURIComponent(p.name || '')}`)
     };
 }
 
@@ -165,21 +171,63 @@ function saveComments(comments) {
 let PLACES = [];   // filled after DOMContentLoaded
 let COMMENTS = loadComments();
 let currentCat = 'all';
-<<<<<<< Xkaroy
-let currentSearchTerm = '';
-=======
 let searchQuery = '';
->>>>>>> master
+
+// ─── Map Functions ──────────────────────────
+function initMap() {
+    if (!document.getElementById('leafletMap')) return;
+    map = L.map('leafletMap').setView([13.779, 100.56], 16); // UTCC coordinates
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const utccIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png', // University icon
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+    });
+
+    L.marker([13.779, 100.56], { icon: utccIcon }).addTo(map)
+        .bindPopup('<b>มหาวิทยาลัยหอการค้าไทย</b><br>UTCC Campus')
+        .openPopup();
+}
+
+function renderMapMarkers(places) {
+    if (!map) return;
+
+    // Clear old markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    const placeIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // simple pin icon
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -28]
+    });
+
+    places.forEach(p => {
+        if (p.lat && p.lng) {
+            const marker = L.marker([p.lat, p.lng], { icon: placeIcon }).addTo(map);
+            marker.bindPopup(`<b>${p.name}</b><br><a href="${p.mapsUrl}" target="_blank">เปิดในแผนที่</a>`);
+            markers.push(marker);
+        }
+    });
+}
+
 
 // ─── Load & Render Category Filter Buttons ──────────────────
 async function loadCategories() {
     const bar = document.getElementById('categoryBar');
+    if (!bar) return;
     try {
         const res = await fetch(CATEGORIES_API);
         if (!res.ok) throw new Error('categories API error');
-        const cats = await res.json();   // sorted by sortOrder
+        const cats = await res.json();
 
-        bar.innerHTML = cats.map((c, i) => {
+        bar.innerHTML = cats.map((c) => {
             const isAll  = c.name === 'all';
             const active = isAll ? ' active' : '';
             const icon   = c.icon ? `<i class='bx ${c.icon}'></i> ` : '';
@@ -190,23 +238,21 @@ async function loadCategories() {
         }).join('');
     } catch (e) {
         console.error('Failed to load categories, using fallback', e);
-        // Hardcoded fallback so UI doesn't break if API is down
         bar.innerHTML = `
             <span class="filter-tag active" data-cat="all" onclick="filterCat('all',this)"><i class='bx bx-grid-alt'></i> ทั้งหมด</span>
-            <span class="filter-tag" data-cat="Restaurant" onclick="filterCat('Restaurant',this)"><i class='bx bx-restaurant'></i> ร้านอาหาร</span>
-            <span class="filter-tag" data-cat="Cafe" onclick="filterCat('Cafe',this)"><i class='bx bx-coffee'></i> คาเฟ่</span>
-            <span class="filter-tag" data-cat="หอพัก" onclick="filterCat('หอพัก',this)"><i class='bx bx-building-house'></i> หอพัก</span>
+            <span class="filter-tag" data-cat="restaurant" onclick="filterCat('restaurant',this)"><i class='bx bx-restaurant'></i> ร้านอาหาร</span>
+            <span class="filter-tag" data-cat="cafe" onclick="filterCat('cafe',this)"><i class='bx bx-coffee'></i> คาเฟ่</span>
+            <span class="filter-tag" data-cat="dorm" onclick="filterCat('dorm',this)"><i class='bx bx-building-house'></i> หอพัก</span>
         `;
     }
 }
 
 // ─── Fetch Places from API ───────────────────
-// cat = 'all' | any category name stored in DB (e.g. 'Restaurant', 'Cafe', 'หอพัก')
 async function fetchPlacesFromApi(cat) {
     try {
         const url = (!cat || cat === 'all')
             ? NEARBY_API
-            : `${NEARBY_API}/category/${encodeURIComponent(cat)}`; // Corrected URL
+            : `${NEARBY_API}/category/${encodeURIComponent(cat)}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('API error ' + res.status);
         const data = await res.json();
@@ -219,12 +265,7 @@ async function fetchPlacesFromApi(cat) {
 
 // ─── Render ─────────────────────────────────
 function renderCards(places) {
-    // เรียงลำดับข้อมูลตามชื่อ ก-ฮ
-    const sortedPlaces = [...places].sort((a, b) => {
-        const nameA = a.name || '';
-        const nameB = b.name || '';
-        return nameA.localeCompare(nameB, 'th');
-    });
+    const sortedPlaces = [...places].sort((a, b) => a.name.localeCompare(b.name, 'th'));
 
     const grid = document.getElementById('nearbyGrid');
     const count = document.getElementById('resultCount');
@@ -313,7 +354,7 @@ function filterCat(cat, btn) {
 }
 
 function doSearch() {
-    const input = document.getElementById('searchInput');
+    const input = document.getElementById('nearbySearchInput');
     if (input) {
         searchQuery = input.value.trim().toLowerCase();
         reRender();
@@ -321,40 +362,23 @@ function doSearch() {
 }
 
 function reRender() {
-<<<<<<< Xkaroy
-    let filtered = PLACES; // Start with all places fetched for the current category
-    
-    // Apply text search if there is a search term
-    if (currentSearchTerm) {
-        filtered = filtered.filter(p => 
-            p.name.toLowerCase().includes(currentSearchTerm) || 
-            p.desc.toLowerCase().includes(currentSearchTerm) ||
-            (p.tags && p.tags.some(tag => tag.toLowerCase().includes(currentSearchTerm)))
-=======
-    let filtered = currentCat === 'all' ? PLACES : PLACES.filter(p => p.cat === currentCat);
+    let filtered = PLACES;
     
     if (searchQuery) {
         filtered = filtered.filter(p => 
             (p.name && p.name.toLowerCase().includes(searchQuery)) || 
             (p.desc && p.desc.toLowerCase().includes(searchQuery)) ||
             (p.tags && p.tags.some(t => t.toLowerCase().includes(searchQuery)))
->>>>>>> master
         );
     }
     
     renderCards(filtered);
+    renderMapMarkers(filtered);
 }
 
 // ─── Admin Auth ─────────────────────────────
-let logoClickCount = 0;
-function showAdminEntry(e) {
-    if (e) e.preventDefault();
-    document.getElementById('adminLoginBtn').style.display = 'flex';
-    openAdminLogin();
-}
-
 function openAdminLogin() {
-    if (isAdmin) return; // already admin, badge handles logout
+    if (isAdmin) return;
     document.getElementById('adminPass').value = '';
     document.getElementById('adminLoginErr').style.display = 'none';
     showModal('adminLoginModal');
@@ -441,7 +465,6 @@ async function savePlaceModal() {
 
     try {
         if (id) {
-            // Edit — PUT to API
             const existing = PLACES.find(p => p.id === id);
             const payload = localToApi(data, existing ? existing.images : undefined);
             const res = await fetch(`${NEARBY_API}/${id}`, {
@@ -452,7 +475,6 @@ async function savePlaceModal() {
             if (!res.ok) throw new Error('PUT failed');
             showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
         } else {
-            // Add — POST to API
             const payload = localToApi(data, data.image ? [data.image] : []);
             const res = await fetch(NEARBY_API, {
                 method: 'POST',
@@ -470,7 +492,6 @@ async function savePlaceModal() {
     }
 }
 
-// Image preview
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pm_image').addEventListener('input', function() {
         previewImage(this.value.trim());
@@ -653,38 +674,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('darkBtn').innerHTML = "<i class='bx bx-sun'></i>";
     }
 
-    // 1. Load category filter buttons from Supabase
+    initMap();
     await loadCategories();
-
-    // 2. Load place cards
     await fetchPlacesFromApi('all');
     reRender();
 
-    // Setup Search input listeners
     const searchInput = document.getElementById('nearbySearchInput');
     const searchBtn = document.getElementById('nearbySearchBtn');
     
     if (searchInput && searchBtn) {
-        // Trigger search on input change (live search)
-        searchInput.addEventListener('input', () => {
-            currentSearchTerm = searchInput.value.toLowerCase().trim();
-            reRender();
-        });
-        // Trigger search on button click
-        searchBtn.addEventListener('click', () => {
-            currentSearchTerm = searchInput.value.toLowerCase().trim();
-            reRender();
-        });
-        // Trigger search on Enter key
+        searchBtn.addEventListener('click', doSearch);
         searchInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                currentSearchTerm = searchInput.value.toLowerCase().trim();
-                reRender();
+                doSearch();
             }
         });
     }
 
-    // FAB color: flip to accent when overlapping dark footer
     const fab = document.getElementById('adminFab');
     const footer = document.querySelector('.nearby-footer');
     if (fab && footer) {
