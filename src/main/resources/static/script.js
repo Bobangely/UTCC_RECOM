@@ -148,9 +148,9 @@ async function loadBuildingData() {
             const itemsFromApi = await res.json();
             // Filter for buildings and merge their data into BUILDING_DATA for map hotspots
             itemsFromApi.filter(item => item.type === 'building').forEach(b => {
-                // Assuming 'title' can act as a key for buildings
-                if (b.title) {
-                    BUILDING_DATA[b.title] = { ...BUILDING_DATA[b.title], ...b };
+                // Use buildingKey as the primary key
+                if (b.buildingKey) {
+                    BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
                 }
             });
             updatePhotoBadges();
