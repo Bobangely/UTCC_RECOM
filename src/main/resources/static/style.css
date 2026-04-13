@@ -524,7 +524,7 @@ body {
 }
 
 .hotspot-icon {
-    font-size: 2.8rem;
+    font-size: 2rem;
     color: #ef4444; /* vivid red for contrast */
     filter: drop-shadow(0 4px 5px rgba(0,0,0,0.4));
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s;
