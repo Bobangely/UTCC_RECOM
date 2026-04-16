@@ -23,43 +23,43 @@ const addPlaceForm = document.getElementById('addPlaceForm');
 // Map Building Static Data  (merged with localStorage edits)
 // This data is now primarily for map hotspots, actual building data comes from API
 const DEFAULT_BUILDING_DATA = {
-    'อาคาร 1': {
-        title: 'อาคาร 1',
+    'อาคาร 01': {
+        title: 'อาคาร 01',
         desc: 'อาคารเรียนรวมสำหรับนักศึกษาชั้นปีต้น มีห้องเรียนขนาดใหญ่สำหรับวิชาพื้นฐาน',
         floors: '5 ชั้น', faculty: 'เรียนรวม / วิชาพื้นฐาน', hours: '07:00 – 20:00',
         facilities: 'ห้องเรียนขนาดใหญ่, ห้องน้ำ',
         image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
     },
-    'อาคาร 3': {
-        title: 'อาคาร 3',
+    'อาคาร 03': {
+        title: 'อาคาร 03',
         desc: 'อาคารเรียนและสำนักงานคณะต่างๆ มีลานกิจกรรมด้านหน้าสำหรับนักศึกษา',
         floors: '6 ชั้น', faculty: 'คณะต่างๆ', hours: '07:00 – 20:00',
         facilities: 'ห้องเรียน, ลานกิจกรรม, ห้องน้ำ',
         image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=600'
     },
-    'อาคาร 5': {
-        title: 'อาคาร 5',
+    'อาคาร 05': {
+        title: 'อาคาร 05',
         desc: 'อาคารสูงฝั่งขวาของแคมปัส ใช้เป็นที่ตั้งของหน่วยงานสนับสนุนการเรียนการสอน',
         floors: '8 ชั้น', faculty: 'หน่วยงานสนับสนุน', hours: '08:00 – 18:00',
         facilities: 'ห้องประชุม, ห้องน้ำ, ลิฟต์',
         image: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=600'
     },
-    'อาคาร 7': {
-        title: 'อาคาร 7',
+    'อาคาร 07': {
+        title: 'อาคาร 07',
         desc: 'อาคารเรียนกลางแคมปัส เชื่อมต่อกับอาคาร 9 ผ่านทางเดินสะพานลอย',
         floors: '6 ชั้น', faculty: 'หลายคณะ', hours: '07:00 – 20:00',
         facilities: 'ห้องเรียน, สะพานลอย, ห้องน้ำ',
         image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600'
     },
-    'อาคาร 8': {
-        title: 'อาคาร 8',
+    'อาคาร 08': {
+        title: 'อาคาร 08',
         desc: 'อาคารเรียนฝั่งซ้าย มีห้องปฏิบัติการและห้องสัมมนาขนาดย่อม',
         floors: '7 ชั้น', faculty: 'คณะวิทยาศาสตร์และเทคโนโลยี', hours: '07:30 – 19:00',
         facilities: 'Lab คอมพิวเตอร์, ห้องสัมมนา, ห้องน้ำ',
         image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600'
     },
-    'อาคาร 9': {
-        title: 'อาคาร 9',
+    'อาคาร 09': {
+        title: 'อาคาร 09',
         desc: 'ศูนย์รวมของคณะทางด้านศิลปะและภาษา มีมุมถ่ายรูปสวยๆ เยอะมาก',
         floors: '8 ชั้น', faculty: 'คณะมนุษยศาสตร์และประยุกต์ศิลป์', hours: '07:00 – 20:00',
         facilities: 'ห้องเรียน, ลานกิจกรรม, ร้านกาแฟ, ห้องน้ำ',
@@ -211,7 +211,7 @@ function openBuildingInfo(buildingKey) {
 function populateBuildingPanel(key) {
     const d = BUILDING_DATA[key];
     document.getElementById('panelBldgName').textContent = d.title || key;
-    document.getElementById('panelBldgDesc').textContent = d.desc || 'ยังไม่มีข้อมูล กดปุ่มแก้ไขเพื่อเพิ่มรายละเอียด';
+    document.getElementById('panelBldgDesc').textContent = d.description || d.desc || 'ยังไม่มีข้อมูล กดปุ่มแก้ไขเพื่อเพิ่มรายละเอียด';
     
     // Render Gallery
     const gallery = document.getElementById('panelBldgGallery');
@@ -255,9 +255,7 @@ function toggleBuildingEdit() {
         buildingEditMode = true;
         const d = BUILDING_DATA[currentSelectedBuilding];
         document.getElementById('peTitle').value = d.title || '';
-        document.getElementById('peDesc').value = d.desc || '';
-        document.getElementById('peImageFile').value = '';
-        document.getElementById('peImage').value = d.image || '';
+        document.getElementById('peDesc').value = d.description || d.desc || '';
         document.getElementById('peFloors').value = d.floors || '';
         document.getElementById('peHours').value = d.hours || '';
         document.getElementById('peFaculty').value = d.faculty || '';
@@ -265,36 +263,9 @@ function toggleBuildingEdit() {
         document.getElementById('panelViewMode').style.display = 'none';
         document.getElementById('panelEditMode').style.display = 'flex';
         document.getElementById('panelEditBtn').innerHTML = "<i class='bx bx-x'></i>";
-        renderImageManager(currentSelectedBuilding);
     } else {
         showBuildingViewMode();
     }
-}
-
-function renderImageManager(key) {
-    const d = BUILDING_DATA[key];
-    const imgs = d.images && d.images.length > 0 ? d.images : (d.image ? [d.image] : []);
-    const manager = document.getElementById('peImgManager');
-    document.getElementById('peImgCount').textContent = imgs.length;
-    manager.innerHTML = '';
-    imgs.forEach((url, idx) => {
-        const item = document.createElement('div');
-        item.className = 'img-manager-item';
-        item.innerHTML = `
-            <img src="${url}" onerror="this.src='https://via.placeholder.com/80'">
-            <button class="img-manager-delete" onclick="deleteBuildingImage('${key}', ${idx})" title="ลบรูปนี้"><i class='bx bx-x'></i></button>
-        `;
-        manager.appendChild(item);
-    });
-}
-
-function deleteBuildingImage(key, idx) {
-    const d = BUILDING_DATA[key];
-    let imgs = d.images && d.images.length > 0 ? [...d.images] : (d.image ? [d.image] : []);
-    imgs.splice(idx, 1);
-    BUILDING_DATA[key].images = imgs;
-    BUILDING_DATA[key].image = imgs.length > 0 ? imgs[0] : '';
-    renderImageManager(key);
 }
 
 async function saveBuildingEdit() {
@@ -303,43 +274,9 @@ async function saveBuildingEdit() {
     const originalIcon = btn.innerHTML;
     btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
     
-    // Upload multiple images if files selected
-    const fileInput = document.getElementById('peImageFile');
-    let uploadedUrls = [];
-    const hasFiles = fileInput.files && fileInput.files.length > 0;
-    
-    if (hasFiles) {
-        try {
-            uploadedUrls = await uploadMultipleImages(fileInput);
-        } catch (err) {
-            btn.innerHTML = originalIcon;
-            alert('⚠️ ' + err.message + '\n\nกรุณาตรวจสอบว่าสร้าง Bucket ชื่อ "images" ใน Supabase Storage แล้วหรือยัง');
-            return;
-        }
-    }
-    
-    // Merge: start with current (possibly edited) images from manager, then add newly uploaded
-    const currentImages = BUILDING_DATA[key].images && BUILDING_DATA[key].images.length > 0
-        ? [...BUILDING_DATA[key].images]
-        : (BUILDING_DATA[key].image ? [BUILDING_DATA[key].image] : []);
-    
-    let mergedImages;
-    if (uploadedUrls && uploadedUrls.length > 0) {
-        mergedImages = [...currentImages, ...uploadedUrls];
-    } else if (document.getElementById('peImage').value.trim()) {
-        const urlVal = document.getElementById('peImage').value.trim();
-        mergedImages = currentImages.includes(urlVal) ? currentImages : [...currentImages, urlVal];
-    } else {
-        mergedImages = currentImages;
-    }
-    
-    const singleImageFallback = mergedImages.length > 0 ? mergedImages[0] : BUILDING_DATA[key].image;
-
     const updated = {
         title: document.getElementById('peTitle').value.trim() || key,
-        desc: document.getElementById('peDesc').value.trim(),
-        image: singleImageFallback,
-        images: mergedImages,
+        description: document.getElementById('peDesc').value.trim(),
         floors: document.getElementById('peFloors').value.trim(),
         hours: document.getElementById('peHours').value.trim(),
         faculty: document.getElementById('peFaculty').value.trim(),
@@ -538,30 +475,6 @@ function translateCategory(cat) {
     return 'ทั่วไป';
 }
 
-// URL Upload Helper (Multiple) — returns {urls:[...]} or throws with message
-async function uploadMultipleImages(fileInput) {
-    if (!fileInput.files || fileInput.files.length === 0) return [];
-    
-    const formData = new FormData();
-    for (const file of fileInput.files) {
-        formData.append('files', file);
-    }
-    
-    const res = await fetch('/api/upload/multiple', {
-        method: 'POST',
-        body: formData
-    });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-        const errMsg = data.error || `HTTP ${res.status}`;
-        throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + errMsg);
-    }
-    
-    return data.urls || [];
-}
-
 // API Calls — main page (CAMPUS places only)
 async function fetchAllUniversityItems() {
     showLoading();
@@ -633,38 +546,15 @@ async function handleAddPlace(e) {
     submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> กำลังบันทึกข้อมูล...";
     submitBtn.disabled = true;
 
-    // Handle internal file upload if present
-    const fileInput = document.getElementById('pImageFile');
-    let uploadedUrls = await uploadMultipleImages(fileInput);
-    
     // Convert tags string to array
     const tagsRaw = document.getElementById('pTags').value;
     const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
     
-    // Merge images
-    let finalImages = [];
-    if (uploadedUrls && uploadedUrls.length > 0) {
-        finalImages = uploadedUrls;
-    } else {
-        const urlInput = document.getElementById('pImage').value;
-        if (urlInput) {
-            finalImages = [urlInput];
-        } else {
-            const cat = document.getElementById('pCategory').value;
-            let defaultImg;
-            if(cat === 'Restaurant') defaultImg = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600';
-            else if(cat === 'Cafe') defaultImg = 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600';
-            else defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
-            finalImages = [defaultImg];
-        }
-    }
-
     const newPlace = {
         name: document.getElementById('pName').value,
         description: document.getElementById('pDesc').value,
         address: document.getElementById('pAddress').value,
         category: document.getElementById('pCategory').value,
-        images: finalImages,
         tags: tagsArray,
         // Add default values for other fields in Place entity
         latitude: 0.0,
@@ -684,7 +574,6 @@ async function handleAddPlace(e) {
         if(res.ok) {
             addModal.classList.remove('active');
             addPlaceForm.reset();
-            document.getElementById('pImageFile').value = '';
             // Refresh all items after adding a new one
             await fetchAllUniversityItems();
         } else {
@@ -840,8 +729,6 @@ async function openEditPlaceModal(id, type) {
     document.getElementById('epDesc').value = p.description || p.desc || '';
     document.getElementById('epAddress').value = p.address || ''; // Only for places
     document.getElementById('epTags').value = (p.tags || []).join(', '); // Only for places
-    document.getElementById('epImageFile').value = '';
-    document.getElementById('epImageUrl').value = '';
 
     // Set category select (only for places)
     const catSel = document.getElementById('epCategory');
@@ -854,7 +741,6 @@ async function openEditPlaceModal(id, type) {
         catSel.style.display = 'none'; // Hide category for buildings
     }
 
-    renderEditPlaceImages();
     document.getElementById('editPlaceModal').classList.add('active');
 }
 
@@ -864,29 +750,6 @@ function closeEditPlaceModal() {
     _editingPlaceType = null;
 }
 
-function renderEditPlaceImages() {
-    if (!_editingPlace) return;
-    const imgs = _editingPlace.images && _editingPlace.images.length > 0 ? _editingPlace.images : (_editingPlace.imageUrl ? [_editingPlace.imageUrl] : []);
-    document.getElementById('epImgCount').textContent = imgs.length;
-    const manager = document.getElementById('epImgManager');
-    manager.innerHTML = '';
-    imgs.forEach((url, idx) => {
-        const item = document.createElement('div');
-        item.className = 'img-manager-item';
-        item.innerHTML = `
-            <img src="${url}" onerror="this.src='https://via.placeholder.com/80'">
-            <button class="img-manager-delete" onclick="deleteEditPlaceImage(${idx})" title="\u0e25\u0e1a\u0e23\u0e39\u0e1b\u0e19\u0e35\u0e49"><i class='bx bx-x'></i></button>
-        `;
-        manager.appendChild(item);
-    });
-}
-
-function deleteEditPlaceImage(idx) {
-    if (!_editingPlace) return;
-    _editingPlace.images.splice(idx, 1);
-    renderEditPlaceImages();
-}
-
 async function saveEditPlace() {
     if (!_editingPlace) return;
     const btn = document.getElementById('epSaveBtn');
@@ -894,46 +757,15 @@ async function saveEditPlace() {
     btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> \u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01...";
     btn.disabled = true;
 
-    // Upload new images if any
-    const fileInput = document.getElementById('epImageFile');
-    let uploadedUrls = [];
-    if (fileInput.files && fileInput.files.length > 0) {
-        try {
-            uploadedUrls = await uploadMultipleImages(fileInput);
-        } catch (err) {
-            btn.innerHTML = origText;
-            btn.disabled = false;
-            alert('⚠️ ' + err.message);
-            return;
-        }
-    }
-
-    // Merge: current manager images + newly uploaded
-    let mergedImages = [...(_editingPlace.images || [])];
-    if (uploadedUrls.length > 0) {
-        mergedImages = [...mergedImages, ...uploadedUrls];
-    }
-    // Also handle single URL input
-    const urlInput = document.getElementById('epImageUrl').value.trim();
-    if (urlInput && !mergedImages.includes(urlInput)) {
-        mergedImages.push(urlInput);
-    }
-    // Fallback if empty
-    if (mergedImages.length === 0) {
-        mergedImages = _editingPlace.images || [];
-    }
-
     let payload = {};
     let apiUrl = '';
 
     if (_editingPlaceType === 'building') {
         apiUrl = `${API_BUILDINGS}/${_editingPlace.id}`;
         payload = {
+            ..._editingPlace,
             title: document.getElementById('epName').value.trim() || _editingPlace.title,
-            desc: document.getElementById('epDesc').value.trim(),
-            image: mergedImages.length > 0 ? mergedImages[0] : '',
-            images: mergedImages,
-            // Add other building specific fields if they were editable
+            description: document.getElementById('epDesc').value.trim(),
         };
     } else if (_editingPlaceType === 'place') {
         apiUrl = `${API_PLACES}/${_editingPlace.id}`;
@@ -945,7 +777,6 @@ async function saveEditPlace() {
             description: document.getElementById('epDesc').value.trim(),
             category: document.getElementById('epCategory').value,
             address: document.getElementById('epAddress').value.trim(),
-            images: mergedImages,
             tags: tagsArray
         };
     }
