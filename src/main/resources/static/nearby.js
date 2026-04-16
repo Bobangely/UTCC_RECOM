@@ -124,8 +124,8 @@ const CAT_LABELS = {
 };
 
 // ─── API Config ──────────────────────────────
-const NEARBY_API      = '/api/nearby-places';
-const CATEGORIES_API  = '/api/nearby-categories';
+const NEARBY_API = '/api/nearby-places';
+const CATEGORIES_API = '/api/nearby-categories';
 
 // ─── Convert API Place → local format ────────
 function apiToLocal(p) {
@@ -139,8 +139,9 @@ function apiToLocal(p) {
         tags: p.tags || [],
         distance: p.distance || 'N/A',
         rating: p.rating || 4.0,
-        lat: p.latitude,
-        lng: p.longitude,
+        // If DB has no coordinates, assign a random nearby mock coordinate for demo purposes
+        lat: p.latitude || (13.779 + (Math.random() * 0.005 - 0.0025)),
+        lng: p.longitude || (100.56 + (Math.random() * 0.005 - 0.0025)),
         mapsUrl: p.mapsUrl || (p.latitude && p.longitude ? `https://maps.google.com/?q=${p.latitude},${p.longitude}` : `https://maps.google.com/?q=${encodeURIComponent(p.name || '')}`)
     };
 }
@@ -173,13 +174,18 @@ let COMMENTS = loadComments();
 let currentCat = 'all';
 let searchQuery = '';
 
+let mapLayer = null;
+
 // ─── Map Functions ──────────────────────────
 function initMap() {
     if (!document.getElementById('leafletMap')) return;
     map = L.map('leafletMap').setView([13.779, 100.56], 16); // UTCC coordinates
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    
+    // Google Maps Tile Layer
+    mapLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; <a href="https://maps.google.com/">Google Maps</a>'
     }).addTo(map);
 
     const utccIcon = L.icon({
@@ -210,11 +216,127 @@ function renderMapMarkers(places) {
 
     places.forEach(p => {
         if (p.lat && p.lng) {
-            const marker = L.marker([p.lat, p.lng], { icon: placeIcon }).addTo(map);
-            marker.bindPopup(`<b>${p.name}</b><br><a href="${p.mapsUrl}" target="_blank">เปิดในแผนที่</a>`);
+            const marker = L.marker([p.lat, p.lng], {
+                icon: placeIcon,
+                draggable: isAdmin   // Draggable only in Admin Mode
+            }).addTo(map);
+
+            const popupContent = isAdmin
+                ? `<b>${p.name}</b><br><span style="color:#38bdf8;font-size:0.8rem">📍 ลากหมุดเพื่อย้ายตำแหน่ง</span><br><small>Lat: ${p.lat.toFixed(5)}, Lng: ${p.lng.toFixed(5)}</small>`
+                : `<b>${p.name}</b><br><a href="${p.mapsUrl}" target="_blank">เปิดในแผนที่</a>`;
+
+            marker.bindPopup(popupContent);
+            marker.placeId = p.id;
+
+            // When Admin drags a marker, save new coords to DB
+            if (isAdmin) {
+                marker.on('dragend', async function(e) {
+                    const newPos = e.target.getLatLng();
+                    const newLat = newPos.lat;
+                    const newLng = newPos.lng;
+
+                    // Update local data
+                    const localPlace = PLACES.find(x => x.id === p.id);
+                    if (localPlace) {
+                        localPlace.lat = newLat;
+                        localPlace.lng = newLng;
+                    }
+
+                    // Update popup with new coords
+                    marker.setPopupContent(
+                        `<b>${p.name}</b><br><span style="color:#38bdf8;font-size:0.8rem">📍 ลากหมุดเพื่อย้ายตำแหน่ง</span><br><small>Lat: ${newLat.toFixed(5)}, Lng: ${newLng.toFixed(5)}</small>`
+                    );
+                    marker.openPopup();
+
+                    // Save to DB via PUT API
+                    try {
+                        const res = await fetch(`${NEARBY_API}/${p.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ latitude: newLat, longitude: newLng })
+                        });
+                        if (res.ok) {
+                            showToast(`✅ บันทึกตำแหน่ง "${p.name}" แล้ว`, 'success');
+                        } else {
+                            showToast('❌ บันทึกตำแหน่งไม่สำเร็จ', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Save coords error:', err);
+                        showToast('❌ เกิดข้อผิดพลาดในการบันทึก', 'error');
+                    }
+                });
+            }
+
             markers.push(marker);
         }
     });
+}
+
+let currentRouteLayer = null;
+
+async function drawRouteToPlace(placeId) {
+    const place = PLACES.find(p => p.id === placeId);
+    if (!place || !place.lat || !place.lng || !map) {
+        showToast('ไม่สามารถนำทางได้ (ไม่มีพิกัดร้านค้า)', 'error');
+        return;
+    }
+
+    // Scroll to map smoothly
+    document.getElementById('leafletMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // University coordinates (Start Point)
+    const startLat = 13.779;
+    const startLng = 100.56;
+    const endLat = place.lat;
+    const endLng = place.lng;
+
+    // Use OSRM public API (walking profile)
+    const osrmUrl = `https://router.project-osrm.org/route/v1/foot/${startLng},${startLat};${endLng},${endLat}?overview=simplified&geometries=geojson`;
+
+    try {
+        if (currentRouteLayer) {
+            map.removeLayer(currentRouteLayer);
+        }
+
+        showToast('กำลังค้นหาเส้นทาง...', 'info');
+
+        const response = await fetch(osrmUrl);
+        const data = await response.json();
+
+        if (data.code !== 'Ok' || data.routes.length === 0) {
+            showToast('ค้นหาเส้นทางไม่สำเร็จ', 'error');
+            return;
+        }
+
+        // Create GeoJSON layer from the OSRM route geometry
+        const routeGeoJSON = data.routes[0].geometry;
+        currentRouteLayer = L.geoJSON(routeGeoJSON, {
+            style: {
+                color: '#38bdf8', /* UTCC blue/sky blue wrapper */
+                weight: 6,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round',
+                dashArray: '1, 10' /* Optional: make it look dotted for walking */
+            }
+        }).addTo(map);
+
+        // Zoom map to fit both UTCC and the Place
+        map.fitBounds(currentRouteLayer.getBounds(), {
+            padding: [50, 50],
+            maxZoom: 18
+        });
+
+        // Find the marker and open its popup
+        const marker = markers.find(m => m.placeId === placeId);
+        if (marker) {
+            marker.openPopup();
+        }
+
+    } catch (e) {
+        console.error("OSRM Routing Error:", e);
+        showToast('เกิดข้อผิดพลาดในการโหลดเส้นทาง', 'error');
+    }
 }
 
 
@@ -317,9 +439,13 @@ function renderCards(places) {
                         <i class='bx bx-chat'></i>
                         ${commentCount > 0 ? `<span class="comment-count">${commentCount}</span>` : ''}
                     </button>
-                    <a href="${p.mapsUrl || '#'}" target="_blank" class="nav-btn">
+                    ${p.lat && p.lng ? `
+                    <button class="nav-btn" onclick="drawRouteToPlace('${p.id}')">
                         <i class='bx bx-navigation'></i> นำทาง
-                    </a>
+                    </button>` : `
+                    <a href="${p.mapsUrl || '#'}" target="_blank" class="nav-btn">
+                        <i class='bx bx-navigation'></i> แผนที่
+                    </a>`}
                 </div>
             </div>
         </div>`;
