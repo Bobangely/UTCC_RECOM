@@ -140,23 +140,27 @@ const DEFAULT_BUILDING_DATA = {
 let BUILDING_DATA = JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
 
 // Fetch from API and merge
-async function loadBuildingData() {
+async function loadInitialData() {
+    showLoading();
     try {
-        // This now fetches all university items, not just buildings
         const res = await fetch(API_UNIVERSITY_ITEMS);
-        if (res.ok) {
-            const itemsFromApi = await res.json();
-            // Filter for buildings and merge their data into BUILDING_DATA for map hotspots
-            itemsFromApi.filter(item => item.type === 'building').forEach(b => {
-                // Use buildingKey as the primary key
-                if (b.buildingKey) {
-                    BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
-                }
-            });
-            updatePhotoBadges();
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
         }
-    } catch (e) {
-        console.error('Failed to load buildings from API, falling back to local defaults', e);
+        allUniversityItems = await res.json();
+        
+        // Populate BUILDING_DATA from the fetched items
+        allUniversityItems.filter(item => item.type === 'building').forEach(b => {
+            if (b.buildingKey) {
+                BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
+            }
+        });
+
+        updatePhotoBadges();
+        applyFiltersAndSearch(); 
+    } catch (err) {
+        showError('ไม่สามารถดึงข้อมูลได้ กรุณาลองตรวจสอบเซิร์ฟเวอร์');
+        console.error(err);
     }
 }
 
@@ -216,12 +220,7 @@ function populateBuildingPanel(key) {
     // Render Gallery
     const gallery = document.getElementById('panelBldgGallery');
     gallery.innerHTML = '';
-    const imagesToRender = [];
-    if (d.images && d.images.length > 0) {
-        imagesToRender.push(...d.images);
-    } else if (d.image) {
-        imagesToRender.push(d.image);
-    }
+    const imagesToRender = (d.images && d.images.length > 0) ? d.images : (d.imageUrl ? [d.imageUrl] : []);
     
     if (imagesToRender.length > 0) {
         imagesToRender.forEach((imgUrl, idx) => {
@@ -291,9 +290,16 @@ async function saveBuildingEdit() {
         });
         
         if (res.ok) {
-            BUILDING_DATA[key] = { ...BUILDING_DATA[key], ...updated };
+            const result = await res.json();
+            BUILDING_DATA[key] = { ...BUILDING_DATA[key], ...result };
+            // also update in allUniversityItems
+            const index = allUniversityItems.findIndex(item => item.type === 'building' && item.buildingKey === key);
+            if (index !== -1) {
+                allUniversityItems[index] = { ...allUniversityItems[index], ...result };
+            }
             populateBuildingPanel(key);
             showBuildingViewMode();
+            applyFiltersAndSearch();
             
             // Success toast
             btn.innerHTML = "<i class='bx bx-check'></i>";
@@ -323,8 +329,7 @@ function searchFromPanel() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadBuildingData(); // Load building data for map hotspots
-    await fetchAllUniversityItems(); // Fetch all items for the main grid
+    await loadInitialData();
     updateFavBadge();
     applyStoredSettings();
 });
@@ -470,7 +475,7 @@ const UI_STRINGS = {
         // Settings panel
         settingsTitle: 'Settings',
         settingsSub: 'Customize your display preferences',
-        labelTheme: '🎨 Theme',
+        labelTheme: '🎨 ธีม',
         labelDarkMode: 'Dark Mode',
         descDarkMode: 'Switch to dark theme',
         labelLang: '🌐 Language',
@@ -807,7 +812,7 @@ async function handleAddPlace(e) {
             addModal.classList.remove('active');
             addPlaceForm.reset();
             // Refresh all items after adding a new one
-            await fetchAllUniversityItems();
+            await loadInitialData();
         } else {
             const errorData = await res.json();
             alert('เพิ่มข้อมูลไม่สำเร็จ: ' + (errorData.message || 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์'));
@@ -839,7 +844,7 @@ async function deletePlace(id, type) {
         });
         if(res.ok) {
             // Refresh list
-            await fetchAllUniversityItems();
+            await loadInitialData();
         } else {
             alert('ลบข้อมูลไม่สำเร็จ');
         }
@@ -1021,7 +1026,7 @@ async function saveEditPlace() {
         });
         if (res.ok) {
             closeEditPlaceModal();
-            await fetchAllUniversityItems(); // Refresh all items after editing
+            await loadInitialData(); // Refresh all items after editing
         } else {
             alert('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07');
         }
