@@ -15,6 +15,7 @@
             <div class="logo">
                 <i class='bx bx-map-alt'></i>
                 <span>UTCCRECOM</span>
+                <span class="logo-badge">อาคารและสถานที่</span>
             </div>
             <div class="nav-actions">
                 <button class="nav-icon-btn" id="favNavBtn" title="รายการโปรด" onclick="toggleFavPanel()">
@@ -53,58 +54,148 @@
 
 
     <div class="side-panel" id="settingsPanel">
-        <div class="side-panel-header">
-            <div class="side-panel-title">
-                <i class='bx bx-cog' style="color:var(--primary-color)"></i>
-                การตั้งค่า
+        <!-- Settings Panel Header -->
+        <div class="settings-panel-header">
+            <div class="settings-header-bg"></div>
+            <div class="settings-header-content">
+                <div class="settings-header-icon">
+                    <i class='bx bx-cog'></i>
+                </div>
+                <div>
+                    <div class="settings-header-title" id="settingsTitle">การตั้งค่า</div>
+                    <div class="settings-header-sub" id="settingsSub">ปรับแต่งการแสดงผลตามต้องการ</div>
+                </div>
             </div>
-            <button class="close-panel-btn" onclick="toggleSettingsPanel()"><i class='bx bx-x'></i></button>
+            <button class="settings-close-btn" onclick="toggleSettingsPanel()"><i class='bx bx-x'></i></button>
         </div>
-        <div class="side-panel-body">
-            <!-- โหมดมืด -->
+
+        <div class="side-panel-body settings-body">
+
+            <!-- ธีม -->
             <div class="settings-section">
-                <div class="settings-section-title"><i class='bx bx-moon'></i> ธีม</div>
-                <div class="settings-row">
-                    <div>
-                        <div class="settings-label">โหมดมืด (Dark Mode)</div>
-                        <div class="settings-desc">เปลี่ยนหน้าเว็บเป็นสีเข้ม</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-            <!-- เปลี่ยนภาษา -->
-            <div class="settings-section">
-                <div class="settings-section-title"><i class='bx bx-globe'></i> ภาษา</div>
-                <div class="settings-row">
-                    <div class="settings-label">ภาษาแสดงผล</div>
-                    <div class="lang-toggle">
-                        <button class="lang-btn active" id="langTH" onclick="setLanguage('th')">🇹🇭 ไทย</button>
-                        <button class="lang-btn" id="langEN" onclick="setLanguage('en')">🇺🇸 EN</button>
+                <div class="settings-section-label" id="labelTheme">🎨 ธีม</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#1e3a8a,#7c3aed)">
+                                <i class='bx bx-moon'></i>
+                            </div>
+                            <div>
+                                <div class="settings-label" id="labelDarkMode">โหมดมืด</div>
+                                <div class="settings-desc" id="descDarkMode">เปลี่ยนธีมเป็นสีเข้ม</div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>
 
+            <!-- ภาษา -->
             <div class="settings-section">
-                <div class="settings-section-title"><i class='bx bx-grid-alt'></i> การแสดงการ์ด</div>
-                <div class="settings-row" style="flex-wrap:wrap; gap:0.5rem;">
-                    <div class="settings-label" style="width:100%; margin-bottom:0.5rem">ขนาดการ์ด</div>
-                    <button class="size-btn active" id="sizeNormal" onclick="setCardSize('normal')">กลาง</button>
-                    <button class="size-btn" id="sizeSmall" onclick="setCardSize('small')">เล็ก</button>
-                    <button class="size-btn" id="sizeLarge" onclick="setCardSize('large')">ใหญ่</button>
+                <div class="settings-section-label" id="labelLang">🌐 ภาษา</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#0891b2,#0ea5e9)">
+                                <i class='bx bx-globe'></i>
+                            </div>
+                            <div class="settings-label" id="labelDisplayLang">ภาษาแสดงผล</div>
+                        </div>
+                        <div class="lang-toggle">
+                            <button class="lang-btn active" id="langTH" onclick="setLanguage('th')">🇹🇭 ไทย</button>
+                            <button class="lang-btn" id="langEN" onclick="setLanguage('en')">🇺🇸 EN</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- การแสดงผล -->
             <div class="settings-section">
-                <div class="settings-section-title"><i class='bx bx-info-circle'></i> เกี่ยวกับ</div>
-                <p class="settings-desc" style="line-height:1.8">
-                    UTCC Places Recommender<br>
-                    <strong>Version:</strong> 1.0.0<br>
-                    <strong>พัฒนาโดย:</strong> นักศึกษา UTCC
-                </p>
+                <div class="settings-section-label" id="labelDisplay">📐 การแสดงผล</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#059669,#10b981)">
+                                <i class='bx bx-layout'></i>
+                            </div>
+                            <div>
+                                <div class="settings-label" id="labelLayout">รูปแบบ Grid</div>
+                                <div class="settings-desc" id="descLayout">สลับระหว่าง Grid / List</div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="listViewToggle" onchange="toggleListView(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-divider"></div>
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+                                <i class='bx bx-image'></i>
+                            </div>
+                            <div>
+                                <div class="settings-label" id="labelHideImg">ซ่อนภาพ</div>
+                                <div class="settings-desc" id="descHideImg">โหลดเร็วขึ้น ประหยัดข้อมูล</div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="hideImagesToggle" onchange="toggleHideImages(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
+
+            <!-- รายการโปรด -->
+            <div class="settings-section">
+                <div class="settings-section-label" id="labelFavSection">❤️ รายการโปรด</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#dc2626,#ef4444)">
+                                <i class='bx bxs-heart'></i>
+                            </div>
+                            <div>
+                                <div class="settings-label" id="labelFavCount">บันทึกไว้แล้ว</div>
+                                <div class="settings-desc"><span id="settingsFavCount">0</span> <span id="labelFavPlaces">สถานที่</span></div>
+                            </div>
+                        </div>
+                        <button class="settings-action-btn danger" id="clearFavBtn" onclick="clearAllFavorites()">
+                            <i class='bx bx-trash'></i> <span id="labelClearFav">ล้าง</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- เกี่ยวกับ -->
+            <div class="settings-section">
+                <div class="settings-section-label" id="labelAbout">ℹ️ เกี่ยวกับ</div>
+                <div class="settings-about-card">
+                    <div class="settings-about-logo">
+                        <i class='bx bx-map-alt'></i>
+                        <span>UTCCRECOM</span>
+                    </div>
+                    <div class="settings-about-info">
+                        <div class="settings-about-row">
+                            <span class="about-key" id="labelVersion">เวอร์ชัน</span>
+                            <span class="about-val">1.0.0</span>
+                        </div>
+                        <div class="settings-about-row">
+                            <span class="about-key" id="labelDev">พัฒนาโดย</span>
+                            <span class="about-val">นักศึกษา UTCC</span>
+                        </div>
+                        <div class="settings-about-row">
+                            <span class="about-key" id="labelUniv">มหาวิทยาลัย</span>
+                            <span class="about-val">หอการค้าไทย</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 

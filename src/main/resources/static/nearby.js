@@ -657,22 +657,136 @@ function showToast(msg, type = 'info') {
     setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
 }
 
+// ─── Nearby Settings Panel UI strings ───────
+const NEARBY_STRINGS = {
+    th: {
+        navFav: 'รายการโปรด',
+        navSettings: 'ตั้งค่า',
+        settingsTitle: 'การตั้งค่า',
+        settingsSub: 'ปรับแต่งการแสดงผลตามต้องการ',
+        labelTheme: '🎨 ธีม',
+        labelDarkMode: 'โหมดมืด',
+        descDarkMode: 'เปลี่ยนธีมเป็นสีเข้ม',
+        labelLang: '🌐 ภาษา',
+        labelDisplayLang: 'ภาษาแสดงผล',
+        labelAbout: 'ℹ️ เกี่ยวกับ',
+        labelVersion: 'เวอร์ชัน',
+        labelDev: 'พัฒนาโดย',
+        labelUniv: 'มหาวิทยาลัย',
+        favPanelTitle: 'รายการโปรด',
+        heroTag: 'บริเวณรอบมหาวิทยาลัย',
+        heroTitle1: 'สถานที่น่าสนใจ',
+        heroTitle2: 'รอบ ม.หอการค้าไทย',
+        heroSub: 'ร้านอาหาร คาเฟ่ หอพัก และบริการต่างๆ ในระยะเดินถึง',
+    },
+    en: {
+        navFav: 'Favorites',
+        navSettings: 'Settings',
+        settingsTitle: 'Settings',
+        settingsSub: 'Customize your display preferences',
+        labelTheme: '🎨 Theme',
+        labelDarkMode: 'Dark Mode',
+        descDarkMode: 'Switch to dark theme',
+        labelLang: '🌐 Language',
+        labelDisplayLang: 'Display Language',
+        labelAbout: 'ℹ️ About',
+        labelVersion: 'Version',
+        labelDev: 'Developed by',
+        labelUniv: 'University',
+        favPanelTitle: 'Favorites',
+        heroTag: 'Around the University',
+        heroTitle1: 'Interesting Places',
+        heroTitle2: 'Around UTCC',
+        heroSub: 'Restaurants, cafés, dorms, and services within walking distance',
+    }
+};
+
+let nearbyLang = localStorage.getItem('lang') || 'th';
+
+function applyNearbyLanguage(lang) {
+    const s = NEARBY_STRINGS[lang] || NEARBY_STRINGS['th'];
+
+    // Nav labels
+    const favLabel = document.getElementById('nearbyNavFavLabel');
+    if (favLabel) favLabel.textContent = s.navFav;
+    const setLabel = document.getElementById('nearbyNavSettingsLabel');
+    if (setLabel) setLabel.textContent = s.navSettings;
+
+    // Settings panel
+    const map = {
+        nearbySettingsTitle: 'settingsTitle',
+        nearbySettingsSub: 'settingsSub',
+        nearbyLabelTheme: 'labelTheme',
+        nearbyLabelDarkMode: 'labelDarkMode',
+        nearbyDescDarkMode: 'descDarkMode',
+        nearbyLabelLang: 'labelLang',
+        nearbyLabelDisplayLang: 'labelDisplayLang',
+        nearbyLabelAbout: 'labelAbout',
+        nearbyLabelVersion: 'labelVersion',
+        nearbyLabelDev: 'labelDev',
+        nearbyLabelUniv: 'labelUniv',
+        nearbyFavPanelTitle: 'favPanelTitle',
+    };
+    Object.entries(map).forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el && s[key] !== undefined) el.textContent = s[key];
+    });
+
+    // Hero text
+    const heroTag = document.querySelector('.hero-tag');
+    if (heroTag) heroTag.innerHTML = `<i class='bx bx-current-location'></i> ${s.heroTag}`;
+    const heroH1 = document.querySelector('.nearby-hero-content h1');
+    if (heroH1) heroH1.innerHTML = `${s.heroTitle1}<br><span class="accent">${s.heroTitle2}</span>`;
+    const heroPara = document.querySelector('.nearby-hero-content > p');
+    if (heroPara) heroPara.textContent = s.heroSub;
+
+    // Lang buttons
+    const thBtn = document.getElementById('nearbyLangTH');
+    const enBtn = document.getElementById('nearbyLangEN');
+    if (thBtn) thBtn.classList.toggle('active', lang === 'th');
+    if (enBtn) enBtn.classList.toggle('active', lang === 'en');
+}
+
+// ─── Settings Panel Toggle ───────────────────
+function toggleNearbySettings() {
+    const settings = document.getElementById('nearbySettingsPanel');
+    const back = document.getElementById('panelBackdrop');
+    settings.classList.toggle('active');
+    back.classList.toggle('active', settings.classList.contains('active'));
+}
+
+function closeNearbyPanels() {
+    document.getElementById('nearbySettingsPanel').classList.remove('active');
+    document.getElementById('panelBackdrop').classList.remove('active');
+}
+
 // ─── Dark Mode ───────────────────────────────
-function toggleDark() {
-    const html = document.documentElement;
-    const isDark = html.getAttribute('data-theme') === 'dark';
-    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-    document.getElementById('darkBtn').innerHTML = isDark ? "<i class='bx bx-moon'></i>" : "<i class='bx bx-sun'></i>";
-    localStorage.setItem('nearby_dark', isDark ? 'light' : 'dark');
+function toggleNearbyDarkMode(enabled) {
+    document.documentElement.setAttribute('data-theme', enabled ? 'dark' : 'light');
+    // Share with main page via same key
+    localStorage.setItem('darkMode', enabled ? 'dark' : 'light');
+}
+
+// ─── Language ────────────────────────────────
+function setNearbyLanguage(lang) {
+    nearbyLang = lang;
+    localStorage.setItem('lang', lang);
+    applyNearbyLanguage(lang);
 }
 
 // ─── Init ────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    const saved = localStorage.getItem('nearby_dark') || localStorage.getItem('darkMode');
-    if (saved === 'dark') {
+    // Restore dark mode — share same key as main page
+    const savedDark = localStorage.getItem('darkMode');
+    if (savedDark === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('darkBtn').innerHTML = "<i class='bx bx-sun'></i>";
+        const toggle = document.getElementById('nearbyDarkModeToggle');
+        if (toggle) toggle.checked = true;
     }
+
+    // Restore language
+    nearbyLang = localStorage.getItem('lang') || 'th';
+    applyNearbyLanguage(nearbyLang);
 
     initMap();
     await loadCategories();
@@ -681,13 +795,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const searchInput = document.getElementById('nearbySearchInput');
     const searchBtn = document.getElementById('nearbySearchBtn');
-    
+
     if (searchInput && searchBtn) {
         searchBtn.addEventListener('click', doSearch);
         searchInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                doSearch();
-            }
+            if (e.key === 'Enter') doSearch();
         });
     }
 

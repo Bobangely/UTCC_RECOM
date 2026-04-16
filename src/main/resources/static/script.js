@@ -468,6 +468,203 @@ function toggleFavPanel() {
     back.classList.toggle('active', panel.classList.contains('active'));
 }
 
+// ====== UI LANGUAGE STRINGS ======
+const UI_STRINGS = {
+    th: {
+        // Navbar
+        navFav: 'รายการโปรด',
+        navSettings: 'ตั้งค่า',
+        navAdd: 'เพิ่มสถานที่',
+        // Settings panel
+        settingsTitle: 'การตั้งค่า',
+        settingsSub: 'ปรับแต่งการแสดงผลตามต้องการ',
+        labelTheme: '🎨 ธีม',
+        labelDarkMode: 'โหมดมืด',
+        descDarkMode: 'เปลี่ยนธีมเป็นสีเข้ม',
+        labelLang: '🌐 ภาษา',
+        labelDisplayLang: 'ภาษาแสดงผล',
+        labelDisplay: '📐 การแสดงผล',
+        labelLayout: 'รูปแบบ Grid',
+        descLayout: 'สลับระหว่าง Grid / List',
+        labelHideImg: 'ซ่อนภาพ',
+        descHideImg: 'โหลดเร็วขึ้น ประหยัดข้อมูล',
+        labelFavSection: '❤️ รายการโปรด',
+        labelFavCount: 'บันทึกไว้แล้ว',
+        labelFavPlaces: 'สถานที่',
+        labelClearFav: 'ล้าง',
+        labelAbout: 'ℹ️ เกี่ยวกับ',
+        labelVersion: 'เวอร์ชัน',
+        labelDev: 'พัฒนาโดย',
+        labelUniv: 'มหาวิทยาลัย',
+        // Search & Filter
+        searchPlaceholder: 'ค้นหาสถานที่, ตึกเรียน, ร้านอาหาร, คาเฟ่...',
+        searchBtn: 'ค้นหา',
+        filterAll: 'ทั้งหมด',
+        filterRestaurant: 'ร้านอาหาร',
+        filterCafe: 'คาเฟ่',
+        filterStudy: 'ที่อ่านหนังสือ',
+        // Hero
+        heroBadge: 'มหาวิทยาลัยหอการค้าไทย',
+        heroTitle1: 'ค้นพบสถานที่น่าสนใจ',
+        heroTitle2: 'รอบ ม.หอการค้าไทย',
+        heroSub: 'แนะนำร้านอาหาร คาเฟ่ และสถานที่ต่างๆ ภายในและรอบแคมปัส สำหรับนักศึกษา UTCC โดยเฉพาะ',
+        statBuilding: 'อาคาร',
+        statPlace: 'สถานที่แนะนำ',
+        statCat: 'หมวดหมู่',
+        ctaMap: 'ดูแผนผังมหาวิทยาลัย',
+        ctaNearby: 'สถานที่รอบมหาลัย',
+        scrollDown: 'เลื่อนลงดูแผนที่',
+        // Section
+        sectionTitle: '🗺️ แผนผังมหาวิทยาลัยหอการค้าไทย',
+        sectionSub: 'คลิกที่หมุดอาคารเพื่อดูรายละเอียดและร้านค้าในบริเวณนั้น',
+        placesTitle: 'สถานที่แนะนำ',
+        placesSub: 'ร้านอาหาร คาเฟ่ และสถานที่เรียนภายในมหาวิทยาลัยหอการค้าไทย',
+        // Fav panel
+        favPanelTitle: 'รายการโปรดของฉัน',
+        favEmpty: 'ยังไม่มีรายการโปรด',
+        favEmptySub: 'กดไอคอน ♡ บนการ์ดสถานที่เพื่อบันทึก',
+        confirmClearFav: 'ยืนยันลบรายการโปรดทั้งหมด?',
+    },
+    en: {
+        // Navbar
+        navFav: 'Favorites',
+        navSettings: 'Settings',
+        navAdd: 'Add Place',
+        // Settings panel
+        settingsTitle: 'Settings',
+        settingsSub: 'Customize your display preferences',
+        labelTheme: '🎨 Theme',
+        labelDarkMode: 'Dark Mode',
+        descDarkMode: 'Switch to dark theme',
+        labelLang: '🌐 Language',
+        labelDisplayLang: 'Display Language',
+        labelDisplay: '📐 Display',
+        labelLayout: 'Grid Layout',
+        descLayout: 'Switch between Grid / List',
+        labelHideImg: 'Hide Images',
+        descHideImg: 'Faster load, save data',
+        labelFavSection: '❤️ Favorites',
+        labelFavCount: 'Saved',
+        labelFavPlaces: 'places',
+        labelClearFav: 'Clear',
+        labelAbout: 'ℹ️ About',
+        labelVersion: 'Version',
+        labelDev: 'Developed by',
+        labelUniv: 'University',
+        // Search & Filter
+        searchPlaceholder: 'Search places, buildings, restaurants, cafés...',
+        searchBtn: 'Search',
+        filterAll: 'All',
+        filterRestaurant: 'Restaurant',
+        filterCafe: 'Café',
+        filterStudy: 'Study Area',
+        // Hero
+        heroBadge: 'University of the Thai Chamber of Commerce',
+        heroTitle1: 'Discover Interesting Places',
+        heroTitle2: 'Around UTCC',
+        heroSub: 'Restaurants, cafés, and more on and around campus — curated for UTCC students.',
+        statBuilding: 'Buildings',
+        statPlace: 'Recommended',
+        statCat: 'Categories',
+        ctaMap: 'View Campus Map',
+        ctaNearby: 'Nearby Places',
+        scrollDown: 'Scroll to map',
+        // Section
+        sectionTitle: '🗺️ UTCC Campus Map',
+        sectionSub: 'Click a building pin to view details and nearby shops',
+        placesTitle: 'Recommended Places',
+        placesSub: 'Restaurants, cafés and study spots at UTCC',
+        // Fav panel
+        favPanelTitle: 'My Favorites',
+        favEmpty: 'No favorites yet',
+        favEmptySub: 'Tap ♡ on a place card to save it',
+        confirmClearFav: 'Clear all favorites?',
+    }
+};
+
+function applyUILanguage(lang) {
+    const s = UI_STRINGS[lang] || UI_STRINGS['th'];
+
+    // Nav buttons
+    const navFavLabel = document.querySelector('#favNavBtn .nav-btn-label');
+    const navSettingsLabel = document.querySelector('#settingsNavBtn .nav-btn-label');
+    if (navFavLabel) navFavLabel.textContent = s.navFav;
+    if (navSettingsLabel) navSettingsLabel.textContent = s.navSettings;
+    const addBtn = document.getElementById('addPlaceBtn');
+    if (addBtn) addBtn.innerHTML = `<i class='bx bx-plus'></i> ${s.navAdd}`;
+
+    // Settings panel labels
+    const ids = [
+        'settingsTitle','settingsSub','labelTheme','labelDarkMode','descDarkMode',
+        'labelLang','labelDisplayLang','labelDisplay','labelLayout','descLayout',
+        'labelHideImg','descHideImg','labelFavSection','labelFavCount','labelFavPlaces',
+        'labelClearFav','labelAbout','labelVersion','labelDev','labelUniv'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && s[id] !== undefined) el.textContent = s[id];
+    });
+
+    // Search bar
+    const si = document.getElementById('searchInput');
+    if (si) si.placeholder = s.searchPlaceholder;
+    const sb = document.getElementById('searchBtn');
+    if (sb) sb.textContent = s.searchBtn;
+
+    // Filter tags
+    const filterTags = document.querySelectorAll('.filter-tag');
+    filterTags.forEach(tag => {
+        const cat = tag.dataset.category;
+        const icon = tag.querySelector('i');
+        if (cat === '') tag.innerHTML = `${icon ? icon.outerHTML : ''} ${s.filterAll}`;
+        else if (cat === 'Restaurant') tag.innerHTML = `${icon ? icon.outerHTML : ''} ${s.filterRestaurant}`;
+        else if (cat === 'Cafe') tag.innerHTML = `${icon ? icon.outerHTML : ''} ${s.filterCafe}`;
+        else if (cat === 'Study Area') tag.innerHTML = `${icon ? icon.outerHTML : ''} ${s.filterStudy}`;
+    });
+
+    // Hero section
+    const heroBadgeEl = document.querySelector('.hero-badge');
+    if (heroBadgeEl) heroBadgeEl.innerHTML = `<i class='bx bxs-star'></i> ${s.heroBadge}`;
+    const heroTitle = document.querySelector('.hero-landing-title');
+    if (heroTitle) heroTitle.innerHTML = `${s.heroTitle1}<br><span class="hero-highlight">${s.heroTitle2}</span>`;
+    const heroSub = document.querySelector('.hero-landing-subtitle');
+    if (heroSub) heroSub.textContent = s.heroSub;
+
+    // Hero stats labels
+    const statLabels = document.querySelectorAll('.hero-stat-label');
+    if (statLabels[0]) statLabels[0].textContent = s.statBuilding;
+    if (statLabels[1]) statLabels[1].textContent = s.statPlace;
+    if (statLabels[2]) statLabels[2].textContent = s.statCat;
+
+    // Hero CTA buttons
+    const ctaBtns = document.querySelectorAll('.hero-cta-btn');
+    if (ctaBtns[0]) ctaBtns[0].innerHTML = `<i class='bx bx-map-alt'></i> ${s.ctaMap}`;
+    if (ctaBtns[1]) ctaBtns[1].innerHTML = `<i class='bx bx-current-location'></i> ${s.ctaNearby}`;
+
+    // Scroll indicator
+    const scrollEl = document.querySelector('.hero-scroll-indicator span');
+    if (scrollEl) scrollEl.textContent = s.scrollDown;
+
+    // Map section header
+    const mapTitle = document.querySelector('.section-title-map');
+    if (mapTitle) mapTitle.textContent = s.sectionTitle;
+    const mapSub = document.querySelector('.section-sub-map');
+    if (mapSub) mapSub.textContent = s.sectionSub;
+
+    // Places section header
+    const pTitle = document.querySelector('.places-section-title h2');
+    if (pTitle) pTitle.textContent = s.placesTitle;
+    const pSub = document.querySelector('.places-section-title p');
+    if (pSub) pSub.textContent = s.placesSub;
+
+    // Favorites panel title
+    const favPanelTitle = document.querySelector('#favPanel .side-panel-title');
+    if (favPanelTitle) favPanelTitle.innerHTML = `<i class='bx bxs-heart' style="color:#ef4444"></i> ${s.favPanelTitle}`;
+
+    // Update settings fav count
+    updateSettingsFavCount();
+}
+
 // ====== SETTINGS SYSTEM ======
 function toggleSettingsPanel() {
     const panel = document.getElementById('settingsPanel');
@@ -475,6 +672,7 @@ function toggleSettingsPanel() {
     document.getElementById('favPanel').classList.remove('active');
     panel.classList.toggle('active');
     back.classList.toggle('active', panel.classList.contains('active'));
+    updateSettingsFavCount();
 }
 
 function closeAllPanels() {
@@ -493,8 +691,34 @@ function setLanguage(lang) {
     localStorage.setItem('lang', lang);
     document.getElementById('langTH').classList.toggle('active', lang === 'th');
     document.getElementById('langEN').classList.toggle('active', lang === 'en');
-    // Re-render to apply language
+    applyUILanguage(lang);
     applyFiltersAndSearch();
+}
+
+function toggleListView(enabled) {
+    const grid = document.getElementById('placesGrid');
+    grid.classList.toggle('list-view', enabled);
+    localStorage.setItem('listView', enabled ? '1' : '0');
+}
+
+function toggleHideImages(enabled) {
+    document.body.classList.toggle('hide-images', enabled);
+    localStorage.setItem('hideImages', enabled ? '1' : '0');
+}
+
+function clearAllFavorites() {
+    const s = UI_STRINGS[currentLang] || UI_STRINGS['th'];
+    if (!confirm(s.confirmClearFav)) return;
+    favorites = [];
+    localStorage.setItem('utcc_favorites', '[]');
+    updateFavBadge();
+    renderFavList();
+    updateSettingsFavCount();
+}
+
+function updateSettingsFavCount() {
+    const el = document.getElementById('settingsFavCount');
+    if (el) el.textContent = favorites.length;
 }
 
 function setCardSize(size) {
@@ -503,8 +727,6 @@ function setCardSize(size) {
     if (size === 'small') grid.classList.add('size-small');
     if (size === 'large') grid.classList.add('size-large');
     localStorage.setItem('cardSize', size);
-    ['sizeNormal', 'sizeSmall', 'sizeLarge'].forEach(id => document.getElementById(id).classList.remove('active'));
-    document.getElementById(size === 'normal' ? 'sizeNormal' : size === 'small' ? 'sizeSmall' : 'sizeLarge').classList.add('active');
 }
 
 function applyStoredSettings() {
@@ -512,6 +734,16 @@ function applyStoredSettings() {
     if (dark === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         document.getElementById('darkModeToggle').checked = true;
+    }
+    const listView = localStorage.getItem('listView') === '1';
+    if (listView) {
+        document.getElementById('listViewToggle').checked = true;
+        toggleListView(true);
+    }
+    const hideImages = localStorage.getItem('hideImages') === '1';
+    if (hideImages) {
+        document.getElementById('hideImagesToggle').checked = true;
+        toggleHideImages(true);
     }
     const size = localStorage.getItem('cardSize');
     if (size) setCardSize(size);
