@@ -45,17 +45,20 @@ public class NearbyPlaceService {
         NearbyPlace existing = nearbyPlaceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Place not found with id: " + id));
 
-        existing.setName(details.getName());
-        existing.setDescription(details.getDescription());
-        existing.setCategory(details.getCategory());
-        existing.setDistance(details.getDistance());
-        existing.setRating(details.getRating());
-        existing.setMapsUrl(details.getMapsUrl());
-        if (details.getTags() != null) {
+        // Partial update: only overwrite non-null fields
+        if (details.getName() != null) existing.setName(details.getName());
+        if (details.getDescription() != null) existing.setDescription(details.getDescription());
+        if (details.getCategory() != null) existing.setCategory(details.getCategory());
+        if (details.getDistance() != null) existing.setDistance(details.getDistance());
+        if (details.getRating() != null) existing.setRating(details.getRating());
+        if (details.getMapsUrl() != null) existing.setMapsUrl(details.getMapsUrl());
+        if (details.getLatitude() != null) existing.setLatitude(details.getLatitude());
+        if (details.getLongitude() != null) existing.setLongitude(details.getLongitude());
+        if (details.getTags() != null && !details.getTags().isEmpty()) {
             existing.getTags().clear();
             existing.getTags().addAll(details.getTags());
         }
-        if (details.getImages() != null) {
+        if (details.getImages() != null && !details.getImages().isEmpty()) {
             existing.getImages().clear();
             existing.getImages().addAll(details.getImages());
         }
