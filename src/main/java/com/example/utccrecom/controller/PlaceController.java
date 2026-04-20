@@ -2,6 +2,7 @@ package com.example.utccrecom.controller;
 
 import com.example.utccrecom.entity.Place;
 import com.example.utccrecom.service.PlaceService;
+import com.example.utccrecom.service.UniversityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,9 @@ public class PlaceController {
 
     @Autowired
     private PlaceService placeService;
+
+    @Autowired
+    private UniversityService universityService;
 
     // Fetch all places (For Map and List)
     @GetMapping
@@ -50,7 +54,9 @@ public class PlaceController {
     // Create a new place
     @PostMapping
     public Place createPlace(@RequestBody Place place) {
-        return placeService.savePlace(place);
+        Place saved = placeService.savePlace(place);
+        universityService.clearCache(); // Clear cache after create
+        return saved;
     }
 
     // Update an existing place
@@ -58,6 +64,7 @@ public class PlaceController {
     public ResponseEntity<Place> updatePlace(@PathVariable UUID id, @RequestBody Place placeDetails) {
         try {
             Place updatedPlace = placeService.updatePlaceData(id, placeDetails);
+            universityService.clearCache(); // Clear cache after update
             return ResponseEntity.ok(updatedPlace);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -68,6 +75,7 @@ public class PlaceController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePlace(@PathVariable UUID id) {
         placeService.deletePlace(id);
+        universityService.clearCache(); // Clear cache after delete
         return ResponseEntity.noContent().build();
     }
 }

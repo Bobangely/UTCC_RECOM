@@ -6,6 +6,8 @@ import com.example.utccrecom.entity.Place;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,8 +23,10 @@ public class UniversityService {
     private BuildingService buildingService;
 
     @Autowired
-    private PlaceService placeService; // Changed from NearbyPlaceService
+    private PlaceService placeService;
 
+    // Cache for 30 seconds - reduces database load significantly
+    @Cacheable(value = "universityItems", unless = "#result == null")
     public List<UniversityItem> getUniversityItems() {
         List<Building> buildings = buildingService.getAllBuildings();
         List<Place> places = placeService.getAllPlaces(); // Changed from nearbyPlaceService.getAllNearbyPlaces()
@@ -38,6 +42,12 @@ public class UniversityService {
         logger.info("Total university items: {}", universityItems.size());
 
         return universityItems;
+    }
+
+    // Clear cache when data changes
+    @CacheEvict(value = "universityItems", allEntries = true)
+    public void clearCache() {
+        logger.info("University items cache cleared");
     }
 
     private UniversityItem mapBuildingToUniversityItem(Building building) {

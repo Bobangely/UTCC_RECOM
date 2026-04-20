@@ -541,6 +541,15 @@
                         <label>แท็ก (คั่นด้วยลูกน้ำ ,)</label>
                         <input type="text" id="pTags" placeholder="แอร์เย็น, ปลั๊กเยอะ, อร่อย">
                     </div>
+                    <div class="form-group">
+                        <label>รูปภาพ <span style="color:var(--text-muted);font-size:0.8rem">(เลือกหลายไฟล์ หรือเพิ่มจากลิงก์)</span></label>
+                        <input type="file" id="pImageFiles" accept="image/*" multiple style="margin-bottom:0.5rem;">
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="url" id="pImageUrl" placeholder="https://example.com/image.jpg" style="flex:1;">
+                            <button type="button" class="btn-secondary" onclick="addPlaceImageUrl()" style="padding:0.5rem 1rem;"><i class='bx bx-plus'></i></button>
+                        </div>
+                        <div id="pGalleryPreview" class="gallery-preview"></div>
+                    </div>
                     <button type="submit" class="btn-modal-save"><i class='bx bx-save'></i> บันทึกข้อมูล</button>
                 </form>
             </div>
@@ -582,6 +591,15 @@
                 <div class="form-group">
                     <label>แท็ก <span style="font-weight:400;text-transform:none;font-size:0.78rem;color:var(--text-muted);">(คั่นด้วยลูกน้ำ ,)</span></label>
                     <input type="text" id="epTags" placeholder="แอร์เย็น, ปลั๊กเยอะ, อร่อย">
+                </div>
+                <div class="form-group">
+                    <label>รูปภาพ <span style="color:var(--text-muted);font-size:0.8rem">(เลือกหลายไฟล์ หรือเพิ่มจากลิงก์)</span></label>
+                    <input type="file" id="epImageFiles" accept="image/*" multiple style="margin-bottom:0.5rem;">
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="url" id="epImageUrl" placeholder="https://example.com/image.jpg" style="flex:1;">
+                        <button type="button" class="btn-secondary" onclick="addEditPlaceImageUrl()" style="padding:0.5rem 1rem;"><i class='bx bx-plus'></i></button>
+                    </div>
+                    <div id="epGalleryPreview" class="gallery-preview"></div>
                 </div>
                 <button class="btn-modal-save" onclick="saveEditPlace()" id="epSaveBtn"><i class='bx bx-save'></i> บันทึกการแก้ไข</button>
             </div>

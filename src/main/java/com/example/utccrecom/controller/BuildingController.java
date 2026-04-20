@@ -2,6 +2,7 @@ package com.example.utccrecom.controller;
 
 import com.example.utccrecom.entity.Building;
 import com.example.utccrecom.service.BuildingService;
+import com.example.utccrecom.service.UniversityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,9 @@ public class BuildingController {
 
     @Autowired
     private BuildingService buildingService;
+
+    @Autowired
+    private UniversityService universityService;
 
     @GetMapping
     public List<Building> getAllBuildings() {
@@ -36,7 +40,9 @@ public class BuildingController {
 
     @PostMapping
     public Building createBuilding(@RequestBody Building building) {
-        return buildingService.saveBuilding(building);
+        Building saved = buildingService.saveBuilding(building);
+        universityService.clearCache(); // Clear cache after create
+        return saved;
     }
 
     @PutMapping("/{id}")
@@ -56,7 +62,9 @@ public class BuildingController {
             existing.setHours(details.getHours());
             existing.setFacilities(details.getFacilities());
             
-            return ResponseEntity.ok(buildingService.saveBuilding(existing));
+            Building saved = buildingService.saveBuilding(existing);
+            universityService.clearCache(); // Clear cache after update
+            return ResponseEntity.ok(saved);
         }
         return ResponseEntity.notFound().build();
     }
@@ -65,12 +73,14 @@ public class BuildingController {
     @PutMapping("/key/{buildingKey}")
     public ResponseEntity<Building> updateBuildingByKey(@PathVariable String buildingKey, @RequestBody Building details) {
         Building updated = buildingService.updateBuildingData(buildingKey, details);
+        universityService.clearCache(); // Clear cache after update
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBuilding(@PathVariable UUID id) {
         buildingService.deleteBuilding(id);
+        universityService.clearCache(); // Clear cache after delete
         return ResponseEntity.noContent().build();
     }
 }

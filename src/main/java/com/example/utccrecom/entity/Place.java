@@ -25,7 +25,6 @@ public class Place {
     
     private String category;
     
-    private String distance;
     private Double rating;
     
     @Column(columnDefinition = "TEXT")
@@ -113,14 +112,6 @@ public class Place {
 
     public void setImages(List<String> images) {
         this.images = images;
-    }
-
-    public String getDistance() {
-        return distance;
-    }
-
-    public void setDistance(String distance) {
-        this.distance = distance;
     }
 
     public Double getRating() {

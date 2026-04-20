@@ -39,7 +39,6 @@ public class PlaceService {
         existingPlace.setLatitude(placeDetails.getLatitude());
         existingPlace.setLongitude(placeDetails.getLongitude());
         existingPlace.setCategory(placeDetails.getCategory());
-        existingPlace.setDistance(placeDetails.getDistance());
         existingPlace.setRating(placeDetails.getRating());
         existingPlace.setMapsUrl(placeDetails.getMapsUrl());
         

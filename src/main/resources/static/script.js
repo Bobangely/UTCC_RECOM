@@ -20,6 +20,12 @@ const addPlaceBtn = document.getElementById('addPlaceBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const addPlaceForm = document.getElementById('addPlaceForm');
 
+// Image handling for Add Place modal
+let addPlaceImages = []; // Array of {type: 'url'|'file', data: url|file}
+
+// Image handling for Edit Place modal
+let editPlaceImages = []; // Array of {type: 'url'|'file', data: url|file}
+
 // Map Building Static Data  (merged with localStorage edits)
 // This data is now primarily for map hotspots, actual building data comes from API
 const DEFAULT_BUILDING_DATA = {
@@ -371,8 +377,18 @@ searchBtn.addEventListener('click', handleSearch);
 searchInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSearch(); });
 
 addPlaceBtn.addEventListener('click', () => addModal.classList.add('active'));
-closeModalBtn.addEventListener('click', () => addModal.classList.remove('active'));
-addModal.addEventListener('click', (e) => { if(e.target === addModal) addModal.classList.remove('active'); });
+closeModalBtn.addEventListener('click', () => {
+    addModal.classList.remove('active');
+    addPlaceImages = []; // Clear images
+    renderAddPlaceGallery();
+});
+addModal.addEventListener('click', (e) => {
+    if(e.target === addModal) {
+        addModal.classList.remove('active');
+        addPlaceImages = []; // Clear images
+        renderAddPlaceGallery();
+    }
+});
 
 addPlaceForm.addEventListener('submit', handleAddPlace);
 
@@ -819,22 +835,43 @@ async function handleAddPlace(e) {
     const tagsRaw = document.getElementById('pTags').value;
     const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
     
+    // Collect image URLs from addPlaceImages
+    let imageUrls = [];
+    const urlImages = addPlaceImages.filter(img => img.type === 'url').map(img => img.data);
+    imageUrls = imageUrls.concat(urlImages);
+    
+    // Upload file images if any
+    const fileImages = addPlaceImages.filter(img => img.type === 'file').map(img => img.data);
+    if (fileImages.length > 0) {
+        try {
+            const formData = new FormData();
+            fileImages.forEach(file => formData.append('files', file));
+            const uploadRes = await fetch('/api/upload/multiple', { method: 'POST', body: formData });
+            if (uploadRes.ok) {
+                const uploadData = await uploadRes.json();
+                imageUrls = imageUrls.concat(uploadData.urls || []);
+            }
+        } catch (err) {
+            console.error('Image upload failed:', err);
+        }
+    }
+    
     const newPlace = {
         name: document.getElementById('pName').value,
         description: document.getElementById('pDesc').value,
         address: document.getElementById('pAddress').value,
         category: document.getElementById('pCategory').value,
         tags: tagsArray,
+        images: imageUrls,
         // Add default values for other fields in Place entity
         latitude: 0.0,
         longitude: 0.0,
-        distance: '~0 ม.',
         rating: 0.0,
         mapsUrl: 'https://maps.google.com/?q=' + encodeURIComponent(document.getElementById('pName').value)
     };
 
     try {
-        const res = await fetch(API_PLACES, { // Use the correct API for places
+        const res = await fetch(API_PLACES, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newPlace)
@@ -843,6 +880,10 @@ async function handleAddPlace(e) {
         if(res.ok) {
             addModal.classList.remove('active');
             addPlaceForm.reset();
+            addPlaceImages = []; // Clear images
+            renderAddPlaceGallery();
+            // Clear cache and force fresh data fetch
+            try { sessionStorage.removeItem(CACHE_KEY); } catch {}
             // Refresh all items after adding a new one
             await loadInitialData();
         } else {
@@ -867,21 +908,29 @@ async function deletePlace(id, type) {
         apiUrl = `${API_PLACES}/${id}`; // API for deleting places
     } else {
         alert('ไม่สามารถระบุประเภทที่จะลบได้');
-        return;
+        console.log(`[DELETE] ${apiUrl}`, { id, type });
     }
-
     try {
-        const res = await fetch(apiUrl, {
-            method: 'DELETE'
-        });
+        const res = await fetch(apiUrl, { method: 'DELETE' });
+        console.log(`[DELETE] Response:`, res.status, res.statusText);
         if(res.ok) {
-            // Refresh list
+            // Clear cache to ensure fresh data
+            try { sessionStorage.removeItem(CACHE_KEY); } catch {}
             await loadInitialData();
+        } else if (res.status === 404) {
+            // Item already deleted in DB, clear cache and refresh
+            console.log('[DELETE] Item not found in DB, clearing cache...');
+            try { sessionStorage.removeItem(CACHE_KEY); } catch {}
+            await loadInitialData();
+            alert('ข้อมูลนี้ถูกลบไปแล้วในฐานข้อมูล หน้าเว็บจะรีเฟรชข้อมูลใหม่');
         } else {
-            alert('ลบข้อมูลไม่สำเร็จ');
+            const txt = await res.text();
+            console.error(`[DELETE] Error ${res.status}:`, txt);
+            alert(`ลบข้อมูลไม่สำเร็จ (HTTP ${res.status})`);
         }
     } catch (err) {
-        alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
+        console.error('[DELETE] Network error:', err);
+        alert('เชื่อมต่อเซิร์เวอร์ไม่ได้: ' + err.message);
     }
 }
 
@@ -1012,6 +1061,20 @@ async function openEditPlaceModal(id, type) {
     document.getElementById('epAddress').value = p.address || ''; // Only for places
     document.getElementById('epTags').value = (p.tags || []).join(', '); // Only for places
 
+    // Load existing images into editPlaceImages array
+    editPlaceImages = [];
+    const existingImages = p.images || [];
+    existingImages.forEach(url => {
+        editPlaceImages.push({ type: 'url', data: url });
+    });
+    renderEditPlaceGallery();
+    
+    // Clear file input and URL input
+    const fileInput = document.getElementById('epImageFiles');
+    if (fileInput) fileInput.value = '';
+    const urlInput = document.getElementById('epImageUrl');
+    if (urlInput) urlInput.value = '';
+
     // Set category select (only for places)
     const catSel = document.getElementById('epCategory');
     if (type === 'place') {
@@ -1030,36 +1093,71 @@ function closeEditPlaceModal() {
     document.getElementById('editPlaceModal').classList.remove('active');
     _editingPlace = null;
     _editingPlaceType = null;
+    editPlaceImages = []; // Clear images
+    renderEditPlaceGallery(); // Clear preview
+    // Clear inputs
+    const fileInput = document.getElementById('epImageFiles');
+    if (fileInput) fileInput.value = '';
+    const urlInput = document.getElementById('epImageUrl');
+    if (urlInput) urlInput.value = '';
 }
 
 async function saveEditPlace() {
     if (!_editingPlace) return;
     const btn = document.getElementById('epSaveBtn');
     const origText = btn.innerHTML;
-    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> \u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01...";
+    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> กำลังบันทึก...";
     btn.disabled = true;
 
     let payload = {};
     let apiUrl = '';
+    let finalImageUrls = [];
+
+    // Collect existing URL images from editPlaceImages (that are already URLs)
+    const urlImages = editPlaceImages.filter(img => img.type === 'url').map(img => img.data);
+    finalImageUrls = finalImageUrls.concat(urlImages);
+    
+    // Upload new file images if any
+    const fileImages = editPlaceImages.filter(img => img.type === 'file').map(img => img.data);
+    if (fileImages.length > 0) {
+        try {
+            const formData = new FormData();
+            fileImages.forEach(file => formData.append('files', file));
+            const uploadRes = await fetch('/api/upload/multiple', { method: 'POST', body: formData });
+            if (uploadRes.ok) {
+                const uploadData = await uploadRes.json();
+                finalImageUrls = finalImageUrls.concat(uploadData.urls || []);
+            }
+        } catch (err) {
+            console.error('Image upload failed:', err);
+        }
+    }
 
     if (_editingPlaceType === 'building') {
         apiUrl = `${API_BUILDINGS}/${_editingPlace.id}`;
         payload = {
-            ..._editingPlace,
+            buildingKey: _editingPlace.buildingKey,
             title: document.getElementById('epName').value.trim() || _editingPlace.title,
-            description: document.getElementById('epDesc').value.trim(),
+            desc: document.getElementById('epDesc').value.trim(),
+            floors: _editingPlace.floors,
+            faculty: _editingPlace.faculty,
+            hours: _editingPlace.hours,
+            facilities: _editingPlace.facilities,
+            images: finalImageUrls
         };
     } else if (_editingPlaceType === 'place') {
         apiUrl = `${API_PLACES}/${_editingPlace.id}`;
         const tagsRaw = document.getElementById('epTags').value;
         const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
         payload = {
-            ..._editingPlace, // Start with existing data to preserve fields like lat/lng
             name: document.getElementById('epName').value.trim() || _editingPlace.name,
             description: document.getElementById('epDesc').value.trim(),
             category: document.getElementById('epCategory').value,
             address: document.getElementById('epAddress').value.trim(),
-            tags: tagsArray
+            tags: tagsArray,
+            latitude: _editingPlace.latitude,
+            longitude: _editingPlace.longitude,
+            images: finalImageUrls
         };
     }
 
@@ -1071,6 +1169,8 @@ async function saveEditPlace() {
         });
         if (res.ok) {
             closeEditPlaceModal();
+            // Clear cache and force fresh data fetch
+            try { sessionStorage.removeItem(CACHE_KEY); } catch {}
             await loadInitialData(); // Refresh all items after editing
         } else {
             alert('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07');
@@ -1138,3 +1238,119 @@ function _renderLightbox() {
         dotsEl.appendChild(dot);
     });
 }
+
+// ─── Multi-Image Upload Functions ─────────────────────────────────────────
+
+// Add Place Modal - Add image URL
+function addPlaceImageUrl() {
+    const input = document.getElementById('pImageUrl');
+    const url = input.value.trim();
+    if (!url) return;
+    if (!url.startsWith('http')) {
+        alert('กรุณากรอก URL ที่ถูกต้อง (ต้องขึ้นต้นด้วย http หรือ https)');
+        return;
+    }
+    addPlaceImages.push({ type: 'url', data: url });
+    input.value = '';
+    renderAddPlaceGallery();
+}
+
+// Add Place Modal - Render gallery preview
+function renderAddPlaceGallery() {
+    const gallery = document.getElementById('pGalleryPreview');
+    if (!gallery) return;
+    
+    gallery.innerHTML = addPlaceImages.map((img, i) => {
+        const src = img.type === 'url' ? img.data : URL.createObjectURL(img.data);
+        return `
+            <div class="preview-img-container">
+                <img src="${src}" alt="Preview ${i+1}">
+                <button type="button" class="preview-remove-btn" onclick="removeAddPlaceImage(${i})">
+                    <i class='bx bx-x'></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    gallery.style.display = addPlaceImages.length > 0 ? 'flex' : 'none';
+}
+
+// Add Place Modal - Remove image
+function removeAddPlaceImage(index) {
+    addPlaceImages.splice(index, 1);
+    renderAddPlaceGallery();
+}
+
+// Add Place Modal - Handle file selection
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('pImageFiles');
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    addPlaceImages.push({ type: 'file', data: file });
+                }
+            });
+            renderAddPlaceGallery();
+            fileInput.value = ''; // Allow selecting same files again
+        });
+    }
+});
+
+// Edit Place Modal - Add image URL
+function addEditPlaceImageUrl() {
+    const input = document.getElementById('epImageUrl');
+    const url = input.value.trim();
+    if (!url) return;
+    if (!url.startsWith('http')) {
+        alert('กรุณากรอก URL ที่ถูกต้อง (ต้องขึ้นต้นด้วย http หรือ https)');
+        return;
+    }
+    editPlaceImages.push({ type: 'url', data: url });
+    input.value = '';
+    renderEditPlaceGallery();
+}
+
+// Edit Place Modal - Render gallery preview
+function renderEditPlaceGallery() {
+    const gallery = document.getElementById('epGalleryPreview');
+    if (!gallery) return;
+    
+    gallery.innerHTML = editPlaceImages.map((img, i) => {
+        const src = img.type === 'url' ? img.data : URL.createObjectURL(img.data);
+        return `
+            <div class="preview-img-container">
+                <img src="${src}" alt="Preview ${i+1}">
+                <button type="button" class="preview-remove-btn" onclick="removeEditPlaceImage(${i})">
+                    <i class='bx bx-x'></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    gallery.style.display = editPlaceImages.length > 0 ? 'flex' : 'none';
+}
+
+// Edit Place Modal - Remove image
+function removeEditPlaceImage(index) {
+    editPlaceImages.splice(index, 1);
+    renderEditPlaceGallery();
+}
+
+// Edit Place Modal - Handle file selection
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('epImageFiles');
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    editPlaceImages.push({ type: 'file', data: file });
+                }
+            });
+            renderEditPlaceGallery();
+            fileInput.value = '';
+        });
+    }
+});
