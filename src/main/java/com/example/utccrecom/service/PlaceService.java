@@ -56,6 +56,7 @@ public class PlaceService {
         return placeRepository.save(existingPlace);
     }
 
+    @Transactional
     public void deletePlace(UUID id) {
         placeRepository.deleteById(id);
     }

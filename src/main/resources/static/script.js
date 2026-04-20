@@ -139,25 +139,57 @@ const DEFAULT_BUILDING_DATA = {
 
 let BUILDING_DATA = JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
 
+const CACHE_KEY = 'utcc_university_items';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in ms
+
+function getCachedItems() {
+    try {
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const { data, ts } = JSON.parse(raw);
+        if (Date.now() - ts > CACHE_TTL) {
+            sessionStorage.removeItem(CACHE_KEY);
+            return null;
+        }
+        return data;
+    } catch { return null; }
+}
+
+function setCachedItems(data) {
+    try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+    } catch {}
+}
+
 // Fetch from API and merge
 async function loadInitialData() {
     showLoading();
+
+    // Try cache first
+    const cached = getCachedItems();
+    if (cached) {
+        allUniversityItems = cached;
+        allUniversityItems.filter(item => item.type === 'building').forEach(b => {
+            if (b.buildingKey) BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
+        });
+        updatePhotoBadges();
+        applyFiltersAndSearch();
+        return;
+    }
+
     try {
         const res = await fetch(API_UNIVERSITY_ITEMS);
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         allUniversityItems = await res.json();
-        
-        // Populate BUILDING_DATA from the fetched items
+
+        setCachedItems(allUniversityItems);
+
         allUniversityItems.filter(item => item.type === 'building').forEach(b => {
-            if (b.buildingKey) {
-                BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
-            }
+            if (b.buildingKey) BUILDING_DATA[b.buildingKey] = { ...BUILDING_DATA[b.buildingKey], ...b };
         });
 
         updatePhotoBadges();
-        applyFiltersAndSearch(); 
+        applyFiltersAndSearch();
     } catch (err) {
         showError('ไม่สามารถดึงข้อมูลได้ กรุณาลองตรวจสอบเซิร์ฟเวอร์');
         console.error(err);
@@ -902,6 +934,8 @@ function renderPlaces(places) {
             <div class="place-card" style="animation-delay: ${delay}s">
                 <div class="card-img-wrapper">
                     ${galleryHtml}
+                    <div class="card-img-overlay"></div>
+                    <span class="card-cat-overlay">${catText}</span>
                     <button class="fav-btn ${isFav ? 'is-fav' : ''}" data-id="${item.id}" 
                         onclick="toggleFavorite('${item.id}', '${item.title || item.name}', '${img}', '${item.category || item.faculty}')"
                         title="${isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด'}">
@@ -909,17 +943,15 @@ function renderPlaces(places) {
                     </button>
                 </div>
                 <div class="card-content">
-                    <div class="card-category">${catText}</div>
                     <h3 class="card-title">${item.title || item.name}</h3>
                     <p class="card-desc">${item.description || item.desc || '-'}</p>
                     <div class="card-tags">${tagsHtml}</div>
-                    <div class="card-footer">
-                        <span><i class='bx bx-map'></i> ${item.address || item.floors || 'มหาวิทยาลัยหอการค้าไทย'}</span>
-                        <div style="display:flex; gap:0.5rem;">
-                            <button class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="alert('ระบบรีวิวกำลังพัฒนา!')"><i class='bx bx-comment-detail'></i> รีวิว</button>
-                            <button class="btn-edit-place" onclick="openEditPlaceModal('${item.id}', '${item.type}')" title="แก้ไขข้อมูล"><i class='bx bx-edit'></i></button>
-                            <button class="btn-danger" onclick="deletePlace('${item.id}', '${item.type}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
-                        </div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-location"><i class='bx bx-map-pin'></i>${item.address || item.floors || 'ม.หอการค้าไทย'}</span>
+                    <div class="card-actions">
+                        <button class="card-action-btn edit-btn" onclick="openEditPlaceModal('${item.id}', '${item.type}')" title="แก้ไขข้อมูล"><i class='bx bx-edit-alt'></i></button>
+                        <button class="card-action-btn delete-btn" onclick="deletePlace('${item.id}', '${item.type}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
                     </div>
                 </div>
             </div>
@@ -928,7 +960,20 @@ function renderPlaces(places) {
 }
 
 function showLoading() {
-    placesGrid.innerHTML = `<div class="loading"><i class='bx bx-loader-alt bx-spin'></i> กำลังโหลดข้อมูล...</div>`;
+    const skeletonCard = `
+        <div class="place-card skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="card-content" style="gap:0.6rem">
+                <div class="skeleton-line" style="width:40%;height:0.6rem"></div>
+                <div class="skeleton-line" style="width:85%"></div>
+                <div class="skeleton-line" style="width:70%"></div>
+                <div class="skeleton-line" style="width:55%;height:0.65rem"></div>
+            </div>
+            <div class="card-footer">
+                <div class="skeleton-line" style="width:50%;height:0.65rem"></div>
+            </div>
+        </div>`;
+    placesGrid.innerHTML = skeletonCard.repeat(6);
 }
 
 function showError(msg) {

@@ -37,45 +37,9 @@
                     <i class='bx bx-cog'></i>
                     <span class="nav-btn-label" id="nearbyNavSettingsLabel">ตั้งค่า</span>
                 </button>
-
-                <button class="nav-icon-btn admin-indicator" id="adminBadge" onclick="toggleAdminOff()" title="ออกจาก Admin Mode" style="display:none">
-                    <i class='bx bx-shield-quarter'></i>
-                    <span style="font-size:0.78rem;font-weight:600;">Admin</span>
-                </button>
-                <button class="nav-icon-btn nav-admin-btn" onclick="openAdminLogin()" id="adminLoginBtn" title="เข้าสู่ระบบ Admin">
-                    <i class='bx bx-lock-alt'></i>
-                    <span class="nav-btn-label">Admin</span>
-                </button>
             </div>
         </div>
     </nav>
-
-    <!-- ====== Admin Login Modal ====== -->
-    <div class="modal-overlay" id="adminLoginModal">
-        <div class="modal admin-modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class='bx bx-shield-alt-2'></i> Admin Login</div>
-                <button class="close-panel-btn" onclick="closeAdminLogin()"><i class='bx bx-x'></i></button>
-            </div>
-            <div class="modal-body">
-                <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem;">กรอกรหัสผ่าน Admin เพื่อเข้าจัดการข้อมูล</p>
-                <div class="form-group">
-                    <label class="form-label">รหัสผ่าน</label>
-                    <input type="password" id="adminPass" class="form-input" placeholder="กรอกรหัสผ่าน Admin..."
-                           onkeydown="if(event.key==='Enter') doAdminLogin()">
-                </div>
-                <div id="adminLoginErr" style="color:#ef4444;font-size:0.85rem;margin-top:0.5rem;display:none">
-                    <i class='bx bx-error-circle'></i> รหัสผ่านไม่ถูกต้อง
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeAdminLogin()">ยกเลิก</button>
-                <button class="btn-primary" onclick="doAdminLogin()">
-                    <i class='bx bx-log-in'></i> เข้าสู่ระบบ
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- ====== Add / Edit Place Modal ====== -->
     <div class="modal-overlay" id="placeModal">
@@ -129,8 +93,18 @@
                     <input type="text" id="pm_tags" class="form-input" placeholder="เช่น ราคาถูก, เปิดดึก, Wi-Fi">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Google Maps URL</label>
-                    <input type="url" id="pm_maps" class="form-input" placeholder="https://maps.google.com/?q=...">
+                    <label class="form-label">Google Maps URL <span style="color:var(--muted);font-size:0.8rem">(วาง URL แล้วระบบจะดึงพิกัดให้อัตโนมัติ)</span></label>
+                    <input type="url" id="pm_maps" class="form-input" placeholder="https://maps.google.com/?q=13.779,100.56" oninput="autoParseLatLng(this.value)">
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Latitude <span style="color:var(--muted);font-size:0.8rem">(ละติจูด)</span></label>
+                        <input type="number" id="pm_lat" class="form-input" step="any" placeholder="เช่น 13.7790">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude <span style="color:var(--muted);font-size:0.8rem">(ลองจิจูด)</span></label>
+                        <input type="number" id="pm_lng" class="form-input" step="any" placeholder="เช่น 100.5600">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -340,8 +314,8 @@
 
     </main>
 
-    <!-- Admin FAB -->
-    <button class="admin-fab" id="adminFab" onclick="openAddPlace()" title="เพิ่มสถานที่" style="display:none">
+    <!-- Add Place FAB -->
+    <button class="admin-fab" id="adminFab" onclick="openAddPlace()" title="เพิ่มสถานที่">
         <i class='bx bx-plus'></i>
     </button>
 

@@ -67,7 +67,8 @@ public class GeminiService {
             }
         } catch (Exception e) {
             // ไม่ปริ้นท์ stack trace ยาวๆ เพื่อให้ Log สะอาด แต่จะบอกสั้นๆ ว่าเกิดอะไรขึ้น
-            System.err.println("Gemini API Request Failed: " + e.getMessage().substring(0, Math.min(e.getMessage().length(), 100)) + "...");
+            String errMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            System.err.println("Gemini API Request Failed: " + errMsg.substring(0, Math.min(errMsg.length(), 100)) + "...");
             return "";
         }
         return "";

@@ -57,7 +57,7 @@ public class SearchController {
             e.printStackTrace();
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Unknown error"));
         }
     }
 }

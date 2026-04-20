@@ -4,8 +4,7 @@
 // =============================================
 
 // ─── Admin Config ──────────────────────────
-const ADMIN_PASSWORD = 'utcc2024'; // Change this!
-let isAdmin = false;
+const isAdmin = true;
 let currentCommentPlaceId = null;
 let selectedStars = 0;
 let deletePendingId = null;
@@ -115,10 +114,14 @@ const DEFAULT_PLACES = [
 
 // ─── Category Meta ──────────────────────────
 const CAT_COLORS = {
+    'Restaurant': '#ef4444', 'Cafe': '#f59e0b', 'Study Area': '#6366f1',
+    'หอพัก': '#10b981', 'Other': '#ec4899', 'Transport': '#3b82f6',
     restaurant: '#ef4444', cafe: '#f59e0b', internet: '#6366f1',
     dorm: '#10b981', convenience: '#ec4899', transport: '#3b82f6'
 };
 const CAT_LABELS = {
+    'Restaurant': 'ร้านอาหาร', 'Cafe': 'คาเฟ่', 'Study Area': 'อินเทอร์เน็ต',
+    'หอพัก': 'หอพัก', 'Other': 'ร้านสะดวกซื้อ', 'Transport': 'ขนส่ง',
     restaurant: 'ร้านอาหาร', cafe: 'คาเฟ่', internet: 'อินเทอร์เน็ต',
     dorm: 'หอพัก', convenience: 'ร้านสะดวกซื้อ', transport: 'ขนส่ง'
 };
@@ -126,9 +129,41 @@ const CAT_LABELS = {
 // ─── API Config ──────────────────────────────
 const NEARBY_API = '/api/nearby-places';
 const CATEGORIES_API = '/api/nearby-categories';
+const REVIEWS_API = '/api/reviews';
+
+const NEARBY_CACHE_KEY = 'utcc_nearby_places';
+const NEARBY_CACHE_TTL = 5 * 60 * 1000;
+
+function getNearbyCache(cat) {
+    try {
+        const raw = sessionStorage.getItem(`${NEARBY_CACHE_KEY}_${cat}`);
+        if (!raw) return null;
+        const { data, ts } = JSON.parse(raw);
+        if (Date.now() - ts > NEARBY_CACHE_TTL) {
+            sessionStorage.removeItem(`${NEARBY_CACHE_KEY}_${cat}`);
+            return null;
+        }
+        return data;
+    } catch { return null; }
+}
+
+function setNearbyCache(cat, data) {
+    try {
+        sessionStorage.setItem(`${NEARBY_CACHE_KEY}_${cat}`, JSON.stringify({ data, ts: Date.now() }));
+    } catch {}
+}
+
+function clearNearbyCache() {
+    Object.keys(sessionStorage)
+        .filter(k => k.startsWith(NEARBY_CACHE_KEY))
+        .forEach(k => sessionStorage.removeItem(k));
+}
 
 // ─── Convert API Place → local format ────────
 function apiToLocal(p) {
+    const finalLat = p.latitude || (13.779 + (Math.random() * 0.005 - 0.0025));
+    const finalLng = p.longitude || (100.56 + (Math.random() * 0.005 - 0.0025));
+    
     return {
         id: p.id,
         cat: p.category || 'restaurant',
@@ -139,10 +174,11 @@ function apiToLocal(p) {
         tags: p.tags || [],
         distance: p.distance || 'N/A',
         rating: p.rating || 4.0,
-        // If DB has no coordinates, assign a random nearby mock coordinate for demo purposes
-        lat: p.latitude || (13.779 + (Math.random() * 0.005 - 0.0025)),
-        lng: p.longitude || (100.56 + (Math.random() * 0.005 - 0.0025)),
-        mapsUrl: p.mapsUrl || (p.latitude && p.longitude ? `https://maps.google.com/?q=${p.latitude},${p.longitude}` : `https://maps.google.com/?q=${encodeURIComponent(p.name || '')}`)
+        lat: finalLat,
+        lng: finalLng,
+        // Use the original Google Maps link if available to show the full place profile.
+        // Fallback to coordinates if no link was provided.
+        mapsUrl: p.mapsUrl ? p.mapsUrl : `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`
     };
 }
 
@@ -155,22 +191,17 @@ function localToApi(data, existingImages) {
         distance: data.distance,
         rating: data.rating,
         mapsUrl: data.mapsUrl,
+        latitude: data.lat || null,
+        longitude: data.lng || null,
         tags: data.tags,
         images: existingImages || (data.image ? [data.image] : [])
     };
 }
 
-// ─── Comments still in localStorage ─────────
-function loadComments() {
-    const saved = localStorage.getItem('utcc_nearby_comments');
-    return saved ? JSON.parse(saved) : {};
-}
-function saveComments(comments) {
-    localStorage.setItem('utcc_nearby_comments', JSON.stringify(comments));
-}
+// ─── Reviews cache (loaded per place from API) ────────────
+let REVIEWS_CACHE = {};
 
 let PLACES = [];   // filled after DOMContentLoaded
-let COMMENTS = loadComments();
 let currentCat = 'all';
 let searchQuery = '';
 
@@ -218,54 +249,25 @@ function renderMapMarkers(places) {
         if (p.lat && p.lng) {
             const marker = L.marker([p.lat, p.lng], {
                 icon: placeIcon,
-                draggable: isAdmin   // Draggable only in Admin Mode
+                draggable: false   // Disabled dragging, rely on mapsUrl parsing instead
             }).addTo(map);
 
-            const popupContent = isAdmin
-                ? `<b>${p.name}</b><br><span style="color:#38bdf8;font-size:0.8rem">📍 ลากหมุดเพื่อย้ายตำแหน่ง</span><br><small>Lat: ${p.lat.toFixed(5)}, Lng: ${p.lng.toFixed(5)}</small>`
-                : `<b>${p.name}</b><br><a href="${p.mapsUrl}" target="_blank">เปิดในแผนที่</a>`;
+            const popupContent = `
+                <div style="width:160px; font-family: inherit;">
+                    <img src="${p.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=300'}" alt="${p.name}" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:6px;">
+                    <strong style="font-size:0.95rem; color:#1e293b; display:block; margin-bottom:4px; line-height:1.2">${p.name}</strong>
+                    <p style="font-size:0.75rem; color:#64748b; margin:0 0 8px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${p.desc || 'ไม่มีคำอธิบาย'}</p>
+                    <a href="${p.mapsUrl}" target="_blank" style="display:inline-block; background:#0ea5e9; color:white; padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.8rem; width:100%; text-align:center;">เปิด Google Maps</a>
+                </div>
+            `;
 
             marker.bindPopup(popupContent);
+            
+            // Open popup on hover (mouseover) so the user doesn't have to click
+            marker.on('mouseover', function() {
+                this.openPopup();
+            });
             marker.placeId = p.id;
-
-            // When Admin drags a marker, save new coords to DB
-            if (isAdmin) {
-                marker.on('dragend', async function(e) {
-                    const newPos = e.target.getLatLng();
-                    const newLat = newPos.lat;
-                    const newLng = newPos.lng;
-
-                    // Update local data
-                    const localPlace = PLACES.find(x => x.id === p.id);
-                    if (localPlace) {
-                        localPlace.lat = newLat;
-                        localPlace.lng = newLng;
-                    }
-
-                    // Update popup with new coords
-                    marker.setPopupContent(
-                        `<b>${p.name}</b><br><span style="color:#38bdf8;font-size:0.8rem">📍 ลากหมุดเพื่อย้ายตำแหน่ง</span><br><small>Lat: ${newLat.toFixed(5)}, Lng: ${newLng.toFixed(5)}</small>`
-                    );
-                    marker.openPopup();
-
-                    // Save to DB via PUT API
-                    try {
-                        const res = await fetch(`${NEARBY_API}/${p.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ latitude: newLat, longitude: newLng })
-                        });
-                        if (res.ok) {
-                            showToast(`✅ บันทึกตำแหน่ง "${p.name}" แล้ว`, 'success');
-                        } else {
-                            showToast('❌ บันทึกตำแหน่งไม่สำเร็จ', 'error');
-                        }
-                    } catch (err) {
-                        console.error('Save coords error:', err);
-                        showToast('❌ เกิดข้อผิดพลาดในการบันทึก', 'error');
-                    }
-                });
-            }
 
             markers.push(marker);
         }
@@ -369,8 +371,30 @@ async function loadCategories() {
     }
 }
 
+// ─── Show skeleton while loading ─────────────
+function showNearbySkeleton() {
+    const grid = document.getElementById('nearbyGrid');
+    if (!grid) return;
+    const card = `
+        <div class="nearby-card nearby-skeleton-card">
+            <div class="nearby-skeleton-img"></div>
+            <div class="card-body" style="gap:0.5rem;display:flex;flex-direction:column">
+                <div class="nearby-skeleton-line" style="width:35%;height:0.55rem"></div>
+                <div class="nearby-skeleton-line" style="width:80%"></div>
+                <div class="nearby-skeleton-line" style="width:65%;height:0.75rem"></div>
+                <div class="nearby-skeleton-line" style="width:50%;height:0.55rem;margin-top:0.4rem"></div>
+            </div>
+        </div>`;
+    grid.innerHTML = card.repeat(6);
+}
+
 // ─── Fetch Places from API ───────────────────
 async function fetchPlacesFromApi(cat) {
+    const cached = getNearbyCache(cat || 'all');
+    if (cached) {
+        PLACES = cached;
+        return;
+    }
     try {
         const url = (!cat || cat === 'all')
             ? NEARBY_API
@@ -379,6 +403,7 @@ async function fetchPlacesFromApi(cat) {
         if (!res.ok) throw new Error('API error ' + res.status);
         const data = await res.json();
         PLACES = data.map(apiToLocal);
+        setNearbyCache(cat || 'all', PLACES);
     } catch (e) {
         console.error('Failed to load from API, using defaults', e);
         PLACES = DEFAULT_PLACES.map(p => ({ ...p }));
@@ -404,7 +429,7 @@ function renderCards(places) {
         const color = CAT_COLORS[p.cat] || '#64748b';
         const label = CAT_LABELS[p.cat] || p.cat;
         const tagsHtml = (p.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
-        const commentCount = (COMMENTS[p.id] || []).length;
+        const commentCount = (REVIEWS_CACHE[p.id] || []).length;
         const adminBtns = isAdmin ? `
             <div class="admin-card-btns">
                 <button class="admin-card-btn edit" onclick="openEditPlace('${p.id}')" title="แก้ไข">
@@ -433,7 +458,6 @@ function renderCards(places) {
                     <span class="card-rating">
                         <span class="stars">${stars}</span>
                         <span>${ratings.avg.toFixed(1)}</span>
-                        ${ratings.count > 0 ? `<span style="color:var(--muted);font-size:0.78rem">(${ratings.count} รีวิว)</span>` : ''}
                     </span>
                     <button class="comment-btn" onclick="openCommentModal('${p.id}', \`${p.name.replace(/`/g, "&#96;")}\`)">
                         <i class='bx bx-chat'></i>
@@ -442,10 +466,11 @@ function renderCards(places) {
                     ${p.lat && p.lng ? `
                     <button class="nav-btn" onclick="drawRouteToPlace('${p.id}')">
                         <i class='bx bx-navigation'></i> นำทาง
-                    </button>` : `
-                    <a href="${p.mapsUrl || '#'}" target="_blank" class="nav-btn">
-                        <i class='bx bx-navigation'></i> แผนที่
-                    </a>`}
+                    </button>` : ''}
+                    <a href="${p.mapsUrl || (p.lat && p.lng ? `https://www.google.com/maps?q=${p.lat},${p.lng}` : `https://maps.google.com/?q=${encodeURIComponent(p.name)}`)}" target="_blank" rel="noopener" class="nav-btn gmaps-btn" title="เปิด Google Maps">
+                        <img src="https://www.google.com/favicon.ico" width="14" height="14" alt="Google Maps" style="border-radius:2px">
+                        Maps
+                    </a>
                 </div>
             </div>
         </div>`;
@@ -453,30 +478,43 @@ function renderCards(places) {
 }
 
 function renderStars(rating) {
-    const full = Math.floor(rating);
-    const half = (rating % 1) >= 0.5;
+    const full = Math.round(rating);
     let s = '';
     for (let i = 1; i <= 5; i++) {
         if (i <= full) s += '★';
-        else if (i === full + 1 && half) s += '⯨';
         else s += '☆';
     }
     return s;
 }
 
 function getAverageRating(placeId, defaultRating) {
-    const comms = COMMENTS[placeId] || [];
-    const rated = comms.filter(c => c.stars > 0);
+    const reviews = REVIEWS_CACHE[placeId] || [];
+    const rated = reviews.filter(r => r.rating > 0);
     if (rated.length === 0) return { avg: defaultRating, count: 0 };
-    const avg = rated.reduce((a, b) => a + b.stars, 0) / rated.length;
+    const avg = rated.reduce((a, b) => a + b.rating, 0) / rated.length;
     return { avg: Math.round(avg * 10) / 10, count: rated.length };
+}
+
+async function preloadAllReviews() {
+    if (PLACES.length === 0) return;
+    await Promise.all(
+        PLACES.map(p =>
+            fetch(`${REVIEWS_API}/place/${p.id}`)
+                .then(r => r.ok ? r.json() : [])
+                .then(data => { REVIEWS_CACHE[p.id] = data; })
+                .catch(() => { REVIEWS_CACHE[p.id] = REVIEWS_CACHE[p.id] || []; })
+        )
+    );
 }
 
 function filterCat(cat, btn) {
     currentCat = cat;
     document.querySelectorAll('.filter-tag').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    fetchPlacesFromApi(cat).then(() => reRender());
+    fetchPlacesFromApi(cat).then(() => {
+        reRender();
+        preloadAllReviews().then(() => reRender());
+    });
 }
 
 function doSearch() {
@@ -502,51 +540,43 @@ function reRender() {
     renderMapMarkers(filtered);
 }
 
-// ─── Admin Auth ─────────────────────────────
-function openAdminLogin() {
-    if (isAdmin) return;
-    document.getElementById('adminPass').value = '';
-    document.getElementById('adminLoginErr').style.display = 'none';
-    showModal('adminLoginModal');
-}
-function closeAdminLogin() { closeAllModals(); }
-
-function doAdminLogin() {
-    const pass = document.getElementById('adminPass').value;
-    if (pass === ADMIN_PASSWORD) {
-        isAdmin = true;
-        closeAllModals();
-        activateAdminMode();
-    } else {
-        document.getElementById('adminLoginErr').style.display = 'flex';
-        document.getElementById('adminPass').value = '';
-    }
-}
-
-function activateAdminMode() {
-    document.getElementById('adminBadge').style.display = 'flex';
-    document.getElementById('adminLoginBtn').style.display = 'none';
-    document.getElementById('adminFab').style.display = 'flex';
-    document.body.classList.add('admin-active');
-    reRender();
-    showToast('🛡️ เข้าสู่ Admin Mode แล้ว', 'success');
-}
-
-function toggleAdminOff() {
-    isAdmin = false;
-    document.getElementById('adminBadge').style.display = 'none';
-    document.getElementById('adminLoginBtn').style.display = 'flex';
-    document.getElementById('adminFab').style.display = 'none';
-    document.body.classList.remove('admin-active');
-    reRender();
-    showToast('ออกจาก Admin Mode แล้ว', 'info');
-}
+// Admin mode is always on — no login required
 
 // ─── Place Modal (Add / Edit) ────────────────
+async function autoParseLatLng(url) {
+    if (!url) return;
+    // Try local parse first (works for full Google Maps URLs)
+    const patterns = [
+        /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/,
+        /@(-?\d+\.\d+),(-?\d+\.\d+)/
+    ];
+    for (const re of patterns) {
+        const m = url.match(re);
+        if (m) {
+            document.getElementById('pm_lat').value = m[1];
+            document.getElementById('pm_lng').value = m[2];
+            return;
+        }
+    }
+    // Can't parse locally (short URL) — ask backend to resolve redirect
+    try {
+        const latEl = document.getElementById('pm_lat');
+        const lngEl = document.getElementById('pm_lng');
+        latEl.placeholder = 'กำลังดึงพิกัด...';
+        const res = await fetch(`/api/util/resolve-maps-url?url=${encodeURIComponent(url)}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.lat != null) latEl.value = data.lat;
+            if (data.lng != null) lngEl.value = data.lng;
+        }
+        latEl.placeholder = 'เช่น 13.7790';
+    } catch(e) { /* silent fail */ }
+}
+
 function openAddPlace() {
     document.getElementById('placeModalTitle').innerHTML = "<i class='bx bx-plus-circle'></i> เพิ่มสถานที่ใหม่";
     document.getElementById('placeModalId').value = '';
-    ['pm_name','pm_desc','pm_image','pm_distance','pm_maps','pm_tags'].forEach(id => document.getElementById(id).value = '');
+    ['pm_name','pm_desc','pm_image','pm_distance','pm_maps','pm_tags','pm_lat','pm_lng'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('pm_rating').value = '4.0';
     document.getElementById('pm_cat').value = 'restaurant';
     document.getElementById('pm_img_preview').style.display = 'none';
@@ -566,6 +596,8 @@ function openEditPlace(placeId) {
     document.getElementById('pm_tags').value = (p.tags || []).join(', ');
     document.getElementById('pm_cat').value = p.cat;
     document.getElementById('pm_maps').value = p.mapsUrl || '';
+    document.getElementById('pm_lat').value = p.lat || '';
+    document.getElementById('pm_lng').value = p.lng || '';
     previewImage(p.image);
     showModal('placeModal');
 }
@@ -578,6 +610,11 @@ async function savePlaceModal() {
     if (!name) { showToast('กรุณากรอกชื่อสถานที่', 'error'); return; }
 
     const id = document.getElementById('placeModalId').value;
+    const existingPlace = id ? PLACES.find(p => p.id === id) : null;
+    const latVal = parseFloat(document.getElementById('pm_lat').value) || (existingPlace ? existingPlace.lat : null);
+    const lngVal = parseFloat(document.getElementById('pm_lng').value) || (existingPlace ? existingPlace.lng : null);
+    const mapsUrlVal = document.getElementById('pm_maps').value.trim() ||
+        (latVal && lngVal ? `https://www.google.com/maps?q=${latVal},${lngVal}` : `https://maps.google.com/?q=${encodeURIComponent(name)}`);
     const data = {
         name,
         cat,
@@ -586,7 +623,9 @@ async function savePlaceModal() {
         distance: document.getElementById('pm_distance').value.trim() || 'N/A',
         rating: parseFloat(document.getElementById('pm_rating').value) || 4.0,
         tags: document.getElementById('pm_tags').value.split(',').map(t => t.trim()).filter(Boolean),
-        mapsUrl: document.getElementById('pm_maps').value.trim() || `https://maps.google.com/?q=${encodeURIComponent(name)}`
+        mapsUrl: mapsUrlVal,
+        lat: latVal,
+        lng: lngVal
     };
 
     try {
@@ -599,6 +638,7 @@ async function savePlaceModal() {
                 body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error('PUT failed');
+            clearNearbyCache();
             showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
         } else {
             const payload = localToApi(data, data.image ? [data.image] : []);
@@ -608,6 +648,7 @@ async function savePlaceModal() {
                 body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error('POST failed');
+            clearNearbyCache();
             showToast('✅ เพิ่มสถานที่สำเร็จ', 'success');
         }
         closeAllModals();
@@ -648,8 +689,8 @@ async function confirmDelete() {
     try {
         const res = await fetch(`${NEARBY_API}/${deletePendingId}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('DELETE failed');
-        delete COMMENTS[deletePendingId];
-        saveComments(COMMENTS);
+        delete REVIEWS_CACHE[deletePendingId];
+        clearNearbyCache();
         closeAllModals();
         await fetchPlacesFromApi(currentCat);
         reRender();
@@ -660,8 +701,8 @@ async function confirmDelete() {
     deletePendingId = null;
 }
 
-// ─── Comments ────────────────────────────────
-function openCommentModal(placeId, placeName) {
+// ─── Comments / Reviews ──────────────────────
+async function openCommentModal(placeId, placeName) {
     currentCommentPlaceId = placeId;
     selectedStars = 0;
     document.getElementById('commentModalTitle').textContent = placeName;
@@ -669,47 +710,123 @@ function openCommentModal(placeId, placeName) {
     document.getElementById('commentText').value = '';
     document.getElementById('starLabel').textContent = 'ยังไม่ได้เลือก';
     renderStarSelect(0);
-    renderCommentList(placeId);
+    document.getElementById('commentList').innerHTML = `<div class="no-comments"><i class='bx bx-loader-alt bx-spin'></i><p>กำลังโหลด...</p></div>`;
     showModal('commentModal');
+    await loadReviewsForPlace(placeId);
+    renderCommentList(placeId);
 }
 
 function closeCommentModal() { closeAllModals(); }
 
+async function loadReviewsForPlace(placeId) {
+    try {
+        const res = await fetch(`${REVIEWS_API}/place/${placeId}`);
+        if (res.ok) {
+            REVIEWS_CACHE[placeId] = await res.json();
+        } else {
+            console.error('loadReviews error:', res.status);
+            REVIEWS_CACHE[placeId] = [];
+        }
+    } catch (e) {
+        console.error('Failed to load reviews:', e);
+        REVIEWS_CACHE[placeId] = REVIEWS_CACHE[placeId] || [];
+    }
+}
+
+function buildRatingSummary(reviews) {
+    if (reviews.length === 0) return '';
+
+    const rated = reviews.filter(r => r.rating > 0);
+    if (rated.length === 0) return '';
+
+    const avg = rated.reduce((s, r) => s + r.rating, 0) / rated.length;
+    const fullStars = Math.round(avg);
+    const half = (avg % 1) >= 0.5;
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= fullStars) starsHtml += "<i class='bx bxs-star'></i>";
+        else if (i === fullStars + 1 && half) starsHtml += "<i class='bx bxs-star-half'></i>";
+        else starsHtml += "<i class='bx bx-star'></i>";
+    }
+
+    // count per star level
+    const counts = [0, 0, 0, 0, 0];
+    rated.forEach(r => { if (r.rating >= 1 && r.rating <= 5) counts[r.rating - 1]++; });
+
+    const barsHtml = [5, 4, 3, 2, 1].map(star => {
+        const cnt = counts[star - 1];
+        const pct = rated.length > 0 ? Math.round((cnt / rated.length) * 100) : 0;
+        return `
+        <div class="rating-bar-row">
+            <span class="rating-bar-label">${star}★</span>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="width:${pct}%"></div></div>
+            <span class="rating-bar-count">${cnt}</span>
+        </div>`;
+    }).join('');
+
+    const label = avg >= 4.5 ? 'ดีเยี่ยม' : avg >= 3.5 ? 'ดีมาก' : avg >= 2.5 ? 'ดี' : avg >= 1.5 ? 'พอใช้' : 'แย่';
+
+    return `
+    <div class="rating-summary">
+        <div class="rating-summary-left">
+            <div class="rating-big-score">${avg.toFixed(1)}</div>
+            <div class="rating-big-stars">${starsHtml}</div>
+            <div class="rating-big-label">${label} · ${rated.length} รีวิว</div>
+        </div>
+        <div class="rating-summary-bars">${barsHtml}</div>
+    </div>`;
+}
+
 function renderCommentList(placeId) {
     const list = document.getElementById('commentList');
-    const comms = COMMENTS[placeId] || [];
+    const reviews = REVIEWS_CACHE[placeId] || [];
 
-    if (comms.length === 0) {
+    if (reviews.length === 0) {
         list.innerHTML = `<div class="no-comments"><i class='bx bx-comment-dots'></i><p>ยังไม่มีความคิดเห็น เป็นคนแรกที่แชร์!</p></div>`;
         return;
     }
 
-    list.innerHTML = comms.slice().reverse().map(c => {
-        const stars = c.stars > 0 ? `<span class="comment-stars">${'★'.repeat(c.stars)}${'☆'.repeat(5-c.stars)}</span>` : '';
-        const date = new Date(c.time).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
-        const adminDel = isAdmin ? `<button class="tiny-del-btn" onclick="deleteComment('${placeId}','${c.id}')"><i class='bx bx-x'></i></button>` : '';
+    const summaryHtml = buildRatingSummary(reviews);
+
+    list.innerHTML = summaryHtml + reviews.map(r => {
+        const ratingInt = Math.round(r.rating || 0);
+        let starIcons = '';
+        for (let i = 1; i <= 5; i++) {
+            starIcons += i <= ratingInt ? "<i class='bx bxs-star'></i>" : "<i class='bx bx-star'></i>";
+        }
+        const stars = ratingInt > 0 ? `<span class="comment-stars">${starIcons}</span>` : '';
+        const rawDate = r.createdAt ? new Date(r.createdAt) : null;
+        const date = rawDate && !isNaN(rawDate) ? rawDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        const author = escapeHtml(r.authorName || 'ไม่ระบุชื่อ');
+        const body = escapeHtml(r.comment || '');
+        const adminDel = isAdmin ? `<button class="tiny-del-btn" onclick="deleteComment('${placeId}','${r.id}')"><i class='bx bx-x'></i></button>` : '';
         return `
         <div class="comment-item">
             <div class="comment-header">
-                <div class="comment-avatar">${c.author[0].toUpperCase()}</div>
+                <div class="comment-avatar">${author[0].toUpperCase()}</div>
                 <div class="comment-meta">
-                    <div class="comment-author">${c.author}</div>
+                    <div class="comment-author">${author}</div>
                     <div class="comment-date">${date}</div>
                 </div>
                 ${stars}
                 ${adminDel}
             </div>
-            <p class="comment-body">${c.text}</p>
+            <p class="comment-body">${body}</p>
         </div>`;
     }).join('');
 }
 
-function deleteComment(placeId, commentId) {
-    if (!COMMENTS[placeId]) return;
-    COMMENTS[placeId] = COMMENTS[placeId].filter(c => c.id !== commentId);
-    saveComments(COMMENTS);
-    renderCommentList(placeId);
-    reRender();
+async function deleteComment(placeId, reviewId) {
+    try {
+        const res = await fetch(`${REVIEWS_API}/${reviewId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('DELETE failed');
+        await loadReviewsForPlace(placeId);
+        renderCommentList(placeId);
+        reRender();
+        showToast('🗑️ ลบความคิดเห็นแล้ว', 'info');
+    } catch (e) {
+        showToast('❌ ลบไม่สำเร็จ', 'error');
+    }
 }
 
 function renderStarSelect(val) {
@@ -734,32 +851,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function submitComment() {
+async function submitComment() {
     const author = document.getElementById('commentAuthor').value.trim();
     const text = document.getElementById('commentText').value.trim();
     if (!author) { showToast('กรุณากรอกชื่อผู้แสดงความเห็น', 'error'); return; }
     if (!text) { showToast('กรุณากรอกความคิดเห็น', 'error'); return; }
+    if (selectedStars === 0) { showToast('กรุณาเลือกคะแนนดาวก่อนส่ง', 'error'); return; }
 
-    const comment = {
-        id: 'c_' + Date.now(),
-        author,
-        text,
-        stars: selectedStars,
-        time: Date.now()
+    const payload = {
+        authorName: author,
+        comment: text,
+        rating: selectedStars
     };
 
-    if (!COMMENTS[currentCommentPlaceId]) COMMENTS[currentCommentPlaceId] = [];
-    COMMENTS[currentCommentPlaceId].push(comment);
-    saveComments(COMMENTS);
+    try {
+        const res = await fetch(`${REVIEWS_API}/nearby/${currentCommentPlaceId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            console.error('Review POST error:', res.status, errText);
+            throw new Error(`Server ${res.status}`);
+        }
+    } catch (e) {
+        console.error('submitComment error:', e);
+        showToast('❌ ส่งความคิดเห็นไม่สำเร็จ', 'error');
+        return;
+    }
 
+    // POST succeeded — reset form and reload reviews
     document.getElementById('commentAuthor').value = '';
     document.getElementById('commentText').value = '';
     selectedStars = 0;
     renderStarSelect(0);
     document.getElementById('starLabel').textContent = 'ยังไม่ได้เลือก';
+    await loadReviewsForPlace(currentCommentPlaceId);
     renderCommentList(currentCommentPlaceId);
     reRender();
     showToast('✅ ส่งความคิดเห็นแล้ว!', 'success');
+}
+
+// ─── Utility ─────────────────────────────────
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 // ─── Modal Helpers ───────────────────────────
@@ -916,8 +1057,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     initMap();
     await loadCategories();
+    showNearbySkeleton();
     await fetchPlacesFromApi('all');
     reRender();
+    // Load real ratings in background then refresh cards
+    preloadAllReviews().then(() => reRender());
 
     const searchInput = document.getElementById('nearbySearchInput');
     const searchBtn = document.getElementById('nearbySearchBtn');

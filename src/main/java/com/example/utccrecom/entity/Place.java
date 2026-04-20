@@ -1,6 +1,7 @@
 package com.example.utccrecom.entity;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,12 +34,12 @@ public class Place {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "place_tags", joinColumns = @JoinColumn(name = "place_id"))
     @Column(name = "tag")
-    private List<String> tags;
+    private List<String> tags = new ArrayList<>();
     
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "place_images", joinColumns = @JoinColumn(name = "place_id"))
     @Column(name = "image_url")
-    private List<String> images;
+    private List<String> images = new ArrayList<>();
 
     public Place() {}
 

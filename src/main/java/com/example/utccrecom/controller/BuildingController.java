@@ -22,6 +22,12 @@ public class BuildingController {
         return buildingService.getAllBuildings();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Building> getBuildingById(@PathVariable UUID id) {
+        Optional<Building> building = buildingService.getBuildingById(id);
+        return building.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/key/{buildingKey}")
     public ResponseEntity<Building> getBuildingByKey(@PathVariable String buildingKey) {
         Optional<Building> building = buildingService.getBuildingByKey(buildingKey);
@@ -42,7 +48,8 @@ public class BuildingController {
             existing.setDesc(details.getDesc());
             existing.setImage(details.getImage());
             if (details.getImages() != null) {
-                existing.setImages(details.getImages());
+                existing.getImages().clear();
+                existing.getImages().addAll(details.getImages());
             }
             existing.setFloors(details.getFloors());
             existing.setFaculty(details.getFaculty());
@@ -59,5 +66,11 @@ public class BuildingController {
     public ResponseEntity<Building> updateBuildingByKey(@PathVariable String buildingKey, @RequestBody Building details) {
         Building updated = buildingService.updateBuildingData(buildingKey, details);
         return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBuilding(@PathVariable UUID id) {
+        buildingService.deleteBuilding(id);
+        return ResponseEntity.noContent().build();
     }
 }
