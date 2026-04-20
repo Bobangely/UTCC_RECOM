@@ -194,7 +194,7 @@ function localToApi(data, existingImages) {
         latitude: data.lat || null,
         longitude: data.lng || null,
         tags: data.tags,
-        images: existingImages || (data.image ? [data.image] : [])
+        images: data.images ? data.images : (existingImages || (data.image ? [data.image] : []))
     };
 }
 
@@ -252,9 +252,10 @@ function renderMapMarkers(places) {
                 draggable: false   // Disabled dragging, rely on mapsUrl parsing instead
             }).addTo(map);
 
+            const firstImg = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=300');
             const popupContent = `
                 <div style="width:160px; font-family: inherit;">
-                    <img src="${p.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=300'}" alt="${p.name}" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:6px;">
+                    <img src="${firstImg}" alt="${p.name}" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:6px;">
                     <strong style="font-size:0.95rem; color:#1e293b; display:block; margin-bottom:4px; line-height:1.2">${p.name}</strong>
                     <p style="font-size:0.75rem; color:#64748b; margin:0 0 8px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${p.desc || 'ไม่มีคำอธิบาย'}</p>
                     <a href="${p.mapsUrl}" target="_blank" style="display:inline-block; background:#0ea5e9; color:white; padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.8rem; width:100%; text-align:center;">เปิด Google Maps</a>
@@ -440,13 +441,30 @@ function renderCards(places) {
                 </button>
             </div>` : '';
 
+        let imgHtml = '';
+        const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+        if (p.images && p.images.length > 1) {
+            imgHtml = `
+            <div class="card-carousel-wrapper">
+                <button class="carousel-btn prev" onclick="scrollCarousel(event, this, -1)">❮</button>
+                <div class="card-carousel-container" onscroll="updateCarouselDots(this)">
+                    ${p.images.map(url => `<img class="carousel-img" src="${url}" onerror="this.src='${defaultImg}'" loading="lazy">`).join('')}
+                </div>
+                <button class="carousel-btn next" onclick="scrollCarousel(event, this, 1)">❯</button>
+                <div class="carousel-dots">
+                    ${p.images.map((_, idx) => `<span class="dot ${idx === 0 ? 'active' : ''}"></span>`).join('')}
+                </div>
+            </div>`;
+        } else {
+            const singleImg = (p.images && p.images.length === 1) ? p.images[0] : (p.image || defaultImg);
+            imgHtml = `<img src="${singleImg}" alt="${p.name}" loading="lazy" onerror="this.src='${defaultImg}'" class="carousel-img">`;
+        }
+
         return `
         <div class="nearby-card" style="animation-delay:${i * 0.05}s" data-cat="${p.cat}">
             ${adminBtns}
             <div class="card-img-wrap">
-                <img src="${p.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600'}"
-                     alt="${p.name}" loading="lazy"
-                     onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600'">
+                ${imgHtml}
                 <span class="card-cat-badge" style="background:${color}">${label}</span>
                 <span class="card-dist-badge"><i class='bx bx-walk'></i>${p.distance}</span>
             </div>
@@ -579,7 +597,13 @@ function openAddPlace() {
     ['pm_name','pm_desc','pm_image','pm_distance','pm_maps','pm_tags','pm_lat','pm_lng'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('pm_rating').value = '4.0';
     document.getElementById('pm_cat').value = 'restaurant';
-    document.getElementById('pm_img_preview').style.display = 'none';
+    document.getElementById('pm_image_files').value = '';
+    const urlAdd = document.getElementById('pm_image_url_add');
+    if (urlAdd) urlAdd.value = '';
+    
+    currentPlaceKeptImages = [];
+    currentUploadFiles = [];
+    renderGalleryPreview();
     showModal('placeModal');
 }
 
@@ -590,7 +614,7 @@ function openEditPlace(placeId) {
     document.getElementById('placeModalId').value = p.id;
     document.getElementById('pm_name').value = p.name;
     document.getElementById('pm_desc').value = p.desc;
-    document.getElementById('pm_image').value = p.image || '';
+    document.getElementById('pm_image').value = '';
     document.getElementById('pm_distance').value = p.distance;
     document.getElementById('pm_rating').value = p.rating;
     document.getElementById('pm_tags').value = (p.tags || []).join(', ');
@@ -598,7 +622,13 @@ function openEditPlace(placeId) {
     document.getElementById('pm_maps').value = p.mapsUrl || '';
     document.getElementById('pm_lat').value = p.lat || '';
     document.getElementById('pm_lng').value = p.lng || '';
-    previewImage(p.image);
+    const urlAdd = document.getElementById('pm_image_url_add');
+    if (urlAdd) urlAdd.value = '';
+    
+    currentPlaceKeptImages = p.images && p.images.length > 0 ? [...p.images] : (p.image ? [p.image] : []);
+    currentUploadFiles = [];
+    renderGalleryPreview();
+    
     showModal('placeModal');
 }
 
@@ -615,11 +645,33 @@ async function savePlaceModal() {
     const lngVal = parseFloat(document.getElementById('pm_lng').value) || (existingPlace ? existingPlace.lng : null);
     const mapsUrlVal = document.getElementById('pm_maps').value.trim() ||
         (latVal && lngVal ? `https://www.google.com/maps?q=${latVal},${lngVal}` : `https://maps.google.com/?q=${encodeURIComponent(name)}`);
+    let uploadedUrls = [];
+    if (currentUploadFiles.length > 0) {
+        const formData = new FormData();
+        currentUploadFiles.forEach(f => formData.append('files', f));
+        
+        try {
+            showToast('⏳ กำลังอัปโหลดรูปภาพ...', 'info');
+            const uploadRes = await fetch('/api/upload/multiple', {
+                method: 'POST',
+                body: formData
+            });
+            if (!uploadRes.ok) throw new Error('Upload failed');
+            const out = await uploadRes.json();
+            uploadedUrls = out.urls || [];
+        } catch (err) {
+            showToast('❌ อัปโหลดรูปไม่สำเร็จ', 'error');
+            return;
+        }
+    }
+    const finalImageUrls = [...currentPlaceKeptImages, ...uploadedUrls];
+
     const data = {
         name,
         cat,
         desc: document.getElementById('pm_desc').value.trim(),
-        image: document.getElementById('pm_image').value.trim(),
+        image: finalImageUrls.length > 0 ? finalImageUrls[0] : '', // fallback for generic single image
+        images: finalImageUrls,
         distance: document.getElementById('pm_distance').value.trim() || 'N/A',
         rating: parseFloat(document.getElementById('pm_rating').value) || 4.0,
         tags: document.getElementById('pm_tags').value.split(',').map(t => t.trim()).filter(Boolean),
@@ -641,7 +693,8 @@ async function savePlaceModal() {
             clearNearbyCache();
             showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
         } else {
-            const payload = localToApi(data, data.image ? [data.image] : []);
+            const payload = localToApi(data, data.images);
+
             const res = await fetch(NEARBY_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -659,22 +712,76 @@ async function savePlaceModal() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('pm_image').addEventListener('input', function() {
-        previewImage(this.value.trim());
-    });
-});
+let currentPlaceKeptImages = [];
+let currentUploadFiles = [];
 
-function previewImage(url) {
-    const prev = document.getElementById('pm_img_preview');
-    const img = document.getElementById('pm_img_el');
-    if (url) {
-        img.src = url;
-        prev.style.display = 'block';
-    } else {
-        prev.style.display = 'none';
-    }
+function renderGalleryPreview() {
+    const gallery = document.getElementById('pm_gallery_preview');
+    if (!gallery) return;
+    gallery.innerHTML = '';
+    
+    currentPlaceKeptImages.forEach((url, i) => {
+        const div = document.createElement('div');
+        div.className = 'preview-img-container';
+        div.innerHTML = `
+            <img src="${url}" alt="kept">
+            <button class="preview-remove-btn" type="button" onclick="removeKeptImage(${i})"><i class='bx bx-x'></i></button>
+        `;
+        gallery.appendChild(div);
+    });
+
+    currentUploadFiles.forEach((file, i) => {
+        const url = URL.createObjectURL(file);
+        const div = document.createElement('div');
+        div.className = 'preview-img-container';
+        div.style.border = '2px solid var(--primary)';
+        div.innerHTML = `
+            <img src="${url}" alt="new">
+            <button class="preview-remove-btn" type="button" onclick="removeUploadFile(${i})"><i class='bx bx-x'></i></button>
+        `;
+        gallery.appendChild(div);
+    });
+
+    gallery.style.display = (currentPlaceKeptImages.length > 0 || currentUploadFiles.length > 0) ? 'flex' : 'none';
 }
+
+function addImageUrl() {
+    const input = document.getElementById('pm_image_url_add');
+    if (!input) return;
+    const url = input.value.trim();
+    if (!url) return;
+    
+    if (!url.startsWith('http')) {
+        showToast('กรุณากรอก URL ที่ถูกต้อง (ขึ้นต้นด้วย http)', 'error');
+        return;
+    }
+    
+    currentPlaceKeptImages.push(url);
+    input.value = '';
+    renderGalleryPreview();
+}
+
+function removeKeptImage(index) {
+    currentPlaceKeptImages.splice(index, 1);
+    renderGalleryPreview();
+}
+
+function removeUploadFile(index) {
+    currentUploadFiles.splice(index, 1);
+    renderGalleryPreview();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('pm_image_files');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            currentUploadFiles = currentUploadFiles.concat(files);
+            this.value = ''; // allow selecting same files again
+            renderGalleryPreview();
+        });
+    }
+});
 
 function openDeleteModal(placeId) {
     const p = PLACES.find(x => x.id === placeId);
@@ -1023,8 +1130,28 @@ function toggleNearbySettings() {
 }
 
 function closeNearbyPanels() {
-    document.getElementById('nearbySettingsPanel').classList.remove('active');
-    document.getElementById('panelBackdrop').classList.remove('active');
+    document.getElementById('nearbySettingsPanel').classList.remove('open');
+    document.getElementById('panelBackdrop').classList.remove('open');
+}
+
+// ─── Carousel Logic ─────────────────────────
+function scrollCarousel(event, btn, direction) {
+    event.stopPropagation(); // prevent clicking the card underneath if any
+    const wrapper = btn.closest('.card-carousel-wrapper');
+    const container = wrapper.querySelector('.card-carousel-container');
+    const scrollAmount = container.clientWidth;
+    container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+}
+
+function updateCarouselDots(container) {
+    const scrollLeft = container.scrollLeft;
+    const width = container.clientWidth;
+    const index = Math.round(scrollLeft / width);
+    const dots = container.parentElement.querySelectorAll('.carousel-dots .dot');
+    dots.forEach((dot, i) => {
+        if (i === index) dot.classList.add('active');
+        else dot.classList.remove('active');
+    });
 }
 
 // ─── Dark Mode ───────────────────────────────

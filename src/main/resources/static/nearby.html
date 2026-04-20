@@ -72,10 +72,19 @@
                     <textarea id="pm_desc" class="form-input" rows="3" placeholder="คำอธิบายสถานที่..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">URL รูปภาพ</label>
-                    <input type="url" id="pm_image" class="form-input" placeholder="https://images.unsplash.com/...">
-                    <div id="pm_img_preview" style="margin-top:0.5rem;height:120px;border-radius:8px;background:var(--bg);overflow:hidden;display:none">
-                        <img id="pm_img_el" style="width:100%;height:100%;object-fit:cover;" src="" alt="">
+                    <label class="form-label">รูปภาพสถานที่ <span style="color:var(--muted);font-size:0.8rem">(สามารถเลือกได้หลายภาพ หรือเพิ่มจากลิงก์)</span></label>
+                    <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                        <input type="file" id="pm_image_files" class="form-input" accept="image/*" multiple style="padding: 0.5rem; background: var(--bg); flex:1;">
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="url" id="pm_image_url_add" class="form-input" placeholder="หรือวาง URL รูปภาพที่นี่..." style="flex:1;">
+                        <button type="button" class="btn-secondary" onclick="addImageUrl()" style="padding: 0.5rem 1rem; width:auto;"><i class='bx bx-plus'></i> เพิ่ม</button>
+                    </div>
+                    <!-- Hidden field to safely keep track of URL string processing if needed -->
+                    <input type="hidden" id="pm_image">
+                    
+                    <!-- Preview Gallery -->
+                    <div id="pm_gallery_preview" style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap; display:none;">
                     </div>
                 </div>
                 <div class="form-grid">
