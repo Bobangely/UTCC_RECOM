@@ -364,6 +364,34 @@
         </div>
     </footer>
 
+    <!-- AI Chatbot Bubble -->
+    <div class="chatbot-bubble" id="chatbotBubble" onclick="toggleChatbot()" title="UTCC AI Assistant">
+        <i class='bx bx-bot'></i>
+        <span class="chatbot-bubble-label">AI</span>
+    </div>
+
+    <div class="chatbot-panel" id="chatbotPanel">
+        <div class="chatbot-header">
+            <div class="chatbot-header-info">
+                <i class='bx bx-bot'></i>
+                <div>
+                    <div class="chatbot-title">UTCC Assistant</div>
+                    <div class="chatbot-subtitle">AI แนะนำสถานที่</div>
+                </div>
+            </div>
+            <button class="chatbot-close" onclick="toggleChatbot()"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="chatbot-messages" id="chatbotMessages">
+            <div class="chat-msg bot">
+                <div class="chat-bubble">สวัสดีครับ! ผมคือ UTCC Assistant 🎓<br>ถามเรื่องร้านอาหาร คาเฟ่ หอพัก หรือสถานที่รอบมหาลัยได้เลยครับ</div>
+            </div>
+        </div>
+        <div class="chatbot-input-row">
+            <input type="text" id="chatbotInput" placeholder="พิมพ์คำถาม..." onkeypress="if(event.key==='Enter') sendChat()">
+            <button onclick="sendChat()"><i class='bx bx-send'></i></button>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="nearby.js"></script>
 </body>

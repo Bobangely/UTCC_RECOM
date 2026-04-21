@@ -1,4 +1,4 @@
-const API_UNIVERSITY_ITEMS = '/api/university/items'; // New API endpoint
+﻿const API_UNIVERSITY_ITEMS = '/api/university/items'; // New API endpoint
 const API_PLACES = '/api/places'; // API for places
 const API_BUILDINGS = '/api/buildings'; // API for buildings
 
@@ -1383,3 +1383,69 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// ====== AI CHATBOT ======
+let chatbotOpen = false;
+let chatHistory = []; // เก็บ history การสนทนา
+
+function toggleChatbot() {
+    chatbotOpen = !chatbotOpen;
+    document.getElementById('chatbotPanel').classList.toggle('active', chatbotOpen);
+    document.getElementById('chatbotBubble').classList.toggle('active', chatbotOpen);
+    if (chatbotOpen) setTimeout(() => document.getElementById('chatbotInput').focus(), 200);
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatbotInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    appendChatMsg(msg, 'user');
+    input.value = '';
+    const typingId = appendChatTyping();
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, history: chatHistory })
+        });
+        const data = await res.json();
+        removeChatTyping(typingId);
+        const reply = data.reply || 'ขออภัย ไม่สามารถตอบได้ในขณะนี้';
+        appendChatMsg(reply, 'bot');
+        // เก็บ history ไว้สำหรับรอบถัดไป
+        chatHistory.push({ role: 'user', text: msg });
+        chatHistory.push({ role: 'model', text: reply });
+        // เก็บแค่ 20 รอบล่าสุด
+        if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+    } catch (e) {
+        removeChatTyping(typingId);
+        appendChatMsg('เกิดข้อผิดพลาด กรุณาลองใหม่', 'bot');
+    }
+}
+
+function appendChatMsg(text, role) {
+    const messages = document.getElementById('chatbotMessages');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${role}`;
+    div.innerHTML = `<div class="chat-bubble">${text.replace(/\n/g, '<br>')}</div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function appendChatTyping() {
+    const messages = document.getElementById('chatbotMessages');
+    const id = 'typing-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'chat-msg bot';
+    div.id = id;
+    div.innerHTML = `<div class="chat-bubble chat-typing"><span></span><span></span><span></span></div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return id;
+}
+
+function removeChatTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}

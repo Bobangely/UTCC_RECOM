@@ -1,6 +1,9 @@
 package com.example.utccrecom.controller;
 
+import com.example.utccrecom.entity.NearbyPlace;
 import com.example.utccrecom.entity.Review;
+import com.example.utccrecom.service.GeminiService;
+import com.example.utccrecom.service.NearbyPlaceService;
 import com.example.utccrecom.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -16,6 +21,12 @@ public class ReviewController {
 
     @Autowired
     private ReviewService reviewService;
+
+    @Autowired
+    private GeminiService geminiService;
+
+    @Autowired
+    private NearbyPlaceService nearbyPlaceService;
 
     // GET /api/reviews/nearby/{placeId}  — ดึงรีวิวกรอง placeType=nearby
     @GetMapping("/nearby/{placeId}")
@@ -56,6 +67,28 @@ public class ReviewController {
             fallback.put("placeId", placeId);
             return ResponseEntity.ok(fallback);
         }
+    }
+
+    // GET /api/reviews/analyze/{placeId}  — AI สรุปรีวิว
+    @GetMapping("/analyze/{placeId}")
+    public ResponseEntity<Map<String, String>> analyzeReviews(@PathVariable String placeId) {
+        List<Review> reviews = reviewService.getReviewsByPlaceId(placeId);
+        if (reviews.isEmpty()) {
+            return ResponseEntity.ok(Map.of("summary", "ยังไม่มีรีวิวสำหรับสถานที่นี้"));
+        }
+
+        String placeName = nearbyPlaceService.getNearbyPlaceById(UUID.fromString(placeId))
+                .map(NearbyPlace::getName).orElse("สถานที่นี้");
+
+        String reviewsText = reviews.stream()
+                .map(r -> "[" + r.getRating() + "★] " + r.getAuthorName() + ": " + r.getComment())
+                .collect(Collectors.joining(" | "));
+
+        String summary = geminiService.analyzeReviews(placeName, reviewsText);
+        if (summary == null || summary.isEmpty()) {
+            summary = "ไม่สามารถวิเคราะห์รีวิวได้ในขณะนี้";
+        }
+        return ResponseEntity.ok(Map.of("summary", summary, "count", String.valueOf(reviews.size())));
     }
 
     // DELETE /api/reviews/{id}  — Admin ลบรีวิวได้
