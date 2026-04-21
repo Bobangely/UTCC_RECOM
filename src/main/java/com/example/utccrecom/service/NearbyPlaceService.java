@@ -54,6 +54,7 @@ public class NearbyPlaceService {
         if (details.getMapsUrl() != null) existing.setMapsUrl(details.getMapsUrl());
         if (details.getLatitude() != null) existing.setLatitude(details.getLatitude());
         if (details.getLongitude() != null) existing.setLongitude(details.getLongitude());
+        if (details.getPrice() != null) existing.setPrice(details.getPrice());
         if (details.getTags() != null && !details.getTags().isEmpty()) {
             existing.getTags().clear();
             existing.getTags().addAll(details.getTags());

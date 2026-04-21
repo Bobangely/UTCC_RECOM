@@ -1,6 +1,9 @@
 package com.example.utccrecom.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +32,10 @@ public class NearbyPlace {
 
     private Double latitude;
     private Double longitude;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private String price;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "nearby_place_tags",
@@ -78,4 +85,7 @@ public class NearbyPlace {
 
     public Double getLongitude() { return longitude; }
     public void setLongitude(Double longitude) { this.longitude = longitude; }
+
+    public String getPrice() { return price; }
+    public void setPrice(String price) { this.price = price; }
 }

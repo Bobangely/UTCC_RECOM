@@ -174,6 +174,7 @@ function apiToLocal(p) {
         tags: p.tags || [],
         distance: p.distance || 'N/A',
         rating: p.rating || 4.0,
+        price: p.price || null,
         lat: finalLat,
         lng: finalLng,
         // Use the original Google Maps link if available to show the full place profile.
@@ -193,6 +194,7 @@ function localToApi(data, existingImages) {
         mapsUrl: data.mapsUrl,
         latitude: data.lat || null,
         longitude: data.lng || null,
+        price: data.price,
         tags: data.tags,
         images: data.images ? data.images : (existingImages || (data.image ? [data.image] : []))
     };
@@ -412,6 +414,38 @@ async function fetchPlacesFromApi(cat) {
 }
 
 // ─── Render ─────────────────────────────────
+function renderPrice(price) {
+    if (!price) return '';
+    try {
+        const priceData = JSON.parse(price);
+        let text = '';
+
+        if (Array.isArray(priceData)) {
+            // Handle array of prices
+            text = priceData.map(item => {
+                switch (item.type) {
+                    case 'range': return `฿${item.min}-${item.max}`;
+                    case 'fixed': return `฿${item.value}`;
+                    case 'starting': return `เริ่มต้น ฿${item.value}`;
+                    default: return item.text || '';
+                }
+            }).join(', ');
+        } else {
+            // Handle single price object
+            switch (priceData.type) {
+                case 'range': text = `฿${priceData.min} - ฿${priceData.max}`; break;
+                case 'fixed': text = `฿${priceData.value}`; break;
+                case 'starting': text = `เริ่มต้น ฿${priceData.value}`; break;
+                default: return '';
+            }
+        }
+        return `<div class="card-price"><i class='bx bx-purchase-tag-alt'></i> ${text}</div>`;
+    } catch (e) {
+        // If not valid JSON, assume it's a raw string
+        return `<div class="card-price"><i class='bx bx-purchase-tag-alt'></i> ${price.trim()}</div>`;
+    }
+}
+
 function renderCards(places) {
     const sortedPlaces = [...places].sort((a, b) => a.name.localeCompare(b.name, 'th'));
 
@@ -430,6 +464,7 @@ function renderCards(places) {
         const color = CAT_COLORS[p.cat] || '#64748b';
         const label = CAT_LABELS[p.cat] || p.cat;
         const tagsHtml = (p.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
+        const priceHtml = renderPrice(p.price);
         const commentCount = (REVIEWS_CACHE[p.id] || []).length;
         const adminBtns = isAdmin ? `
             <div class="admin-card-btns">
@@ -472,6 +507,7 @@ function renderCards(places) {
                 <div class="card-name">${p.name}</div>
                 <p class="card-desc">${p.desc}</p>
                 <div class="card-tags">${tagsHtml}</div>
+                ${priceHtml}
                 <div class="card-footer">
                     <span class="card-rating">
                         <span class="stars">${stars}</span>
@@ -594,7 +630,7 @@ async function autoParseLatLng(url) {
 function openAddPlace() {
     document.getElementById('placeModalTitle').innerHTML = "<i class='bx bx-plus-circle'></i> เพิ่มสถานที่ใหม่";
     document.getElementById('placeModalId').value = '';
-    ['pm_name','pm_desc','pm_image','pm_distance','pm_maps','pm_tags','pm_lat','pm_lng'].forEach(id => document.getElementById(id).value = '');
+    ['pm_name','pm_desc','pm_image','pm_distance','pm_maps','pm_tags','pm_lat','pm_lng', 'pm_price'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('pm_rating').value = '4.0';
     document.getElementById('pm_cat').value = 'restaurant';
     document.getElementById('pm_image_files').value = '';
@@ -617,6 +653,30 @@ function openEditPlace(placeId) {
     document.getElementById('pm_image').value = '';
     document.getElementById('pm_distance').value = p.distance;
     document.getElementById('pm_rating').value = p.rating;
+    
+    // Convert price from JSON to simple string for editing
+    let priceForEdit = '';
+    if (p.price) {
+        try {
+            const priceData = JSON.parse(p.price);
+            if (Array.isArray(priceData)) {
+                priceForEdit = priceData.map(item => {
+                    if (item.type === 'range') return `${item.min}-${item.max}`;
+                    if (item.type === 'fixed') return item.value;
+                    if (item.type === 'starting') return `${item.value}+`;
+                    return item.text || '';
+                }).join(', ');
+            } else { // Fallback for old single object format
+                if (priceData.type === 'fixed') priceForEdit = priceData.value;
+                else if (priceData.type === 'range') priceForEdit = `${priceData.min}-${priceData.max}`;
+                else if (priceData.type === 'starting') priceForEdit = `${priceData.value}+`;
+            }
+        } catch(e) {
+            priceForEdit = p.price; // If not valid JSON, display as is
+        }
+    }
+    document.getElementById('pm_price').value = priceForEdit;
+
     document.getElementById('pm_tags').value = (p.tags || []).join(', ');
     document.getElementById('pm_cat').value = p.cat;
     document.getElementById('pm_maps').value = p.mapsUrl || '';
@@ -633,6 +693,42 @@ function openEditPlace(placeId) {
 }
 
 function closePlaceModal() { closeAllModals(); }
+
+// Helper to parse user input for price
+function parsePriceInput(input) {
+    if (!input || !input.trim()) {
+        return null; // No input, no price
+    }
+
+    const parts = input.split(',').map(p => p.trim()).filter(Boolean);
+    if (parts.length === 0) return null;
+
+    const priceData = parts.map(part => {
+        // Case 1: Range (e.g., "100-500")
+        const rangeMatch = part.match(/^(\d+)\s*-\s*(\d+)$/);
+        if (rangeMatch) {
+            return { type: 'range', min: parseInt(rangeMatch[1]), max: parseInt(rangeMatch[2]) };
+        }
+
+        // Case 2: Starting from (e.g., "4500+")
+        const startingMatch = part.match(/^(\d+)\+$/);
+        if (startingMatch) {
+            return { type: 'starting', value: parseInt(startingMatch[1]) };
+        }
+
+        // Case 3: Fixed price (e.g., "500")
+        const fixedMatch = part.match(/^(\d+)$/);
+        if (fixedMatch) {
+            return { type: 'fixed', value: parseInt(fixedMatch[1]) };
+        }
+
+        // Fallback: if it doesn't match known patterns, store as raw text
+        return { type: 'text', text: part };
+    });
+
+    return JSON.stringify(priceData);
+}
+
 
 async function savePlaceModal() {
     const name = document.getElementById('pm_name').value.trim();
@@ -666,6 +762,9 @@ async function savePlaceModal() {
     }
     const finalImageUrls = [...currentPlaceKeptImages, ...uploadedUrls];
 
+    const priceInput = document.getElementById('pm_price').value;
+    const priceJson = parsePriceInput(priceInput);
+
     const data = {
         name,
         cat,
@@ -674,6 +773,7 @@ async function savePlaceModal() {
         images: finalImageUrls,
         distance: document.getElementById('pm_distance').value.trim() || 'N/A',
         rating: parseFloat(document.getElementById('pm_rating').value) || 4.0,
+        price: priceJson,
         tags: document.getElementById('pm_tags').value.split(',').map(t => t.trim()).filter(Boolean),
         mapsUrl: mapsUrlVal,
         lat: latVal,
@@ -689,7 +789,10 @@ async function savePlaceModal() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (!res.ok) throw new Error('PUT failed');
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`PUT failed: ${errorText}`);
+            }
             clearNearbyCache();
             showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
         } else {
@@ -700,7 +803,10 @@ async function savePlaceModal() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (!res.ok) throw new Error('POST failed');
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`POST failed: ${errorText}`);
+            }
             clearNearbyCache();
             showToast('✅ เพิ่มสถานที่สำเร็จ', 'success');
         }
