@@ -4,7 +4,7 @@
 // =============================================
 
 // ─── Admin Config ──────────────────────────
-const isAdmin = true;
+let isAdmin = false; // Default to false
 let currentCommentPlaceId = null;
 let selectedStars = 0;
 let deletePendingId = null;
@@ -466,15 +466,15 @@ function renderCards(places) {
         const tagsHtml = (p.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
         const priceHtml = renderPrice(p.price);
         const commentCount = (REVIEWS_CACHE[p.id] || []).length;
-        const adminBtns = isAdmin ? `
-            <div class="admin-card-btns">
+        const adminBtns = `
+            <div class="admin-card-btns admin-only">
                 <button class="admin-card-btn edit" onclick="openEditPlace('${p.id}')" title="แก้ไข">
                     <i class='bx bx-edit'></i>
                 </button>
                 <button class="admin-card-btn delete" onclick="openDeleteModal('${p.id}')" title="ลบ">
                     <i class='bx bx-trash'></i>
                 </button>
-            </div>` : '';
+            </div>`;
 
         let imgHtml = '';
         const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
@@ -594,7 +594,28 @@ function reRender() {
     renderMapMarkers(filtered);
 }
 
-// Admin mode is always on — no login required
+// ─── Admin Mode ──────────────────────────────
+const ADMIN_PASSWORD = 'utcc1234';
+
+function toggleAdminMode(enabled) {
+    if (enabled) {
+        const input = prompt('กรุณากรอกรหัสผ่าน Admin:');
+        if (input !== ADMIN_PASSWORD) {
+            showToast('❌ รหัสผ่านไม่ถูกต้อง', 'error');
+            const toggle = document.getElementById('adminModeToggle');
+            if (toggle) toggle.checked = false;
+            return;
+        }
+    }
+    setAdminMode(enabled);
+}
+
+function setAdminMode(enabled) {
+    isAdmin = enabled;
+    document.body.classList.toggle('admin-mode', enabled);
+    localStorage.setItem('adminMode', enabled ? '1' : '0');
+    reRender();
+}
 
 // ─── Place Modal (Add / Edit) ────────────────
 async function autoParseLatLng(url) {
@@ -1236,8 +1257,8 @@ function toggleNearbySettings() {
 }
 
 function closeNearbyPanels() {
-    document.getElementById('nearbySettingsPanel').classList.remove('open');
-    document.getElementById('panelBackdrop').classList.remove('open');
+    document.getElementById('nearbySettingsPanel').classList.remove('active');
+    document.getElementById('panelBackdrop').classList.remove('active');
 }
 
 // ─── Carousel Logic ─────────────────────────
@@ -1287,6 +1308,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Restore language
     nearbyLang = localStorage.getItem('lang') || 'th';
     applyNearbyLanguage(nearbyLang);
+
+    // Restore Admin Mode
+    const savedAdmin = localStorage.getItem('adminMode') === '1';
+    if (savedAdmin) {
+        const toggle = document.getElementById('adminModeToggle');
+        if (toggle) toggle.checked = true;
+        setAdminMode(true);
+    }
+
 
     initMap();
     await loadCategories();

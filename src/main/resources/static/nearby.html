@@ -9,6 +9,7 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="nearby.css">
+    <link rel="stylesheet" href="admin.css">
 </head>
 <body>
 
@@ -249,6 +250,28 @@
                 </div>
             </div>
 
+            <!-- Admin Mode -->
+            <div class="settings-section">
+                <div class="settings-section-label" id="labelAdminMode">⚙️ โหมด Admin</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#4f46e5,#8b5cf6)">
+                                <i class='bx bxs-user-shield'></i>
+                            </div>
+                            <div>
+                                <div class="settings-label" id="labelEnableAdmin">เปิดใช้งานโหมด Admin</div>
+                                <div class="settings-desc" id="descEnableAdmin">อนุญาตให้แก้ไขและเพิ่มข้อมูล</div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="adminModeToggle" onchange="toggleAdminMode(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- About -->
             <div class="settings-section">
                 <div class="settings-section-label" id="nearbyLabelAbout">ℹ️ เกี่ยวกับ</div>
@@ -328,7 +351,7 @@
     </main>
 
     <!-- Add Place FAB -->
-    <button class="admin-fab" id="adminFab" onclick="openAddPlace()" title="เพิ่มสถานที่">
+    <button class="admin-fab admin-only" id="adminFab" onclick="openAddPlace()" title="เพิ่มสถานที่">
         <i class='bx bx-plus'></i>
     </button>
 

@@ -7,6 +7,7 @@ let currentSearchQuery = ''; // Track current search query
 let currentLang = localStorage.getItem('lang') || 'th';
 let favorites = JSON.parse(localStorage.getItem('utcc_favorites') || '[]');
 let allUniversityItems = []; // Store all fetched items for client-side filtering
+let adminMode = false; // Admin mode state
 
 // DOM Elements
 const placesGrid = document.getElementById('placesGrid');
@@ -719,6 +720,28 @@ function setCardSize(size) {
     localStorage.setItem('cardSize', size);
 }
 
+const ADMIN_PASSWORD = 'utcc1234';
+
+function toggleAdminMode(enabled) {
+    if (enabled) {
+        const input = prompt('กรุณากรอกรหัสผ่าน Admin:');
+        if (input !== ADMIN_PASSWORD) {
+            alert('❌ รหัสผ่านไม่ถูกต้อง');
+            const toggle = document.getElementById('adminModeToggle');
+            if (toggle) toggle.checked = false;
+            return;
+        }
+    }
+    setAdminMode(enabled);
+}
+
+function setAdminMode(enabled) {
+    adminMode = enabled;
+    document.body.classList.toggle('admin-mode', enabled);
+    localStorage.setItem('adminMode', enabled ? '1' : '0');
+    applyFiltersAndSearch();
+}
+
 function applyStoredSettings() {
     const dark = localStorage.getItem('darkMode');
     if (dark === 'dark') {
@@ -739,6 +762,12 @@ function applyStoredSettings() {
     if (size) setCardSize(size);
     const lang = localStorage.getItem('lang') || 'th';
     setLanguage(lang);
+
+    const admin = localStorage.getItem('adminMode') === '1';
+    if (admin) {
+        document.getElementById('adminModeToggle').checked = true;
+        setAdminMode(true);
+    }
 }
 
 function translateCategory(cat) {

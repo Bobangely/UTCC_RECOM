@@ -1,0 +1,20 @@
+/* Default state: Hide admin features */
+body:not(.admin-mode) .admin-only,
+body:not(.admin-mode) #addPlaceBtn,
+body:not(.admin-mode) .card-actions .edit-btn,
+body:not(.admin-mode) .card-actions .delete-btn,
+body:not(.admin-mode) #panelEditBtn {
+    display: none !important;
+}
+
+/* Show features when in admin mode */
+body.admin-mode .admin-only {
+    display: block !important;
+}
+
+body.admin-mode #addPlaceBtn,
+body.admin-mode .card-actions .edit-btn,
+body.admin-mode .card-actions .delete-btn,
+body.admin-mode #panelEditBtn {
+    display: flex !important;
+}
