@@ -1,7 +1,9 @@
 package com.example.utccrecom.controller;
 
-import com.example.utccrecom.entity.Location; // แก้กลับมาใช้ Location เหมือนเดิม
-import com.example.utccrecom.service.GeminiService; // Import GeminiService
+import com.example.utccrecom.entity.Location;
+import com.example.utccrecom.service.GeminiService;
+import com.example.utccrecom.service.NearbyPlaceService;
+import com.example.utccrecom.service.PlaceService;
 import com.example.utccrecom.service.SupabaseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +19,17 @@ import java.util.Map;
 @RequestMapping("/api")
 public class SearchController {
 
-    private final GeminiService geminiService; // เปลี่ยนเป็น GeminiService
+    private final GeminiService geminiService;
     private final SupabaseService supabaseService;
+    private final PlaceService placeService;
+    private final NearbyPlaceService nearbyPlaceService;
 
-    public SearchController(GeminiService geminiService, SupabaseService supabaseService) {
+    public SearchController(GeminiService geminiService, SupabaseService supabaseService,
+                            PlaceService placeService, NearbyPlaceService nearbyPlaceService) {
         this.geminiService = geminiService;
         this.supabaseService = supabaseService;
+        this.placeService = placeService;
+        this.nearbyPlaceService = nearbyPlaceService;
     }
 
     @PostMapping("/search")
@@ -33,25 +40,24 @@ public class SearchController {
             if (searchTerm == null || searchTerm.trim().isEmpty()) {
                 List<Location> allLocations = supabaseService.findAllLocations();
                 return ResponseEntity.ok(allLocations);
-            } else {
-                // Prompt ที่เฉพาะเจาะจงให้ตอบกลับมาเป็น keyword คั่นด้วย comma เท่านั้น
-                String promptText = "You are a search assistant for a university. Extract keywords related to university life, " +
-                        "such as building names, faculties, course subjects, or activities, from the following query. " +
-                        "Return ONLY the keywords as a comma-separated list, nothing else. The query is: " + searchTerm;
-
-                // ใช้ GeminiService ดึงข้อมูลผ่าน REST API โดยตรง!
-                String keywords = geminiService.extractKeywords(promptText);
-
-                // หาก keywords ไม่มีข้อมูล หรือยาวเกินไป (เช่น เป็นประโยค Error) ให้ใช้คำที่ผู้ใช้พิมพ์มาค้นหาเลย
-                if (keywords == null || keywords.trim().isEmpty() || keywords.length() > 50) {
-                     // ปิดข้อความ Log Fallback ทิ้งเพื่อความสะอาด
-                     keywords = searchTerm;
-                }
-
-                // ค้นหาใน Supabase ด้วย keywords ที่ได้มา
-                List<Location> locations = supabaseService.searchLocations(keywords);
-                return ResponseEntity.ok(locations);
             }
+
+            // Smart Search: ให้ Gemini เข้าใจ intent และแปลงเป็น keywords
+            String promptText = "คุณคือ Smart Search สำหรับมหาวิทยาลัยหอการค้าไทย (UTCC) " +
+                    "วิเคราะห์ความต้องการของผู้ใช้และแปลงเป็น keywords ภาษาไทย/อังกฤษ " +
+                    "ที่เกี่ยวข้องกับ: ชื่ออาคาร, คณะ, ร้านอาหาร, คาเฟ่, สิ่งอำนวยความสะดวก, หมวดหมู่ " +
+                    "ตัวอย่าง: 'ที่นั่งเงียบๆ มีปลั๊ก' → 'Study Area, ห้องสมุด, ปลั๊ก' " +
+                    "ตอบกลับเป็น keywords คั่นด้วย comma เท่านั้น ไม่เกิน 5 คำ " +
+                    "query: " + searchTerm;
+
+            String keywords = geminiService.extractKeywords(promptText);
+
+            if (keywords == null || keywords.trim().isEmpty() || keywords.length() > 100) {
+                keywords = searchTerm;
+            }
+
+            List<Location> locations = supabaseService.searchLocations(keywords);
+            return ResponseEntity.ok(locations);
 
         } catch (Exception e) {
             e.printStackTrace();

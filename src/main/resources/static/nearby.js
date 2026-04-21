@@ -1,4 +1,4 @@
-// =============================================
+﻿// =============================================
 //  UTCC Nearby — nearby.js
 //  Admin & Comment system + localStorage
 // =============================================
@@ -946,6 +946,31 @@ async function openCommentModal(placeId, placeName) {
     renderStarSelect(0);
     document.getElementById('commentList').innerHTML = `<div class="no-comments"><i class='bx bx-loader-alt bx-spin'></i><p>กำลังโหลด...</p></div>`;
     showModal('commentModal');
+
+    // เพิ่มปุ่ม AI วิเคราะห์รีวิว
+    const modalFooter = document.querySelector('#commentModal .modal-footer');
+    if (modalFooter && !document.getElementById(`analyze-btn-${placeId}`)) {
+        const analyzeBtn = document.createElement('button');
+        analyzeBtn.className = 'btn-secondary';
+        analyzeBtn.id = `analyze-btn-${placeId}`;
+        analyzeBtn.innerHTML = `<i class='bx bx-bot'></i> AI สรุปรีวิว`;
+        analyzeBtn.onclick = () => analyzeReviews(placeId, placeName);
+        modalFooter.insertBefore(analyzeBtn, modalFooter.firstChild);
+
+        // result box
+        const resultEl = document.createElement('div');
+        resultEl.id = `analyze-result-${placeId}`;
+        resultEl.className = 'ai-review-summary';
+        resultEl.style.display = 'none';
+        document.querySelector('#commentModal .modal-body').appendChild(resultEl);
+    } else if (document.getElementById(`analyze-btn-${placeId}`)) {
+        // reset ถ้าเปิด modal ใหม่
+        const oldBtn = document.getElementById(`analyze-btn-${placeId}`);
+        if (oldBtn) { oldBtn.id = `analyze-btn-${placeId}`; oldBtn.onclick = () => analyzeReviews(placeId, placeName); }
+        const oldResult = document.getElementById(`analyze-result-${placeId}`);
+        if (oldResult) oldResult.style.display = 'none';
+    }
+
     await loadReviewsForPlace(placeId);
     renderCommentList(placeId);
 }
@@ -1346,3 +1371,88 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, { passive: true });
     }
 });
+
+
+// ====== AI CHATBOT ======
+let chatbotOpen = false;
+let chatHistory = []; // เก็บ history การสนทนา
+
+function toggleChatbot() {
+    chatbotOpen = !chatbotOpen;
+    document.getElementById('chatbotPanel').classList.toggle('active', chatbotOpen);
+    document.getElementById('chatbotBubble').classList.toggle('active', chatbotOpen);
+    if (chatbotOpen) setTimeout(() => document.getElementById('chatbotInput').focus(), 200);
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatbotInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    appendChatMsg(msg, 'user');
+    input.value = '';
+    const typingId = appendChatTyping();
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, history: chatHistory })
+        });
+        const data = await res.json();
+        removeChatTyping(typingId);
+        const reply = data.reply || 'ขออภัย ไม่สามารถตอบได้ในขณะนี้';
+        appendChatMsg(reply, 'bot');
+        chatHistory.push({ role: 'user', text: msg });
+        chatHistory.push({ role: 'model', text: reply });
+        if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+    } catch (e) {
+        removeChatTyping(typingId);
+        appendChatMsg('เกิดข้อผิดพลาด กรุณาลองใหม่', 'bot');
+    }
+}
+
+function appendChatMsg(text, role) {
+    const messages = document.getElementById('chatbotMessages');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${role}`;
+    div.innerHTML = `<div class="chat-bubble">${text.replace(/\n/g, '<br>')}</div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function appendChatTyping() {
+    const messages = document.getElementById('chatbotMessages');
+    const id = 'typing-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'chat-msg bot';
+    div.id = id;
+    div.innerHTML = `<div class="chat-bubble chat-typing"><span></span><span></span><span></span></div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return id;
+}
+
+function removeChatTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+// ====== AI วิเคราะห์รีวิว ======
+async function analyzeReviews(placeId) {
+    const btn = document.getElementById('aiAnalyzeBtn');
+    const resultEl = document.getElementById('aiAnalyzeResult');
+    if (!btn || !resultEl) return;
+    btn.disabled = true;
+    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> กำลังวิเคราะห์...`;
+    resultEl.style.display = 'none';
+    try {
+        const res = await fetch(`/api/reviews/analyze/${placeId}`);
+        const data = await res.json();
+        resultEl.innerHTML = `<i class='bx bx-bot'></i> <strong>AI สรุป:</strong> ${data.summary}`;
+        resultEl.style.display = 'block';
+    } catch (e) {
+        resultEl.innerHTML = `<i class='bx bx-error'></i> ไม่สามารถวิเคราะห์ได้`;
+        resultEl.style.display = 'block';
+    }
+    btn.innerHTML = `<i class='bx bx-bot'></i> AI สรุปรีวิว`;
+    btn.disabled = false;
+}
