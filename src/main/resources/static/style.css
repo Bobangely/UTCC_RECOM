@@ -286,8 +286,9 @@ body {
 .hero-bg-overlay {
     position: absolute;
     inset: 0;
-    background: url('https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&q=20&w=1600') center/cover no-repeat;
-    opacity: 0.08;
+    /* UTCC Campus - Beautiful sunset view of the iconic building */
+    background: url('images/UTCC-2-scaled-1.jpg') center/cover no-repeat;
+    opacity: 0.15;
 }
 
 .hero-landing-content {
