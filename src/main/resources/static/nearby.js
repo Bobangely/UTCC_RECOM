@@ -1309,8 +1309,17 @@ function updateCarouselDots(container) {
 // ─── Dark Mode ───────────────────────────────
 function toggleNearbyDarkMode(enabled) {
     document.documentElement.setAttribute('data-theme', enabled ? 'dark' : 'light');
-    // Share with main page via same key
     localStorage.setItem('darkMode', enabled ? 'dark' : 'light');
+}
+
+function toggleNearbyHideImages(enabled) {
+    document.body.classList.toggle('hide-images', enabled);
+    localStorage.setItem('hideImages', enabled ? '1' : '0');
+}
+
+function toggleNearbyListView(enabled) {
+    document.getElementById('nearbyGrid').classList.toggle('list-view', enabled);
+    localStorage.setItem('listView', enabled ? '1' : '0');
 }
 
 // ─── Language ────────────────────────────────
@@ -1327,6 +1336,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (savedDark === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         const toggle = document.getElementById('nearbyDarkModeToggle');
+        if (toggle) toggle.checked = true;
+    }
+
+    // Restore hide images
+    const hideImages = localStorage.getItem('hideImages') === '1';
+    if (hideImages) {
+        document.body.classList.add('hide-images');
+        const toggle = document.getElementById('nearbyHideImagesToggle');
+        if (toggle) toggle.checked = true;
+    }
+
+    // Restore list view
+    const listView = localStorage.getItem('listView') === '1';
+    if (listView) {
+        document.getElementById('nearbyGrid').classList.add('list-view');
+        const toggle = document.getElementById('nearbyListViewToggle');
         if (toggle) toggle.checked = true;
     }
 

@@ -250,6 +250,44 @@
                 </div>
             </div>
 
+            <!-- การแสดงผล -->
+            <div class="settings-section">
+                <div class="settings-section-label" id="nearbyLabelDisplay">📐 การแสดงผล</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#059669,#10b981)">
+                                <i class='bx bx-layout'></i>
+                            </div>
+                            <div>
+                                <div class="settings-label" id="nearbyLabelLayout">รูปแบบ Grid</div>
+                                <div class="settings-desc" id="nearbyDescLayout">สลับระหว่าง Grid / List</div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="nearbyListViewToggle" onchange="toggleNearbyListView(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-divider"></div>
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+                                <i class='bx bx-image'></i>
+                            </div>
+                            <div>
+                                <div class="settings-label" id="nearbyLabelHideImg">ซ่อนภาพ</div>
+                                <div class="settings-desc" id="nearbyDescHideImg">โหลดเร็วขึ้น ประหยัดข้อมูล</div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="nearbyHideImagesToggle" onchange="toggleNearbyHideImages(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Admin Mode -->
             <div class="settings-section">
                 <div class="settings-section-label" id="labelAdminMode">⚙️ โหมด Admin</div>
