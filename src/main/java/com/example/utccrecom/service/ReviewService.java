@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -21,6 +22,10 @@ public class ReviewService {
 
     public List<Review> getReviewsByPlaceId(String placeId) {
         return reviewRepository.findByPlaceIdOrderByCreatedAtDesc(placeId);
+    }
+
+    public Optional<Review> getReviewById(UUID id) {
+        return reviewRepository.findById(id);
     }
 
     @Transactional
