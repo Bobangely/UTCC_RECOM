@@ -493,8 +493,9 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 .hero-overlay {
     position: absolute;
     inset: 0;
-    background: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=10&w=1400') center/cover no-repeat;
-    opacity: 0.06;
+    /* UTCC Campus Background */
+    background: url('UTCC-2-scaled-1.jpg') center/cover no-repeat;
+    opacity: 0.15;
 }
 
 .nearby-hero-content {

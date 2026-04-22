@@ -287,8 +287,8 @@ body {
     position: absolute;
     inset: 0;
     /* UTCC Campus - Beautiful sunset view of the iconic building */
-    background: url('images/UTCC-2-scaled-1.jpg') center/cover no-repeat;
-    opacity: 0.15;
+    background: url('UTCC-2-scaled-1.jpg') center/cover no-repeat;
+    opacity: 0.25;
 }
 
 .hero-landing-content {
