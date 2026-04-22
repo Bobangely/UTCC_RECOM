@@ -11,6 +11,4 @@ import java.util.UUID;
 @Repository
 public interface NearbyCategoryRepository extends JpaRepository<NearbyCategory, UUID> {
     List<NearbyCategory> findAllByOrderBySortOrderAsc();
-
-    Optional<NearbyCategory> findByName(String name);
 }

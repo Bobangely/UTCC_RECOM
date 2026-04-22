@@ -21,10 +21,15 @@ public class StorageService {
     @Value("${supabase.url}")
     private String supabaseUrl;
 
-    @Value("${supabase.anon-key}") // <-- FIXED: Changed from supabase.key to supabase.anon-key
+    @Value("${supabase.anon-key}")
     private String supabaseKey;
 
     private final String BUCKET_NAME = "images";
+    private final RestTemplate restTemplate;
+
+    public StorageService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     public String uploadImage(MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();
@@ -32,14 +37,9 @@ public class StorageService {
         if (originalFilename != null && originalFilename.lastIndexOf(".") > 0) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-        
-        // Generate a unique filename
-        String uniqueFileName = UUID.randomUUID().toString() + extension;
-        
-        // Supabase Storage REST API Endpoint
-        String uploadUrl = supabaseUrl + "/storage/v1/object/" + BUCKET_NAME + "/" + uniqueFileName;
 
-        RestTemplate restTemplate = new RestTemplate();
+        String uniqueFileName = UUID.randomUUID().toString() + extension;
+        String uploadUrl = supabaseUrl + "/storage/v1/object/" + BUCKET_NAME + "/" + uniqueFileName;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(supabaseKey);

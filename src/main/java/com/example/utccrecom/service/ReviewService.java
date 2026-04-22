@@ -40,8 +40,4 @@ public class ReviewService {
         reviewRepository.deleteById(id);
     }
 
-    @Transactional
-    public void deleteReviewsByPlace(String placeId) {
-        reviewRepository.deleteByPlaceId(placeId);
-    }
 }
