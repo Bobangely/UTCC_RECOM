@@ -945,34 +945,70 @@ async function openCommentModal(placeId, placeName) {
     document.getElementById('starLabel').textContent = 'ยังไม่ได้เลือก';
     renderStarSelect(0);
     document.getElementById('commentList').innerHTML = `<div class="no-comments"><i class='bx bx-loader-alt bx-spin'></i><p>กำลังโหลด...</p></div>`;
+
+    const myReview = (() => { try { return JSON.parse(localStorage.getItem(`reviewed_${placeId}`)); } catch { return null; } })();
+    const alreadyReviewed = !!myReview;
+    const addBox = document.querySelector('#commentModal .comment-add-box');
+    const submitBtn = document.querySelector('#commentModal .modal-footer .btn-primary');
+    let alreadyMsg = document.getElementById('already-reviewed-msg');
+    if (!alreadyMsg) {
+        alreadyMsg = document.createElement('div');
+        alreadyMsg.id = 'already-reviewed-msg';
+        alreadyMsg.style.cssText = 'text-align:center;padding:0.75rem;color:var(--muted);font-size:0.9rem;display:flex;gap:0.5rem;justify-content:center;align-items:center;flex-wrap:wrap;';
+        addBox.parentNode.insertBefore(alreadyMsg, addBox);
+    }
+    if (alreadyReviewed) {
+        alreadyMsg.innerHTML = `<i class='bx bx-check-circle' style="color:#10b981"></i> คุณได้แสดงความเห็นสถานที่นี้แล้ว
+            <button class="btn-secondary" style="padding:0.25rem 0.75rem;font-size:0.8rem" id="alreadyMsg-edit-btn">
+                <i class='bx bx-edit'></i> แก้ไข
+            </button>
+            <button class="btn-secondary" style="padding:0.25rem 0.75rem;font-size:0.8rem;color:#ef4444" onclick="deleteMyComment('${placeId}','${myReview.id}')">
+                <i class='bx bx-trash'></i> ลบ
+            </button>`;
+        addBox.style.display = 'none';
+        submitBtn.style.display = 'none';
+        alreadyMsg.style.display = 'flex';
+    } else {
+        addBox.style.display = '';
+        submitBtn.style.display = '';
+        alreadyMsg.style.display = 'none';
+    }
+
     showModal('commentModal');
 
-    // เพิ่มปุ่ม AI วิเคราะห์รีวิว
+    // ปุ่ม AI — ใช้ id คงที่ สร้างครั้งเดียว แค่อัปเดต onclick
     const modalFooter = document.querySelector('#commentModal .modal-footer');
-    if (modalFooter && !document.getElementById(`analyze-btn-${placeId}`)) {
-        const analyzeBtn = document.createElement('button');
+    let analyzeBtn = document.getElementById('ai-analyze-btn');
+    let analyzeResult = document.getElementById('ai-analyze-result');
+    if (!analyzeBtn) {
+        analyzeBtn = document.createElement('button');
         analyzeBtn.className = 'btn-secondary';
-        analyzeBtn.id = `analyze-btn-${placeId}`;
+        analyzeBtn.id = 'ai-analyze-btn';
         analyzeBtn.innerHTML = `<i class='bx bx-bot'></i> AI สรุปรีวิว`;
-        analyzeBtn.onclick = () => analyzeReviews(placeId, placeName);
         modalFooter.insertBefore(analyzeBtn, modalFooter.firstChild);
 
-        // result box
-        const resultEl = document.createElement('div');
-        resultEl.id = `analyze-result-${placeId}`;
-        resultEl.className = 'ai-review-summary';
-        resultEl.style.display = 'none';
-        document.querySelector('#commentModal .modal-body').appendChild(resultEl);
-    } else if (document.getElementById(`analyze-btn-${placeId}`)) {
-        // reset ถ้าเปิด modal ใหม่
-        const oldBtn = document.getElementById(`analyze-btn-${placeId}`);
-        if (oldBtn) { oldBtn.id = `analyze-btn-${placeId}`; oldBtn.onclick = () => analyzeReviews(placeId, placeName); }
-        const oldResult = document.getElementById(`analyze-result-${placeId}`);
-        if (oldResult) oldResult.style.display = 'none';
+        analyzeResult = document.createElement('div');
+        analyzeResult.id = 'ai-analyze-result';
+        analyzeResult.className = 'ai-review-summary';
+        analyzeResult.style.display = 'none';
+        document.querySelector('#commentModal .modal-body').appendChild(analyzeResult);
     }
+    analyzeBtn.onclick = () => analyzeReviews(placeId);
+    analyzeBtn.disabled = false;
+    analyzeBtn.innerHTML = `<i class='bx bx-bot'></i> AI สรุปรีวิว`;
+    analyzeResult.style.display = 'none';
 
     await loadReviewsForPlace(placeId);
     renderCommentList(placeId);
+
+    // ผูก onclick ให้ปุ่มแก้ไขใน alreadyMsg หลังโหลด reviews เสร็จ
+    if (alreadyReviewed) {
+        const editBtn = document.getElementById('alreadyMsg-edit-btn');
+        if (editBtn) {
+            const myR = (REVIEWS_CACHE[placeId] || []).find(r => r.id === myReview.id);
+            editBtn.onclick = () => editMyComment(placeId, myReview.id, myR ? myR.comment : '', myR ? myR.rating : 0);
+        }
+    }
 }
 
 function closeCommentModal() { closeAllModals(); }
@@ -1059,15 +1095,21 @@ function renderCommentList(placeId) {
         const author = escapeHtml(r.authorName || 'ไม่ระบุชื่อ');
         const body = escapeHtml(r.comment || '');
         const adminDel = isAdmin ? `<button class="tiny-del-btn" onclick="deleteComment('${placeId}','${r.id}')"><i class='bx bx-x'></i></button>` : '';
+        const myReview = (() => { try { return JSON.parse(localStorage.getItem(`reviewed_${placeId}`)); } catch { return null; } })();
+        const isMyReview = myReview && myReview.id === r.id;
+        const myBtns = isMyReview ? `
+            <button class="tiny-del-btn" style="background:#3b82f6" title="แก้ไข" onclick="editMyComment('${placeId}','${r.id}','${(r.comment||'').replace(/'/g,"&#39;")}',${ratingInt})"><i class='bx bx-edit'></i></button>
+            <button class="tiny-del-btn" title="ลบ" onclick="deleteMyComment('${placeId}','${r.id}')"><i class='bx bx-trash'></i></button>` : '';
         return `
         <div class="comment-item">
             <div class="comment-header">
                 <div class="comment-avatar">${author[0].toUpperCase()}</div>
                 <div class="comment-meta">
-                    <div class="comment-author">${author}</div>
+                    <div class="comment-author">${author}${isMyReview ? ` <span style="font-size:0.75rem;color:#10b981;font-weight:600">• คุณ</span>` : ''}</div>
                     <div class="comment-date">${date}</div>
                 </div>
                 ${stars}
+                ${myBtns}
                 ${adminDel}
             </div>
             <p class="comment-body">${body}</p>
@@ -1108,20 +1150,27 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('starLabel').textContent = labels[v];
         });
     });
+
+    document.querySelectorAll('#editStarSelect span').forEach(s => {
+        const v = parseInt(s.dataset.v);
+        s.addEventListener('mouseover', () => renderEditStarSelect(v));
+        s.addEventListener('mouseout', () => renderEditStarSelect(editSelectedStars));
+        s.addEventListener('click', () => {
+            editSelectedStars = v;
+            renderEditStarSelect(v);
+            const labels = ['', '★ แย่มาก', '★★ พอใช้', '★★★ ดี', '★★★★ ดีมาก', '★★★★★ ดีเยี่ยม'];
+            document.getElementById('editStarLabel').textContent = labels[v];
+        });
+    });
 });
 
 async function submitComment() {
     const author = document.getElementById('commentAuthor').value.trim();
     const text = document.getElementById('commentText').value.trim();
     if (!author) { showToast('กรุณากรอกชื่อผู้แสดงความเห็น', 'error'); return; }
-    if (!text) { showToast('กรุณากรอกความคิดเห็น', 'error'); return; }
     if (selectedStars === 0) { showToast('กรุณาเลือกคะแนนดาวก่อนส่ง', 'error'); return; }
 
-    const payload = {
-        authorName: author,
-        comment: text,
-        rating: selectedStars
-    };
+    const payload = { authorName: author, comment: text, rating: selectedStars };
 
     try {
         const res = await fetch(`${REVIEWS_API}/nearby/${currentCommentPlaceId}`, {
@@ -1129,27 +1178,96 @@ async function submitComment() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        if (!res.ok) {
-            const errText = await res.text().catch(() => '');
-            console.error('Review POST error:', res.status, errText);
-            throw new Error(`Server ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Server ${res.status}`);
+        const saved = await res.json();
+        localStorage.setItem(`reviewed_${currentCommentPlaceId}`, JSON.stringify({ id: saved.id, authorName: author }));
     } catch (e) {
         console.error('submitComment error:', e);
         showToast('❌ ส่งความคิดเห็นไม่สำเร็จ', 'error');
         return;
     }
 
-    // POST succeeded — reset form and reload reviews
     document.getElementById('commentAuthor').value = '';
     document.getElementById('commentText').value = '';
     selectedStars = 0;
     renderStarSelect(0);
     document.getElementById('starLabel').textContent = 'ยังไม่ได้เลือก';
+    const addBox = document.querySelector('#commentModal .comment-add-box');
+    const submitBtn = document.querySelector('#commentModal .modal-footer .btn-primary');
+    const alreadyMsg = document.getElementById('already-reviewed-msg');
+    if (addBox) addBox.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'none';
+    if (alreadyMsg) alreadyMsg.style.display = 'block';
     await loadReviewsForPlace(currentCommentPlaceId);
     renderCommentList(currentCommentPlaceId);
     reRender();
     showToast('✅ ส่งความคิดเห็นแล้ว!', 'success');
+}
+
+async function deleteMyComment(placeId, reviewId) {
+    if (!confirm('ลบความคิดเห็นของคุณ?')) return;
+    try {
+        const res = await fetch(`${REVIEWS_API}/${reviewId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('DELETE failed');
+        localStorage.removeItem(`reviewed_${placeId}`);
+        const addBox = document.querySelector('#commentModal .comment-add-box');
+        const submitBtn = document.querySelector('#commentModal .modal-footer .btn-primary');
+        const alreadyMsg = document.getElementById('already-reviewed-msg');
+        if (addBox) addBox.style.display = '';
+        if (submitBtn) submitBtn.style.display = '';
+        if (alreadyMsg) alreadyMsg.style.display = 'none';
+        await loadReviewsForPlace(placeId);
+        renderCommentList(placeId);
+        reRender();
+        showToast('🗑️ ลบความคิดเห็นแล้ว', 'info');
+    } catch (e) {
+        showToast('❌ ลบไม่สำเร็จ', 'error');
+    }
+}
+
+async function editMyComment(placeId, reviewId, currentComment, currentRating) {
+    document.getElementById('editReviewId').value = reviewId;
+    document.getElementById('editReviewPlaceId').value = placeId;
+    document.getElementById('editCommentText').value = currentComment || '';
+    editSelectedStars = currentRating || 0;
+    renderEditStarSelect(editSelectedStars);
+    const labels = ['', '★ แย่มาก', '★★ พอใช้', '★★★ ดี', '★★★★ ดีมาก', '★★★★★ ดีเยี่ยม'];
+    document.getElementById('editStarLabel').textContent = labels[editSelectedStars] || 'ยังไม่ได้เลือก';
+    showModal('editCommentModal');
+}
+
+let editSelectedStars = 0;
+
+function renderEditStarSelect(val) {
+    document.querySelectorAll('#editStarSelect span').forEach((s, i) => {
+        s.textContent = i < val ? '★' : '☆';
+        s.style.color = i < val ? '#fbbf24' : '#cbd5e1';
+    });
+}
+
+async function saveEditComment() {
+    const reviewId = document.getElementById('editReviewId').value;
+    const placeId = document.getElementById('editReviewPlaceId').value;
+    const text = document.getElementById('editCommentText').value.trim();
+    if (editSelectedStars === 0) { showToast('กรุณาเลือกคะแนนดาว', 'error'); return; }
+
+    try {
+        const res = await fetch(`${REVIEWS_API}/${reviewId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comment: text, rating: editSelectedStars })
+        });
+        if (!res.ok) throw new Error('PUT failed');
+    } catch (e) {
+        showToast('❌ แก้ไขไม่สำเร็จ', 'error');
+        return;
+    }
+
+    closeAllModals();
+    await loadReviewsForPlace(placeId);
+    renderCommentList(placeId);
+    reRender();
+    showToast('✅ แก้ไขความคิดเห็นแล้ว', 'success');
 }
 
 // ─── Utility ─────────────────────────────────
@@ -1462,9 +1580,17 @@ function removeChatTyping(id) {
 }
 
 // ====== AI วิเคราะห์รีวิว ======
+function renderMarkdown(text) {
+    return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^\*\s+/gm, '• ')
+        .replace(/\n{2,}/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+}
+
 async function analyzeReviews(placeId) {
-    const btn = document.getElementById('aiAnalyzeBtn');
-    const resultEl = document.getElementById('aiAnalyzeResult');
+    const btn = document.getElementById('ai-analyze-btn');
+    const resultEl = document.getElementById('ai-analyze-result');
     if (!btn || !resultEl) return;
     btn.disabled = true;
     btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> กำลังวิเคราะห์...`;
@@ -1472,7 +1598,7 @@ async function analyzeReviews(placeId) {
     try {
         const res = await fetch(`/api/reviews/analyze/${placeId}`);
         const data = await res.json();
-        resultEl.innerHTML = `<i class='bx bx-bot'></i> <strong>AI สรุป:</strong> ${data.summary}`;
+        resultEl.innerHTML = `<i class='bx bx-bot'></i> <strong>AI สรุป</strong><hr style="margin:0.5rem 0;opacity:0.3"><p>${renderMarkdown(data.summary)}</p>`;
         resultEl.style.display = 'block';
     } catch (e) {
         resultEl.innerHTML = `<i class='bx bx-error'></i> ไม่สามารถวิเคราะห์ได้`;

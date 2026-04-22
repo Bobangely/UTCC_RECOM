@@ -170,6 +170,41 @@
         </div>
     </div>
 
+    <!-- ====== Edit Comment Modal ====== -->
+    <div class="modal-overlay" id="editCommentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class='bx bx-edit'></i> แก้ไขความคิดเห็น</div>
+                <button class="close-panel-btn" onclick="closeAllModals()"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editReviewId">
+                <input type="hidden" id="editReviewPlaceId">
+                <div class="form-group">
+                    <label class="form-label">ความคิดเห็น <span style="color:var(--muted);font-size:0.8rem">(ไม่จำเป็น)</span></label>
+                    <textarea id="editCommentText" class="form-input" rows="3" placeholder="แชร์ประสบการณ์ของคุณ..."></textarea>
+                </div>
+                <div class="star-select-row">
+                    <label class="form-label">ให้คะแนน: </label>
+                    <div class="star-select" id="editStarSelect">
+                        <span data-v="1">☆</span>
+                        <span data-v="2">☆</span>
+                        <span data-v="3">☆</span>
+                        <span data-v="4">☆</span>
+                        <span data-v="5">☆</span>
+                    </div>
+                    <span id="editStarLabel" style="color:var(--muted);font-size:0.85rem">ยังไม่ได้เลือก</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAllModals()">ยกเลิก</button>
+                <button class="btn-primary" onclick="saveEditComment()">
+                    <i class='bx bx-save'></i> บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ====== Delete Confirm Modal ====== -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal" style="max-width:380px">

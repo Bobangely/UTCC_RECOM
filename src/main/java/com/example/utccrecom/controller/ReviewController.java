@@ -77,8 +77,11 @@ public class ReviewController {
             return ResponseEntity.ok(Map.of("summary", "ยังไม่มีรีวิวสำหรับสถานที่นี้"));
         }
 
-        String placeName = nearbyPlaceService.getNearbyPlaceById(UUID.fromString(placeId))
-                .map(NearbyPlace::getName).orElse("สถานที่นี้");
+        String placeName = "สถานที่นี้";
+        try {
+            placeName = nearbyPlaceService.getNearbyPlaceById(UUID.fromString(placeId))
+                    .map(NearbyPlace::getName).orElse("สถานที่นี้");
+        } catch (Exception ignored) {}
 
         String reviewsText = reviews.stream()
                 .map(r -> "[" + r.getRating() + "★] " + r.getAuthorName() + ": " + r.getComment())
@@ -91,7 +94,30 @@ public class ReviewController {
         return ResponseEntity.ok(Map.of("summary", summary, "count", String.valueOf(reviews.size())));
     }
 
-    // DELETE /api/reviews/{id}  — Admin ลบรีวิวได้
+    // PUT /api/reviews/{id}  — แก้ไขรีวิวของตัวเอง
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateReview(
+            @PathVariable UUID id,
+            @RequestBody Review updated) {
+        try {
+            Review existing = reviewService.getReviewById(id)
+                    .orElseThrow(() -> new RuntimeException("Not found"));
+            if (updated.getComment() != null) existing.setComment(updated.getComment());
+            if (updated.getRating() > 0) existing.setRating(updated.getRating());
+            if (updated.getAuthorName() != null) existing.setAuthorName(updated.getAuthorName());
+            Review saved = reviewService.saveReview(existing);
+            Map<String, Object> resp = new java.util.LinkedHashMap<>();
+            resp.put("status", "updated");
+            resp.put("id", saved.getId().toString());
+            resp.put("comment", saved.getComment());
+            resp.put("rating", saved.getRating());
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // DELETE /api/reviews/{id}  — Admin หรือเจ้าของลบรีวิวได้
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable UUID id) {
         try {

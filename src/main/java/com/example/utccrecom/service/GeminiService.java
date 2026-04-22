@@ -127,9 +127,9 @@ public class GeminiService {
 
     // 3. วิเคราะห์รีวิว — สรุปความเห็นจากรีวิวทั้งหมด
     public String analyzeReviews(String placeName, String reviewsText) {
-        String prompt = "วิเคราะห์รีวิวของ '" + placeName + "' ต่อไปนี้และสรุปเป็นภาษาไทย " +
-                "ในรูปแบบ: จุดเด่น, จุดด้อย, และสรุปโดยรวม " +
-                "กระชับไม่เกิน 3-4 ประโยค รีวิว: " + reviewsText;
+        String prompt = "สรุปรีวิวของ '" + placeName + "' เป็นภาษาไทย กระชับ ไม่เกิน 3 ประโยค "
+                + "แบ่งเป็น จุดเด่น / จุดด้อย / สรุปโดยรวม "
+                + "ห้ามใส่หัวข้อซ้ำชื่อร้าน ตอบตรงๆ เลย รีวิว: " + reviewsText;
         return callGemini(prompt);
     }
 }
