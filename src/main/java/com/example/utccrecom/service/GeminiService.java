@@ -59,9 +59,11 @@ public class GeminiService {
                             .path("text").asText().trim();
                 }
             }
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 429) return "__RATE_LIMITED__";
+            System.err.println("Gemini API Failed: " + e.getStatusCode());
         } catch (Exception e) {
-            String errMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            System.err.println("Gemini API Failed: " + errMsg.substring(0, Math.min(errMsg.length(), 100)));
+            System.err.println("Gemini API Failed: " + e.getClass().getSimpleName());
         }
         return "";
     }
@@ -118,9 +120,11 @@ public class GeminiService {
                     return candidates.get(0).path("content").path("parts").get(0).path("text").asText().trim();
                 }
             }
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 429) return "__RATE_LIMITED__";
+            System.err.println("Gemini Chat Failed: " + e.getStatusCode());
         } catch (Exception e) {
-            String errMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            System.err.println("Gemini Chat Failed: " + errMsg.substring(0, Math.min(errMsg.length(), 100)));
+            System.err.println("Gemini Chat Failed: " + e.getClass().getSimpleName());
         }
         return "";
     }

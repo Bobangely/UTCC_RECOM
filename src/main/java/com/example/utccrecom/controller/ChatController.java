@@ -64,6 +64,8 @@ public class ChatController {
 
         if (reply == null || reply.isEmpty()) {
             reply = "ขออภัย ไม่สามารถตอบได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง";
+        } else if (reply.equals("__RATE_LIMITED__")) {
+            reply = "ขออภัย ระบบ AI ถูกใช้งานหนักเกินไปในขณะนี้ กรุณารอสักครู่แล้วลองใหม่อีกครั้ง";
         }
 
         return ResponseEntity.ok(Map.of("reply", reply));

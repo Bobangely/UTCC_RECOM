@@ -35,16 +35,16 @@ function displayResults(locations) {
     }
 
     let html = locations.map(location => {
-        const imageHtml = location.imageUrl
-            ? `<img src="${location.imageUrl}" alt="${location.name}" class="result-image">`
+        const imageHtml = location.image
+            ? `<img src="${location.image}" alt="${location.title}" class="result-image">`
             : `<div class="result-image placeholder-image"><span>No Image</span></div>`;
 
         return `
             <div class="result-item">
                 ${imageHtml}
                 <div class="result-details">
-                    <h3>${location.name}</h3>
-                    <p>${location.description}</p>
+                    <h3>${location.title}</h3>
+                    <p>${location.desc}</p>
                 </div>
             </div>
         `;

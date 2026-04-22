@@ -1559,7 +1559,8 @@ function appendChatMsg(text, role) {
     const messages = document.getElementById('chatbotMessages');
     const div = document.createElement('div');
     div.className = `chat-msg ${role}`;
-    div.innerHTML = `<div class="chat-bubble">${text.replace(/\n/g, '<br>')}</div>`;
+    const formatted = role === 'bot' ? renderMarkdown(text) : text.replace(/\n/g, '<br>');
+    div.innerHTML = `<div class="chat-bubble">${formatted}</div>`;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
 }

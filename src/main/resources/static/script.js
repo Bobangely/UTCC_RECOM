@@ -789,22 +789,6 @@ function translateCategory(cat) {
     return 'ทั่วไป';
 }
 
-// API Calls — main page (CAMPUS places only)
-async function fetchAllUniversityItems() {
-    showLoading();
-    try {
-        const res = await fetch(API_UNIVERSITY_ITEMS);
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        allUniversityItems = await res.json();
-        applyFiltersAndSearch(); // Apply filters and search query after fetching all items
-    } catch (err) {
-        showError('ไม่สามารถดึงข้อมูลได้ กรุณาลองตรวจสอบเซิร์ฟเวอร์');
-        console.error(err);
-    }
-}
-
 function applyFiltersAndSearch() {
     let filteredItems = [...allUniversityItems];
 
@@ -820,12 +804,25 @@ function applyFiltersAndSearch() {
     // Apply search query filter
     if (currentSearchQuery) {
         const query = currentSearchQuery.toLowerCase();
+        const categoryMap = {
+            'ร้านอาหาร': 'restaurant', 'อาหาร': 'restaurant',
+            'คาเฟ่': 'cafe', 'กาแฟ': 'cafe',
+            'ที่อ่านหนังสือ': 'study area', 'study': 'study area'
+        };
+        const mappedCategory = Object.keys(categoryMap).find(k => query.includes(k) || k.includes(query));
+
         filteredItems = filteredItems.filter(item => {
+            if (mappedCategory) {
+                // category search: buildings ออก, places เช็คเฉพาะ category
+                if (item.type === 'building') return false;
+                return (item.category || '').toLowerCase() === categoryMap[mappedCategory];
+            }
+
             const name = item.name || item.title || '';
             const description = item.description || item.desc || '';
             const tags = (item.tags || []).join(' ');
-            const faculty = item.faculty || '';
-            const facilities = item.facilities || '';
+            const faculty = item.type === 'building' ? (item.faculty || '') : '';
+            const facilities = item.type === 'building' ? (item.facilities || '') : '';
 
             return name.toLowerCase().includes(query) ||
                    description.toLowerCase().includes(query) ||
@@ -835,8 +832,10 @@ function applyFiltersAndSearch() {
         });
     }
 
-    // Sort data A-Z by name/title
+    // Sort: buildings first, then places, each group A-Z
     const sortedData = filteredItems.sort((a, b) => {
+        if (a.type === 'building' && b.type !== 'building') return -1;
+        if (a.type !== 'building' && b.type === 'building') return 1;
         const nameA = a.name || a.title || '';
         const nameB = b.name || b.title || '';
         return nameA.localeCompare(nameB, 'th');
