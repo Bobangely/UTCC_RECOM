@@ -61,10 +61,11 @@ public class SearchController {
     }
 
     private List<Building> searchBuildings(String keywords) {
+        List<Building> all = buildingRepository.findAll();
         return Arrays.stream(keywords.split(","))
                 .map(String::trim)
                 .filter(kw -> !kw.isEmpty())
-                .flatMap(kw -> buildingRepository.findAll().stream()
+                .flatMap(kw -> all.stream()
                         .filter(b -> (b.getTitle() != null && b.getTitle().toLowerCase().contains(kw.toLowerCase())) ||
                                      (b.getDesc() != null && b.getDesc().toLowerCase().contains(kw.toLowerCase()))))
                 .distinct()
