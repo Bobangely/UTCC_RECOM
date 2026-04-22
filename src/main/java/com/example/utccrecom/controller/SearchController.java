@@ -1,10 +1,8 @@
 package com.example.utccrecom.controller;
 
-import com.example.utccrecom.entity.Location;
+import com.example.utccrecom.entity.Building;
+import com.example.utccrecom.repository.BuildingRepository;
 import com.example.utccrecom.service.GeminiService;
-import com.example.utccrecom.service.NearbyPlaceService;
-import com.example.utccrecom.service.PlaceService;
-import com.example.utccrecom.service.SupabaseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,24 +10,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
 public class SearchController {
 
     private final GeminiService geminiService;
-    private final SupabaseService supabaseService;
-    private final PlaceService placeService;
-    private final NearbyPlaceService nearbyPlaceService;
+    private final BuildingRepository buildingRepository;
 
-    public SearchController(GeminiService geminiService, SupabaseService supabaseService,
-                            PlaceService placeService, NearbyPlaceService nearbyPlaceService) {
+    public SearchController(GeminiService geminiService, BuildingRepository buildingRepository) {
         this.geminiService = geminiService;
-        this.supabaseService = supabaseService;
-        this.placeService = placeService;
-        this.nearbyPlaceService = nearbyPlaceService;
+        this.buildingRepository = buildingRepository;
     }
 
     @PostMapping("/search")
@@ -38,11 +33,9 @@ public class SearchController {
             String searchTerm = request.get("query");
 
             if (searchTerm == null || searchTerm.trim().isEmpty()) {
-                List<Location> allLocations = supabaseService.findAllLocations();
-                return ResponseEntity.ok(allLocations);
+                return ResponseEntity.ok(buildingRepository.findAll());
             }
 
-            // Smart Search: ให้ Gemini เข้าใจ intent และแปลงเป็น keywords
             String promptText = "คุณคือ Smart Search สำหรับมหาวิทยาลัยหอการค้าไทย (UTCC) " +
                     "วิเคราะห์ความต้องการของผู้ใช้และแปลงเป็น keywords ภาษาไทย/อังกฤษ " +
                     "ที่เกี่ยวข้องกับ: ชื่ออาคาร, คณะ, ร้านอาหาร, คาเฟ่, สิ่งอำนวยความสะดวก, หมวดหมู่ " +
@@ -56,8 +49,8 @@ public class SearchController {
                 keywords = searchTerm;
             }
 
-            List<Location> locations = supabaseService.searchLocations(keywords);
-            return ResponseEntity.ok(locations);
+            List<Building> results = searchBuildings(keywords);
+            return ResponseEntity.ok(results);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -65,5 +58,16 @@ public class SearchController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Unknown error"));
         }
+    }
+
+    private List<Building> searchBuildings(String keywords) {
+        return Arrays.stream(keywords.split(","))
+                .map(String::trim)
+                .filter(kw -> !kw.isEmpty())
+                .flatMap(kw -> buildingRepository.findAll().stream()
+                        .filter(b -> (b.getTitle() != null && b.getTitle().toLowerCase().contains(kw.toLowerCase())) ||
+                                     (b.getDesc() != null && b.getDesc().toLowerCase().contains(kw.toLowerCase()))))
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

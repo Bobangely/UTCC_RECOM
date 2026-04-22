@@ -10,5 +10,4 @@ import java.util.UUID;
 @Repository
 public interface BuildingRepository extends JpaRepository<Building, UUID> {
     Optional<Building> findByBuildingKey(String buildingKey);
-    boolean existsByBuildingKey(String buildingKey);
 }

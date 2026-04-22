@@ -222,6 +222,20 @@
     <!-- ====== Modal Backdrop ====== -->
     <div class="modal-backdrop" id="modalBackdrop" onclick="closeAllModals()"></div>
 
+    <!-- ====== Lightbox (same as index.html) ====== -->
+    <div class="lightbox-overlay" id="lightboxOverlay" onclick="lightboxClickOutside(event)">
+        <button class="lightbox-close" onclick="closeLightbox()"><i class='bx bx-x'></i></button>
+        <img class="lightbox-img" id="lightboxImg" src="" alt="">
+        <div class="lightbox-controls">
+            <button class="lightbox-btn" onclick="lightboxPrev()"><i class='bx bx-chevron-left'></i></button>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+                <span class="lightbox-counter" id="lightboxCounter">1 / 1</span>
+                <div class="lightbox-dots" id="lightboxDots"></div>
+            </div>
+            <button class="lightbox-btn" onclick="lightboxNext()"><i class='bx bx-chevron-right'></i></button>
+        </div>
+    </div>
+
     <!-- ====== Panel Backdrop ====== -->
     <div class="panel-backdrop" id="panelBackdrop" onclick="closeNearbyPanels()"></div>
 

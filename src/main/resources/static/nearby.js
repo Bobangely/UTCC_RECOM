@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 //  UTCC Nearby — nearby.js
 //  Admin & Comment system + localStorage
 // =============================================
@@ -478,21 +478,23 @@ function renderCards(places) {
 
         let imgHtml = '';
         const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
-        if (p.images && p.images.length > 1) {
+        const allImgs = (p.images && p.images.length > 0) ? p.images : (p.image ? [p.image] : [defaultImg]);
+        const placeImgKey = `lb_${p.id}`;
+        window[placeImgKey] = allImgs;
+        if (allImgs.length > 1) {
             imgHtml = `
             <div class="card-carousel-wrapper">
                 <button class="carousel-btn prev" onclick="scrollCarousel(event, this, -1)">❮</button>
                 <div class="card-carousel-container" onscroll="updateCarouselDots(this)">
-                    ${p.images.map(url => `<img class="carousel-img" src="${url}" onerror="this.src='${defaultImg}'" loading="lazy">`).join('')}
+                    ${allImgs.map((url, idx) => `<img class="carousel-img" src="${url}" onerror="this.src='${defaultImg}'" loading="lazy" onclick="openLightbox(window['${placeImgKey}'], ${idx})" style="cursor:zoom-in">`).join('')}
                 </div>
                 <button class="carousel-btn next" onclick="scrollCarousel(event, this, 1)">❯</button>
                 <div class="carousel-dots">
-                    ${p.images.map((_, idx) => `<span class="dot ${idx === 0 ? 'active' : ''}"></span>`).join('')}
+                    ${allImgs.map((_, idx) => `<span class="dot ${idx === 0 ? 'active' : ''}"></span>`).join('')}
                 </div>
             </div>`;
         } else {
-            const singleImg = (p.images && p.images.length === 1) ? p.images[0] : (p.image || defaultImg);
-            imgHtml = `<img src="${singleImg}" alt="${p.name}" loading="lazy" onerror="this.src='${defaultImg}'" class="carousel-img">`;
+            imgHtml = `<img src="${allImgs[0]}" alt="${p.name}" loading="lazy" onerror="this.src='${defaultImg}'" class="carousel-img" onclick="openLightbox(window['${placeImgKey}'], 0)" style="cursor:zoom-in">`;
         }
 
         return `
@@ -1606,4 +1608,56 @@ async function analyzeReviews(placeId) {
     }
     btn.innerHTML = `<i class='bx bx-bot'></i> AI สรุปรีวิว`;
     btn.disabled = false;
+}
+
+// ====== LIGHTBOX ======
+let _lbImages = [];
+let _lbIndex = 0;
+
+function openLightbox(images, index) {
+    _lbImages = images;
+    _lbIndex = index;
+    _renderLightbox();
+    document.getElementById('lightboxOverlay').classList.add('active');
+    document.addEventListener('keydown', _lightboxKeyHandler);
+}
+
+function closeLightbox() {
+    document.getElementById('lightboxOverlay').classList.remove('active');
+    document.removeEventListener('keydown', _lightboxKeyHandler);
+}
+
+function lightboxClickOutside(e) {
+    if (e.target === document.getElementById('lightboxOverlay')) closeLightbox();
+}
+
+function lightboxNext() {
+    _lbIndex = (_lbIndex + 1) % _lbImages.length;
+    _renderLightbox();
+}
+
+function lightboxPrev() {
+    _lbIndex = (_lbIndex - 1 + _lbImages.length) % _lbImages.length;
+    _renderLightbox();
+}
+
+function _lightboxKeyHandler(e) {
+    if (e.key === 'ArrowRight') lightboxNext();
+    else if (e.key === 'ArrowLeft') lightboxPrev();
+    else if (e.key === 'Escape') closeLightbox();
+}
+
+function _renderLightbox() {
+    const img = document.getElementById('lightboxImg');
+    img.style.opacity = '0';
+    setTimeout(() => { img.src = _lbImages[_lbIndex]; img.style.opacity = '1'; }, 120);
+    document.getElementById('lightboxCounter').textContent = (_lbIndex + 1) + ' / ' + _lbImages.length;
+    const dotsEl = document.getElementById('lightboxDots');
+    dotsEl.innerHTML = '';
+    _lbImages.forEach(function(_, i) {
+        const dot = document.createElement('div');
+        dot.className = 'lightbox-dot' + (i === _lbIndex ? ' active' : '');
+        dot.onclick = function() { _lbIndex = i; _renderLightbox(); };
+        dotsEl.appendChild(dot);
+    });
 }
