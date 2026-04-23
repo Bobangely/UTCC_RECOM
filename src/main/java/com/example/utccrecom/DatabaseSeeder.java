@@ -27,20 +27,20 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         try { seedBuildings(); } catch (Exception e) {
-            System.err.println("⚠️  Failed to seed buildings: " + e.getMessage());
+            System.err.println("⚠️  เพาะข้อมูลอาคารไม่สำเร็จ: " + e.getMessage());
         }
         try { seedCategories(); } catch (Exception e) {
-            System.err.println("⚠️  Failed to seed categories: " + e.getMessage());
+            System.err.println("⚠️  เพาะข้อมูลหมวดหมู่ไม่สำเร็จ: " + e.getMessage());
         }
         try { seedNearbyPlaces(); } catch (Exception e) {
-            System.err.println("⚠️  Failed to seed nearby places: " + e.getMessage());
+            System.err.println("⚠️  เพาะข้อมูลสถานที่ใกล้เคียงไม่สำเร็จ: " + e.getMessage());
         }
     }
 
-    // ── Buildings ─────────────────────────────────────────────
+    // อาคาร
     private void seedBuildings() {
         if (buildingRepository.count() == 0) {
-            System.out.println("Seeding buildings...");
+            System.out.println("เพาะข้อมูลอาคาร...");
             buildingRepository.save(createBuilding("อาคาร 1", "อาคาร 1",
                     "อาคารเรียนรวมสำหรับนักศึกษาชั้นปีต้น มีห้องเรียนขนาดใหญ่สำหรับวิชาพื้นฐาน",
                     "5 ชั้น", "เรียนรวม / วิชาพื้นฐาน", "07:00 – 20:00", "ห้องเรียนขนาดใหญ่, ห้องน้ำ",
@@ -57,10 +57,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
     }
 
-    // ── Nearby Categories ──────────────────────────
+    // หมวดหมู่สถานที่ใกล้เคียง
     private void seedCategories() {
         if (nearbyCategoryRepository.count() == 0) {
-            System.out.println("Seeding nearby categories...");
+            System.out.println("เพาะข้อมูลหมวดหมู่สถานที่ใกล้เคียง...");
             nearbyCategoryRepository.save(new NearbyCategory("all",       "ทั้งหมด",             "bx-grid-alt",       0));
             nearbyCategoryRepository.save(new NearbyCategory("Restaurant","ร้านอาหาร",           "bx-restaurant",     1));
             nearbyCategoryRepository.save(new NearbyCategory("Cafe",      "คาเฟ่",               "bx-coffee",         2));
@@ -68,14 +68,14 @@ public class DatabaseSeeder implements CommandLineRunner {
             nearbyCategoryRepository.save(new NearbyCategory("หอพัก",    "หอพัก",               "bx-building-house", 4));
             nearbyCategoryRepository.save(new NearbyCategory("Other",     "ร้านสะดวกซื้อ",        "bx-store",          5));
             nearbyCategoryRepository.save(new NearbyCategory("Transport", "ขนส่ง / MRT",         "bx-bus",            6));
-            System.out.println("✅ Seeded " + nearbyCategoryRepository.count() + " categories.");
+            System.out.println("✅ เพาะข้อมูลสำเร็จ " + nearbyCategoryRepository.count() + " หมวดหมู่");
         }
     }
 
-    // ── Nearby Places (3 examples) ────────────────────────────
+    // สถานที่ใกล้เคียง
     private void seedNearbyPlaces() {
         if (nearbyPlaceRepository.count() == 0) {
-            System.out.println("Seeding 3 nearby place examples...");
+            System.out.println("เพาะข้อมูลสถานที่ใกล้เคียง 3 ตัวอย่าง...");
 
             // ร้านอาหาร
             nearbyPlaceRepository.save(createNearbyPlace(
@@ -110,11 +110,10 @@ public class DatabaseSeeder implements CommandLineRunner {
                     Arrays.asList("https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=600")
             ));
 
-            System.out.println("✅ Seeded " + nearbyPlaceRepository.count() + " nearby places.");
+            System.out.println("✅ เพาะข้อมูลสำเร็จ " + nearbyPlaceRepository.count() + " สถานที่ใกล้เคียง");
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────
     private NearbyPlace createNearbyPlace(String name, String category, String description,
                                           String distance, double rating, String mapsUrl,
                                           java.util.List<String> tags, java.util.List<String> images) {

@@ -5,21 +5,21 @@ import java.util.UUID;
 
 public class UniversityItem {
     private UUID id;
-    private String type; // "building" or "place"
+    private String type; // "building" หรือ "place"
     private String title;
     private String description;
     private String imageUrl;
     private List<String> images;
     private String category;
     
-    // Additional fields for buildings
+    // ฟิลด์เพิ่มเติมสำหรับอาคาร
     private String buildingKey;
     private String floors;
     private String faculty;
     private String hours;
     private String facilities;
 
-    // Getters and Setters
+    // Getters และ Setters
 
     public UUID getId() {
         return id;

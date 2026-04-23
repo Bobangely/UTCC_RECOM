@@ -17,7 +17,7 @@
     <nav class="nearby-navbar">
         <div class="nearby-nav-content">
 
-            <!-- Left: Back to main -->
+            <!-- ซ้าย: กลับหน้าหลัก -->
             <div class="nav-left">
                 <a href="index.html" class="nav-back-btn">
                     <i class='bx bx-chevron-left'></i>
@@ -25,14 +25,14 @@
                 </a>
             </div>
 
-            <!-- Center: Logo -->
+            <!-- กลาง: โลโก้ -->
             <div class="nearby-logo">
                 <i class='bx bx-buildings'></i>
                 <span>UTCCRECOM</span>
                 <span class="nearby-logo-badge">สถานที่รอบมหาวิทยาลัย</span>
             </div>
 
-            <!-- Right: Actions -->
+            <!-- ขวา: ปุ่มต่างๆ -->
             <div class="nav-actions">
                 <button class="nav-icon-btn" id="settingsNavBtn" onclick="toggleNearbySettings()" title="ตั้งค่า">
                     <i class='bx bx-cog'></i>
@@ -42,7 +42,7 @@
         </div>
     </nav>
 
-    <!-- ====== Add / Edit Place Modal ====== -->
+    <!-- ====== Modal เพิ่ม / แก้ไขสถานที่ ====== -->
     <div class="modal-overlay" id="placeModal">
         <div class="modal admin-modal">
             <div class="modal-header">
@@ -81,10 +81,10 @@
                         <input type="url" id="pm_image_url_add" class="form-input" placeholder="หรือวาง URL รูปภาพที่นี่..." style="flex:1;">
                         <button type="button" class="btn-secondary" onclick="addImageUrl()" style="padding: 0.5rem 1rem; width:auto;"><i class='bx bx-plus'></i> เพิ่ม</button>
                     </div>
-                    <!-- Hidden field to safely keep track of URL string processing if needed -->
+                    <!-- ช่องซ่อนเพื่อติดตามการแปลง URL string ถ้าจำเป็น -->
                     <input type="hidden" id="pm_image">
                     
-                    <!-- Preview Gallery -->
+                    <!-- แสดงตัวอย่างรูปภาพ -->
                     <div id="pm_gallery_preview" style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap; display:none;">
                     </div>
                 </div>
@@ -130,7 +130,7 @@
         </div>
     </div>
 
-    <!-- ====== Comment Modal ====== -->
+    <!-- ====== Modal ความคิดเห็น ====== -->
     <div class="modal-overlay" id="commentModal">
         <div class="modal">
             <div class="modal-header">
@@ -170,7 +170,7 @@
         </div>
     </div>
 
-    <!-- ====== Edit Comment Modal ====== -->
+    <!-- ====== Modal แก้ไขความคิดเห็น ====== -->
     <div class="modal-overlay" id="editCommentModal">
         <div class="modal">
             <div class="modal-header">
@@ -205,7 +205,7 @@
         </div>
     </div>
 
-    <!-- ====== Delete Confirm Modal ====== -->
+    <!-- ====== Modal ยืนยันการลบ ====== -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal" style="max-width:380px">
             <div class="modal-body" style="text-align:center;padding:2rem">
@@ -219,10 +219,10 @@
             </div>
         </div>
     </div>
-    <!-- ====== Modal Backdrop ====== -->
+    <!-- ====== ฉากหลัง Modal ====== -->
     <div class="modal-backdrop" id="modalBackdrop" onclick="closeAllModals()"></div>
 
-    <!-- ====== Lightbox (same as index.html) ====== -->
+    <!-- ====== Lightbox (เหมือนกับ index.html) ====== -->
     <div class="lightbox-overlay" id="lightboxOverlay" onclick="lightboxClickOutside(event)">
         <button class="lightbox-close" onclick="closeLightbox()"><i class='bx bx-x'></i></button>
         <img class="lightbox-img" id="lightboxImg" src="" alt="">
@@ -236,13 +236,13 @@
         </div>
     </div>
 
-    <!-- ====== Panel Backdrop ====== -->
+    <!-- ====== ฉากหลัง Panel ====== -->
     <div class="panel-backdrop" id="panelBackdrop" onclick="closeNearbyPanels()"></div>
 
 
-    <!-- ====== Settings Side Panel ====== -->
+    <!-- ====== แผงตั้งค่า ====== -->
     <div class="side-panel" id="nearbySettingsPanel">
-        <!-- Header -->
+        <!-- ส่วนหัว -->
         <div class="settings-panel-header">
             <div class="settings-header-bg"></div>
             <div class="settings-header-content">
@@ -255,10 +255,10 @@
             <button class="settings-close-btn" onclick="closeNearbyPanels()"><i class='bx bx-x'></i></button>
         </div>
 
-        <!-- Body -->
+        <!-- เนื้อหา -->
         <div class="side-panel-body settings-body">
 
-            <!-- Theme -->
+            <!-- ธีม -->
             <div class="settings-section">
                 <div class="settings-section-label" id="nearbyLabelTheme">🎨 ธีม</div>
                 <div class="settings-card">
@@ -280,7 +280,7 @@
                 </div>
             </div>
 
-            <!-- Language -->
+            <!-- ภาษา -->
             <div class="settings-section">
                 <div class="settings-section-label" id="nearbyLabelLang">🌐 ภาษา</div>
                 <div class="settings-card">
@@ -337,7 +337,7 @@
                 </div>
             </div>
 
-            <!-- Admin Mode -->
+            <!-- โหมด Admin -->
             <div class="settings-section">
                 <div class="settings-section-label" id="labelAdminMode">⚙️ โหมด Admin</div>
                 <div class="settings-card">
@@ -359,7 +359,7 @@
                 </div>
             </div>
 
-            <!-- About -->
+            <!-- เกี่ยวกับ -->
             <div class="settings-section">
                 <div class="settings-section-label" id="nearbyLabelAbout">ℹ️ เกี่ยวกับ</div>
                 <div class="settings-about-card">
@@ -399,7 +399,7 @@
             </div>
         </div>
     </section>
-    <!-- Category filter moved to places-section header -->
+    <!-- หมวดหมู่ย้ายไปอยู่ในส่วนหัวของ places-section -->
 
     <main class="main-content">
 
@@ -446,12 +446,12 @@
         <div class="footer-content">
             <div class="footer-logo"><i class='bx bx-map-alt'></i> UTCC Recom</div>
             <p>ข้อมูลสถานที่รอบมหาวิทยาลัยหอการค้าไทย สำหรับนักศึกษาและบุคลากร</p>
-            <!-- Hidden admin trigger -->
+            <!-- ปุ่มซ่อนเพื่อเปิด admin -->
             <a href="index.html" class="footer-back-btn"><i class='bx bx-home'></i> กลับหน้าหลัก</a>
         </div>
     </footer>
 
-    <!-- AI Chatbot Bubble -->
+    <!-- ปุ่มลอย AI Chatbot -->
     <div class="chatbot-bubble" id="chatbotBubble" onclick="toggleChatbot()" title="UTCC AI Assistant">
         <i class='bx bx-bot'></i>
         <span class="chatbot-bubble-label">AI</span>

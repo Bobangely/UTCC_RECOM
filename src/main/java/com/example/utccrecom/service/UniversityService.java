@@ -25,18 +25,18 @@ public class UniversityService {
     @Autowired
     private PlaceService placeService;
 
-    // Cache for 30 seconds - reduces database load significantly
+    // แคช 30 วินาที
     @Cacheable(value = "universityItems", unless = "#result == null")
     public List<UniversityItem> getUniversityItems() {
         List<Building> buildings = buildingService.getAllBuildings();
-        List<Place> places = placeService.getAllPlaces(); // Changed from nearbyPlaceService.getAllNearbyPlaces()
+        List<Place> places = placeService.getAllPlaces(); // เปลี่ยนจาก nearbyPlaceService.getAllNearbyPlaces()
 
         logger.info("Found {} buildings", buildings.size());
-        logger.info("Found {} places", places.size()); // Changed log message
+        logger.info("พบ {} places", places.size()); // เปลี่ยนข้อความ log
 
         List<UniversityItem> universityItems = Stream.concat(
                 buildings.stream().map(this::mapBuildingToUniversityItem),
-                places.stream().map(this::mapPlaceToUniversityItem) // Changed to use mapPlaceToUniversityItem
+                places.stream().map(this::mapPlaceToUniversityItem) // เปลี่ยนเป็น mapPlaceToUniversityItem
         ).collect(Collectors.toList());
 
         logger.info("Total university items: {}", universityItems.size());
@@ -44,7 +44,7 @@ public class UniversityService {
         return universityItems;
     }
 
-    // Clear cache when data changes
+    // ล้าง cache เมื่อข้อมูลเปลี่ยนแปลง
     @CacheEvict(value = "universityItems", allEntries = true)
     public void clearCache() {
         logger.info("University items cache cleared");
@@ -59,9 +59,7 @@ public class UniversityService {
         item.setDescription(building.getDesc());
         item.setImageUrl(building.getImage());
         item.setImages(building.getImages());
-        item.setCategory("University"); // Buildings are part of the university
-        
-        // Add missing fields
+        item.setCategory("University"); // อาคารเป็นส่วนหนึ่งของมหาวิทยาลัย
         item.setFloors(building.getFloors());
         item.setFaculty(building.getFaculty());
         item.setHours(building.getHours());

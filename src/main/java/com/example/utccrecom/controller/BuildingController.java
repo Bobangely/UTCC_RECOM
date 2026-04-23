@@ -41,7 +41,7 @@ public class BuildingController {
     @PostMapping
     public Building createBuilding(@RequestBody Building building) {
         Building saved = buildingService.saveBuilding(building);
-        universityService.clearCache(); // Clear cache after create
+        universityService.clearCache(); // ล้าง cache หลังสร้างข้อมูล
         return saved;
     }
 
@@ -63,24 +63,24 @@ public class BuildingController {
             existing.setFacilities(details.getFacilities());
             
             Building saved = buildingService.saveBuilding(existing);
-            universityService.clearCache(); // Clear cache after update
+            universityService.clearCache(); // ล้าง cache หลังอัปเดตข้อมูล
             return ResponseEntity.ok(saved);
         }
         return ResponseEntity.notFound().build();
     }
     
-    // update by building key (for simpler frontend integration)
+    // อัปเดตด้วย building key
     @PutMapping("/key/{buildingKey}")
     public ResponseEntity<Building> updateBuildingByKey(@PathVariable String buildingKey, @RequestBody Building details) {
         Building updated = buildingService.updateBuildingData(buildingKey, details);
-        universityService.clearCache(); // Clear cache after update
+        universityService.clearCache(); // ล้าง cache หลังอัปเดตข้อมูล
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBuilding(@PathVariable UUID id) {
         buildingService.deleteBuilding(id);
-        universityService.clearCache(); // Clear cache after delete
+        universityService.clearCache(); // ล้าง cache หลังลบข้อมูล
         return ResponseEntity.noContent().build();
     }
 }

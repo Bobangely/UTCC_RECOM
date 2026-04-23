@@ -45,7 +45,6 @@ public class NearbyPlaceService {
         NearbyPlace existing = nearbyPlaceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Place not found with id: " + id));
 
-        // Partial update: only overwrite non-null fields
         if (details.getName() != null) existing.setName(details.getName());
         if (details.getDescription() != null) existing.setDescription(details.getDescription());
         if (details.getCategory() != null) existing.setCategory(details.getCategory());

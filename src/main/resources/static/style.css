@@ -17,7 +17,7 @@
     --input-bg: #ffffff;
 }
 
-/* Dark Mode */
+/* โหมดมืด */
 [data-theme="dark"] {
     --bg-color: #0f172a;
     --card-bg: #1e293b;
@@ -60,7 +60,7 @@ body {
     line-height: 1.6;
 }
 
-/* Navbar */
+/* แถบนำทาง */
 .navbar {
     background: var(--navbar-bg);
     border-bottom: 2px solid var(--navbar-border);
@@ -112,7 +112,7 @@ body {
     gap: 0.5rem;
 }
 
-/* Nav Icon Buttons */
+/* ปุ่มไอคอนแถบนำทาง */
 .nav-icon-btn {
     display: flex;
     align-items: center;
@@ -160,7 +160,7 @@ body {
 
 .nav-btn-label { font-size: 0.85rem; }
 
-/* Buttons */
+/* ปุ่ม */
 .btn-primary {
     background-color: var(--primary-color);
     color: white;
@@ -224,14 +224,14 @@ body {
     margin-top: 1rem;
 }
 
-/* Main Container */
+/* คอนเทนเนอร์หลัก */
 .container {
     max-width: 100%;
     margin: 0 auto;
     padding: 0;
 }
 
-/* ====== Full-Screen Hero Landing (UTCC Style) ====== */
+/* ====== Hero Landing เต็มหน้าจอ (UTCC Style) ====== */
 .hero-landing {
     position: relative;
     width: 100%;
@@ -254,7 +254,7 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* Animated circles bg decoration */
+/* วงกลมเคลื่อนไหวเป็นพื้นหลัง */
 .hero-landing::before {
     content: '';
     position: absolute;
@@ -286,7 +286,7 @@ body {
 .hero-bg-overlay {
     position: absolute;
     inset: 0;
-    /* UTCC Campus - Beautiful sunset view of the iconic building */
+    /* ภาพมหาวิทยาลัยหอการค้าไทย */
     background: url('UTCC-2-scaled-1.jpg') center/cover no-repeat;
     opacity: 0.25;
 }
@@ -394,7 +394,7 @@ body {
     transform: translateY(-3px);
 }
 
-/* Side-by-side CTA buttons */
+/* ปุ่ม CTA เรียงชิดกัน */
 .hero-cta-group {
     display: flex;
     gap: 1rem;
@@ -402,7 +402,7 @@ body {
     flex-wrap: wrap;
 }
 
-/* Outline / Ghost variant */
+/* ปุ่มแบบ Outline / Ghost */
 .hero-cta-outline {
     background: transparent;
     color: #ffffff;
@@ -442,7 +442,7 @@ body {
     color: rgba(255,255,255,0.9);
 }
 
-/* Map section wrapper */
+/* กรอบส่วนแผนที่ */
 #mapSection {
     max-width: 1200px;
     margin: 0 auto;
@@ -465,7 +465,7 @@ body {
 
 /* ================================================== */
 
-/* Hero Section (existing map wrapper header) */
+/* ส่วน Hero (ส่วนหัวแผนที่เดิม) */
 .hero {
     text-align: center;
     margin-bottom: 2.5rem;
@@ -486,7 +486,7 @@ body {
     margin-bottom: 2rem;
 }
 
-/* Interactive Map CSS */
+/* CSS แผนที่แบบ Interactive */
 .campus-map-wrapper {
     width: 100%;
     margin: 1.5rem 0 2rem 0;
@@ -509,7 +509,7 @@ body {
 }
 
 .map-container::after {
-    /* Subtle overlay to make pins pop more */
+    /* เอฟเฟกต์ overlay เบาๆ เพื่อให้ pin โดดเด่นขึ้น */
     content: '';
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -527,7 +527,7 @@ body {
     object-position: center;
 }
 
-/* Hotspots */
+/* จุดกดบนแผนที่ */
 .map-hotspot {
     position: absolute;
     transform: translate(-50%, -100%);
@@ -540,7 +540,7 @@ body {
 
 .hotspot-icon {
     font-size: 2rem;
-    color: #ef4444; /* vivid red for contrast */
+    color: #ef4444; /* สีแดงเข้มเพื่อความชัดเจน */
     filter: drop-shadow(0 4px 5px rgba(0,0,0,0.4));
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s;
     position: relative;
@@ -570,7 +570,7 @@ body {
     100% { transform: translateX(-50%) scale(4); opacity: 0; }
 }
 
-/* Tooltip on Hover */
+/* Tooltip เมื่อ hover */
 .hotspot-tooltip {
     position: absolute;
     bottom: 100%;
@@ -606,7 +606,7 @@ body {
     transform: translateY(-8px);
 }
 
-/* Browser Fixed Building Info Panel */
+/* แผงข้อมูลอาคารแบบ Fixed */
 .building-info-panel {
     position: fixed;
     top: 0;
@@ -626,7 +626,7 @@ body {
 
 .building-info-panel.active { right: 0; }
 
-/* Panel Header */
+/* ส่วนหัวของ Panel */
 .panel-header {
     display: flex;
     align-items: center;
@@ -803,7 +803,7 @@ body {
 
 .lightbox-dot.active { background: white; }
 
-/* Image Manager (edit mode) */
+/* ตัวจัดการรูปภาพ (โหมดแก้ไข) */
 .img-manager {
     display: flex;
     flex-wrap: wrap;
@@ -849,7 +849,7 @@ body {
 
 .img-manager-delete:hover { background: #ef4444; }
 
-/* Photo count badge on tooltip */
+/* ป้ายนับจำนวนรูปบน tooltip */
 .hotspot-photo-badge {
     display: inline-block;
     background: rgba(255,255,255,0.25);
@@ -876,7 +876,7 @@ body {
     font-weight: 700;
 }
 
-/* Detail rows */
+/* แถวรายละเอียด */
 .panel-detail-grid { margin: 0.75rem 0; display: flex; flex-direction: column; gap: 0.5rem; }
 
 .panel-detail-row {
@@ -893,7 +893,7 @@ body {
 .pd-label { color: var(--text-muted); flex-shrink: 0; min-width: 120px; }
 .pd-val { color: var(--text-main); font-weight: 500; }
 
-/* Edit form */
+/* ฟอร์มแก้ไข */
 .pedit-group { margin-bottom: 0.75rem; }
 .pedit-label {
     display: block;
@@ -924,7 +924,7 @@ body {
 }
 .pedit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 
-/* Dark mode support */
+/* รองรับโหมดมืด */
 [data-theme="dark"] .building-info-panel {
     background: #1e293b;
     border-color: #334155;
@@ -991,7 +991,7 @@ body {
     transform: translateY(-1px);
 }
 
-/* Filter Tags */
+/* แท็กกรอง */
 .filter-tags {
     display: flex;
     justify-content: center;
@@ -1035,7 +1035,7 @@ body {
     transform: translateY(-1px);
 }
 
-/* Places Section Header */
+/* ส่วนหัวสถานที่ */
 .places-section-header {
     max-width: 1200px;
     margin: 1.5rem auto 0;
@@ -1079,7 +1079,7 @@ body {
     margin: 0;
 }
 
-/* Places Grid */
+/* ตารางสถานที่ */
 .places-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -1124,7 +1124,7 @@ body {
 .place-card:hover .card-img.single { transform: scale(1.07); }
 .place-card:hover .card-gallery-slider .slide-item { transform: scale(1.04); }
 
-/* Gradient overlay on bottom of image */
+/* เอฟเฟกต์ gradient ด้านล่างของรูป */
 .card-img-overlay {
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -1134,7 +1134,7 @@ body {
     z-index: 1;
 }
 
-/* Category badge on top of image */
+/* ป้ายหมวดหมู่บนรูป */
 .card-cat-overlay {
     position: absolute;
     top: 12px;
@@ -1155,7 +1155,7 @@ body {
     text-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
-/* Card Image Gallery Slider */
+/* Slider รูปภาพบนการ์ด */
 .card-gallery-slider {
     display: flex;
     overflow-x: auto;
@@ -1190,7 +1190,7 @@ body {
     z-index: 2;
 }
 
-/* Favorite heart button on card */
+/* ปุ่มหัวใจรายการโปรดบนการ์ด */
 .fav-btn {
     position: absolute;
     top: 10px;
@@ -1288,7 +1288,7 @@ body {
     color: #93c5fd;
 }
 
-/* Card Footer */
+/* ส่วนท้ายการ์ด */
 .card-footer {
     display: flex;
     justify-content: space-between;
@@ -1324,7 +1324,7 @@ body {
     flex-shrink: 0;
 }
 
-/* Card Action Buttons */
+/* ปุ่มกระทำบนการ์ด */
 .card-actions {
     display: flex;
     gap: 0.4rem;
@@ -1385,7 +1385,7 @@ body {
     color: #fca5a5;
 }
 
-/* Modal Overlay */
+/* หน้าต่าง Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -1480,7 +1480,7 @@ body {
 .modal-body::-webkit-scrollbar { width: 5px; }
 .modal-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-/* Section dividers inside modal */
+/* เส้นคั่นภายใน Modal */
 .modal-section-title {
     font-size: 0.7rem;
     font-weight: 700;
@@ -1536,7 +1536,7 @@ body {
 
 .form-group textarea { resize: vertical; min-height: 80px; }
 
-/* File upload zone */
+/* โซนอัปโหลดไฟล์ */
 .file-upload-zone {
     border: 2px dashed var(--border-color);
     border-radius: 12px;
@@ -1586,7 +1586,7 @@ body {
     gap: 0.75rem;
 }
 
-/* Modal save button */
+/* ปุ่มบันทึกใน Modal */
 .btn-modal-save {
     width: 100%;
     padding: 0.85rem;
@@ -1629,7 +1629,7 @@ body {
     font-size: 1rem;
 }
 
-/* ====== Side Panels (Favorites & Settings) ====== */
+/* ====== แผงด้านข้าง (รายการโปรด & ตั้งค่า) ====== */
 .side-panel {
     position: fixed;
     top: 0;
@@ -1646,7 +1646,7 @@ body {
     border-left: 1px solid var(--border-color);
 }
 
-/* ──── Premium Settings Panel Header ──── */
+/* ──── ส่วนหัวแผงตั้งค่าแบบ Premium ──── */
 .settings-panel-header {
     position: relative;
     padding: 1.5rem 1.25rem 1.25rem;
@@ -1727,7 +1727,7 @@ body {
 }
 .settings-close-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
 
-/* ──── Settings Body ──── */
+/* ──── เนื้อหาแผงตั้งค่า ──── */
 .settings-body {
     padding: 1rem 1.1rem 2rem !important;
     display: flex;
@@ -1752,7 +1752,7 @@ body {
     gap: 0.35rem;
 }
 
-/* Card container for each settings group */
+/* กล่องสำหรับแต่ละกลุ่มตั้งค่า */
 .settings-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -1810,7 +1810,7 @@ body {
     margin-top: 1px;
 }
 
-/* Action button (e.g., clear favorites) */
+/* ปุ่มกระทำ (เช่น ล้างรายการโปรด) */
 .settings-action-btn {
     display: flex;
     align-items: center;
@@ -1841,7 +1841,7 @@ body {
     color: #f87171;
 }
 
-/* About card */
+/* การ์ดเกี่ยวกับ */
 .settings-about-card {
     background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
     border: 1px solid #bfdbfe;
@@ -1890,7 +1890,7 @@ body {
     text-align: right;
 }
 
-/* Toggle Switch */
+/* สวิตช์เปิด/ปิด */
 .toggle-switch {
     position: relative;
     display: inline-block;
@@ -1924,7 +1924,7 @@ body {
 input:checked + .toggle-slider { background-color: var(--primary-color); }
 input:checked + .toggle-slider:before { transform: translateX(22px); }
 
-/* Language Toggle */
+/* สวิตช์ภาษา */
 .lang-toggle {
     display: flex;
     background: var(--bg-color);
@@ -1954,7 +1954,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     box-shadow: 0 2px 5px rgba(11,26,69,0.25);
 }
 
-/* ──── Favorites list  ──── */
+/* ──── รายการโปรด ──── */
 .fav-empty {
     display: flex;
     flex-direction: column;
@@ -2006,7 +2006,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 }
 .fav-remove-btn:hover { background: #fef2f2; color: #ef4444; border-color: #fca5a5; }
 
-/* ──── Dark mode overrides for new settings ──── */
+/* ──── โหมดมืดสำหรับตั้งค่าใหม่ ──── */
 [data-theme="dark"] .settings-card {
     background: var(--card-bg);
     border-color: var(--border-color);
@@ -2014,13 +2014,13 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 [data-theme="dark"] .lang-toggle { background: var(--card-bg); }
 [data-theme="dark"] .settings-about-logo { color: #93c5fd; }
 
-/* ──── List View mode ──── */
+/* ──── โหมดแสดงผลแบบ List ──── */
 .places-grid.list-view {
     grid-template-columns: 1fr;
     gap: 1rem;
 }
 
-/* Card becomes horizontal row */
+/* การ์ดเป็นแถวนอน */
 .places-grid.list-view .place-card {
     flex-direction: row;
     max-height: none;
@@ -2029,13 +2029,13 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     border-radius: 14px;
 }
 
-/* Disable the translateY lift in list mode */
+/* ปิดการยกขึ้นในโหมด list */
 .places-grid.list-view .place-card:hover {
     transform: none;
     box-shadow: 0 6px 20px rgba(11,26,69,0.12);
 }
 
-/* Left: image wrapper — fixed width, full card height */
+/* ซ้าย: กรอบรูปภาพ — ความกว้างคงที่, ความสูงเต็มการ์ด */
 .places-grid.list-view .card-img-wrapper {
     width: 220px;
     min-width: 220px;
@@ -2045,7 +2045,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     align-self: stretch;
 }
 
-/* Image covers wrapper fully */
+/* รูปครอบคลุมกรอบเต็ม */
 .places-grid.list-view .card-img {
     width: 100%;
     height: 100%;
@@ -2065,55 +2065,54 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     height: 100%;
 }
 
-/* Right: content column — flex column so footer sticks to bottom */
+/* คอลัมน์เนื้อหา */
 .places-grid.list-view .card-content {
     flex: 1;
     min-width: 0;
-    padding: 0.9rem 1.25rem 0;   /* no bottom padding — footer handles it */
+    padding: 0.9rem 1.25rem 0;
     display: flex;
     flex-direction: column;
-    overflow: visible;            /* must NOT be hidden — footer must show */
+    overflow: visible;
 }
 
-/* Clamp description to 2 lines */
+/* คำอธิบาย */
 .places-grid.list-view .card-desc {
     -webkit-line-clamp: 2;
     line-clamp: 2;
     flex-shrink: 0;
 }
 
-/* Tags — limit to 1 row in list mode */
+/* Tags — จำกัดแถว */
 .places-grid.list-view .card-tags {
     flex-wrap: nowrap;
     overflow: hidden;
     margin-bottom: 0;
 }
 
-/* Footer pushed to bottom of right column */
+/* เลื่อนหน้าจอแถบขวา */
 .places-grid.list-view .card-footer {
-    margin-top: auto;             /* push footer to bottom */
+    margin-top: auto;
     border-top: 1px solid var(--border-color);
     padding: 0.65rem 1.25rem;
     flex-shrink: 0;
 }
 
-/* Photo count badge */
+/* ป้ายนับจำนวนภาพ */
 .places-grid.list-view .card-photo-count {
     bottom: 6px;
     right: 6px;
 }
 
-/* Fav button inside image wrapper */
+/* ปุ่มถูกใจรูปภาพ */
 .places-grid.list-view .fav-btn {
     top: 8px;
     right: 8px;
 }
 
-/* ──── Hide images mode ──── */
+/* ──── โหมดซ่อนรูปภาพ ──── */
 body.hide-images .card-img-wrapper { display: none; }
 body.hide-images .place-card { flex-direction: column; }
 
-/* ──── Card Size Variants (kept for JS compatibility) ──── */
 .places-grid.size-small {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
@@ -2121,7 +2120,7 @@ body.hide-images .place-card { flex-direction: column; }
     grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
 }
 
-/* ── Shared side panel open/close & Favorites header ── */
+/* ── แถบด้านข้าง / สถานที่โปรด ── */
 .side-panel.active { right: 0; }
 
 .side-panel-header {
@@ -2177,7 +2176,7 @@ body.hide-images .place-card { flex-direction: column; }
     pointer-events: all;
 }
 
-/* ── Skeleton Loading ─────────────────────── */
+/* ── โหลดข้อมูลแบบ Skeleton ──────────────────────── */
 @keyframes shimmer {
     0%   { background-position: -600px 0; }
     100% { background-position: 600px 0; }
@@ -2215,7 +2214,7 @@ body.hide-images .place-card { flex-direction: column; }
     background-size: 600px 100%;
 }
 
-/* Gallery Preview Styles */
+/* ขยายภาพ */
 .gallery-preview {
     display: flex;
     gap: 0.5rem;

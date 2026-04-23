@@ -1,34 +1,34 @@
-﻿const API_UNIVERSITY_ITEMS = '/api/university/items'; // New API endpoint
-const API_PLACES = '/api/places'; // API for places
-const API_BUILDINGS = '/api/buildings'; // API for buildings
+﻿const API_UNIVERSITY_ITEMS = '/api/university/items'; // endpoint API ใหม่
+const API_PLACES = '/api/places'; // API สำหรับสถานที่
+const API_BUILDINGS = '/api/buildings'; // API สำหรับอาคาร
 
 let currentCategory = '';
-let currentSearchQuery = ''; // Track current search query
+let currentSearchQuery = ''; // ติดตามคำค้นหาปัจจุบัน
 let currentLang = localStorage.getItem('lang') || 'th';
 let favorites = JSON.parse(localStorage.getItem('utcc_favorites') || '[]');
-let allUniversityItems = []; // Store all fetched items for client-side filtering
-let adminMode = false; // Admin mode state
+let allUniversityItems = []; // เก็บข้อมูลทั้งหมดสำหรับกรองฝั่ง client
+let adminMode = false; // สถานะโหมด Admin
 
-// DOM Elements
+// องค์ประกอบ DOM
 const placesGrid = document.getElementById('placesGrid');
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const filterTags = document.querySelectorAll('.filter-tag');
 
-// Modal Elements
+// องค์ประกอบ Modal
 const addModal = document.getElementById('addModal');
 const addPlaceBtn = document.getElementById('addPlaceBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const addPlaceForm = document.getElementById('addPlaceForm');
 
-// Image handling for Add Place modal
-let addPlaceImages = []; // Array of {type: 'url'|'file', data: url|file}
+// จัดการรูปภาพสำหรับ Modal เพิ่มสถานที่
+let addPlaceImages = []; // อาร์เรย์ของ {type: 'url'|'file', data: url|file}
 
-// Image handling for Edit Place modal
-let editPlaceImages = []; // Array of {type: 'url'|'file', data: url|file}
+// จัดการรูปภาพสำหรับ Modal แก้ไขสถานที่
+let editPlaceImages = []; // อาร์เรย์ของ {type: 'url'|'file', data: url|file}
 
-// Map Building Static Data  (merged with localStorage edits)
-// This data is now primarily for map hotspots, actual building data comes from API
+// ข้อมูลอาคารแบบ Static (รวมกับการแก้ไขจาก localStorage)
+// ข้อมูลนี้ใช้สำหรับจุดกดบนแผนที่เป็นหลัก ข้อมูลอาคารจริงมาจาก API
 const DEFAULT_BUILDING_DATA = {
     'อาคาร 01': {
         title: 'อาคาร 01',
@@ -147,7 +147,7 @@ const DEFAULT_BUILDING_DATA = {
 let BUILDING_DATA = JSON.parse(JSON.stringify(DEFAULT_BUILDING_DATA));
 
 const CACHE_KEY = 'utcc_university_items';
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in ms
+const CACHE_TTL = 5 * 60 * 1000; // 5 นาที (มิลลิวินาที)
 
 function getCachedItems() {
     try {
@@ -168,11 +168,11 @@ function setCachedItems(data) {
     } catch {}
 }
 
-// Fetch from API and merge
+// ดึงข้อมูลจาก API และรวมกัน
 async function loadInitialData() {
     showLoading();
 
-    // Try cache first
+    // ลองดึงจาก cache ก่อน
     const cached = getCachedItems();
     if (cached) {
         allUniversityItems = cached;
@@ -204,11 +204,11 @@ async function loadInitialData() {
 }
 
 function updatePhotoBadges() {
-    // Update all hotspot-tooltip spans to show photo count badge
+    // อัปเดต tooltip ของจุดกดทั้งหมดให้แสดงจำนวนรูปภาพ
     document.querySelectorAll('.map-hotspot').forEach(hotspot => {
         const tooltip = hotspot.querySelector('.hotspot-tooltip');
         if (!tooltip) return;
-        // get the building key from the onclick attribute
+        // ดึง building key จาก attribute onclick
         const onclick = hotspot.getAttribute('onclick') || '';
         const match = onclick.match(/openBuildingInfo\('([^']+)'\)/);
         if (!match) return;
@@ -216,7 +216,7 @@ function updatePhotoBadges() {
         const d = BUILDING_DATA[key];
         if (!d) return;
         const count = (d.images && d.images.length > 0) ? d.images.length : (d.image ? 1 : 0);
-        // Remove existing badge
+        // ลบ badge เดิมออก
         const existingBadge = tooltip.querySelector('.hotspot-photo-badge');
         if (existingBadge) existingBadge.remove();
         if (count > 0) {
@@ -230,12 +230,12 @@ function updatePhotoBadges() {
 let currentSelectedBuilding = '';
 let buildingEditMode = false;
 
-// ── Building Panel ─────────────────────────
+// ── แผงข้อมูลอาคาร ─────────────────────────
 function openBuildingInfo(buildingKey) {
     const data = BUILDING_DATA[buildingKey];
     currentSelectedBuilding = buildingKey;
 
-    // If no data yet, create a blank entry so user can fill it in
+    // ถ้ายังไม่มีข้อมูล สร้างรายการว่างให้ผู้ใช้กรอก
     if (!data) {
         BUILDING_DATA[buildingKey] = {
             title: buildingKey, desc: '', floors: '', faculty: '',
@@ -246,7 +246,7 @@ function openBuildingInfo(buildingKey) {
     }
 
     populateBuildingPanel(buildingKey);
-    // Show view mode
+    // แสดงโหมดดูข้อมูล
     showBuildingViewMode();
     document.getElementById('buildingInfoPanel').classList.add('active');
 }
@@ -256,7 +256,7 @@ function populateBuildingPanel(key) {
     document.getElementById('panelBldgName').textContent = d.title || key;
     document.getElementById('panelBldgDesc').textContent = d.description || d.desc || 'ยังไม่มีข้อมูล กดปุ่มแก้ไขเพื่อเพิ่มรายละเอียด';
     
-    // Render Gallery
+    // แสดงแกลเลอรี่
     const gallery = document.getElementById('panelBldgGallery');
     gallery.innerHTML = '';
     const imagesToRender = (d.images && d.images.length > 0) ? d.images : (d.imageUrl ? [d.imageUrl] : []);
@@ -289,7 +289,7 @@ function showBuildingViewMode() {
 
 function toggleBuildingEdit() {
     if (!buildingEditMode) {
-        // Enter edit mode
+        // เข้าสู่โหมดแก้ไข
         buildingEditMode = true;
         const d = BUILDING_DATA[currentSelectedBuilding];
         document.getElementById('peTitle').value = d.title || '';
@@ -331,7 +331,7 @@ async function saveBuildingEdit() {
         if (res.ok) {
             const result = await res.json();
             BUILDING_DATA[key] = { ...BUILDING_DATA[key], ...result };
-            // also update in allUniversityItems
+            // อัปเดตใน allUniversityItems ด้วย
             const index = allUniversityItems.findIndex(item => item.type === 'building' && item.buildingKey === key);
             if (index !== -1) {
                 allUniversityItems[index] = { ...allUniversityItems[index], ...result };
@@ -340,7 +340,7 @@ async function saveBuildingEdit() {
             showBuildingViewMode();
             applyFiltersAndSearch();
             
-            // Success toast
+            // แสดง toast สำเร็จ
             btn.innerHTML = "<i class='bx bx-check'></i>";
             btn.style.color = '#10b981';
             setTimeout(() => { btn.innerHTML = "<i class='bx bx-edit'></i>"; btn.style.color = ''; }, 2000);
@@ -366,14 +366,14 @@ function searchFromPanel() {
     document.getElementById('placesGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Event Listeners
+// ตัวรับฟังเหตุการณ์
 document.addEventListener('DOMContentLoaded', async () => {
     await loadInitialData();
     updateFavBadge();
     applyStoredSettings();
 });
 
-// Update the search functionality to use AI endpoint
+// อัปเดตฟังก์ชันค้นหาให้ใช้ endpoint AI
 searchBtn.addEventListener('click', handleSearch);
 searchInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSearch(); });
 
@@ -398,11 +398,11 @@ filterTags.forEach(tag => {
         filterTags.forEach(t => t.classList.remove('active'));
         tag.classList.add('active');
         currentCategory = tag.dataset.category;
-        applyFiltersAndSearch(); // Apply filters and search query
+        applyFiltersAndSearch(); // ใช้ตัวกรองและคำค้นหา
     });
 });
 
-// ====== FAVORITES SYSTEM ======
+// ====== ระบบรายการโปรด ======
 function toggleFavorite(placeId, placeName, placeImg, placeCategory) {
     const idx = favorites.findIndex(f => f.id === placeId);
     if (idx === -1) {
@@ -413,7 +413,7 @@ function toggleFavorite(placeId, placeName, placeImg, placeCategory) {
     localStorage.setItem('utcc_favorites', JSON.stringify(favorites));
     updateFavBadge();
     renderFavList();
-    // Re-render heart icon state on card
+    // แสดงสถานะไอคอนหัวใจบนการ์ดใหม่
     const btn = document.querySelector(`.fav-btn[data-id="${placeId}"]`);
     if (btn) {
         const isFav = favorites.some(f => f.id === placeId);
@@ -459,14 +459,14 @@ function toggleFavPanel() {
     back.classList.toggle('active', panel.classList.contains('active'));
 }
 
-// ====== UI LANGUAGE STRINGS ======
+// ====== ข้อความภาษา UI ======
 const UI_STRINGS = {
     th: {
-        // Navbar
+        // แถบนำทาง
         navFav: 'รายการโปรด',
         navSettings: 'ตั้งค่า',
         navAdd: 'เพิ่มสถานที่',
-        // Settings panel
+        // แผงตั้งค่า
         settingsTitle: 'การตั้งค่า',
         settingsSub: 'ปรับแต่งการแสดงผลตามต้องการ',
         labelTheme: '🎨 ธีม',
@@ -487,14 +487,14 @@ const UI_STRINGS = {
         labelVersion: 'เวอร์ชัน',
         labelDev: 'พัฒนาโดย',
         labelUniv: 'มหาวิทยาลัย',
-        // Search & Filter
+        // ค้นหาและกรอง
         searchPlaceholder: 'ค้นหาสถานที่, ตึกเรียน, ร้านอาหาร, คาเฟ่...',
         searchBtn: 'ค้นหา',
         filterAll: 'ทั้งหมด',
         filterRestaurant: 'ร้านอาหาร',
         filterCafe: 'คาเฟ่',
         filterStudy: 'ที่อ่านหนังสือ',
-        // Hero
+        // ส่วน Hero
         heroBadge: 'มหาวิทยาลัยหอการค้าไทย',
         heroTitle1: 'ค้นพบสถานที่น่าสนใจ',
         heroTitle2: 'รอบ ม.หอการค้าไทย',
@@ -505,23 +505,23 @@ const UI_STRINGS = {
         ctaMap: 'ดูแผนผังมหาวิทยาลัย',
         ctaNearby: 'สถานที่รอบมหาลัย',
         scrollDown: 'เลื่อนลงดูแผนที่',
-        // Section
+        // ส่วนหัว
         sectionTitle: '🗺️ แผนผังมหาวิทยาลัยหอการค้าไทย',
         sectionSub: 'คลิกที่หมุดอาคารเพื่อดูรายละเอียดและร้านค้าในบริเวณนั้น',
         placesTitle: 'สถานที่แนะนำ',
         placesSub: 'ร้านอาหาร คาเฟ่ และสถานที่เรียนภายในมหาวิทยาลัยหอการค้าไทย',
-        // Fav panel
+        // แผงรายการโปรด
         favPanelTitle: 'รายการโปรดของฉัน',
         favEmpty: 'ยังไม่มีรายการโปรด',
         favEmptySub: 'กดไอคอน ♡ บนการ์ดสถานที่เพื่อบันทึก',
         confirmClearFav: 'ยืนยันลบรายการโปรดทั้งหมด?',
     },
     en: {
-        // Navbar
+        // แถบนำทาง
         navFav: 'Favorites',
         navSettings: 'Settings',
         navAdd: 'Add Place',
-        // Settings panel
+        // แผงตั้งค่า
         settingsTitle: 'Settings',
         settingsSub: 'Customize your display preferences',
         labelTheme: '🎨 ธีม',
@@ -542,14 +542,14 @@ const UI_STRINGS = {
         labelVersion: 'Version',
         labelDev: 'Developed by',
         labelUniv: 'University',
-        // Search & Filter
+        // ค้นหาและกรอง
         searchPlaceholder: 'Search places, buildings, restaurants, cafés...',
         searchBtn: 'Search',
         filterAll: 'All',
         filterRestaurant: 'Restaurant',
         filterCafe: 'Café',
         filterStudy: 'Study Area',
-        // Hero
+        // ส่วน Hero
         heroBadge: 'University of the Thai Chamber of Commerce',
         heroTitle1: 'Discover Interesting Places',
         heroTitle2: 'Around UTCC',
@@ -560,12 +560,12 @@ const UI_STRINGS = {
         ctaMap: 'View Campus Map',
         ctaNearby: 'Nearby Places',
         scrollDown: 'Scroll to map',
-        // Section
+        // ส่วนหัว
         sectionTitle: '🗺️ UTCC Campus Map',
         sectionSub: 'Click a building pin to view details and nearby shops',
         placesTitle: 'Recommended Places',
         placesSub: 'Restaurants, cafés and study spots at UTCC',
-        // Fav panel
+        // แผงรายการโปรด
         favPanelTitle: 'My Favorites',
         favEmpty: 'No favorites yet',
         favEmptySub: 'Tap ♡ on a place card to save it',
@@ -576,7 +576,7 @@ const UI_STRINGS = {
 function applyUILanguage(lang) {
     const s = UI_STRINGS[lang] || UI_STRINGS['th'];
 
-    // Nav buttons
+    // ปุ่มแถบนำทาง
     const navFavLabel = document.querySelector('#favNavBtn .nav-btn-label');
     const navSettingsLabel = document.querySelector('#settingsNavBtn .nav-btn-label');
     if (navFavLabel) navFavLabel.textContent = s.navFav;
@@ -584,7 +584,7 @@ function applyUILanguage(lang) {
     const addBtn = document.getElementById('addPlaceBtn');
     if (addBtn) addBtn.innerHTML = `<i class='bx bx-plus'></i> ${s.navAdd}`;
 
-    // Settings panel labels
+    // ป้ายกำกับแผงตั้งค่า
     const ids = [
         'settingsTitle','settingsSub','labelTheme','labelDarkMode','descDarkMode',
         'labelLang','labelDisplayLang','labelDisplay','labelLayout','descLayout',
@@ -596,13 +596,13 @@ function applyUILanguage(lang) {
         if (el && s[id] !== undefined) el.textContent = s[id];
     });
 
-    // Search bar
+    // แถบค้นหา
     const si = document.getElementById('searchInput');
     if (si) si.placeholder = s.searchPlaceholder;
     const sb = document.getElementById('searchBtn');
     if (sb) sb.textContent = s.searchBtn;
 
-    // Filter tags
+    // แท็กกรอง
     const filterTags = document.querySelectorAll('.filter-tag');
     filterTags.forEach(tag => {
         const cat = tag.dataset.category;
@@ -613,7 +613,7 @@ function applyUILanguage(lang) {
         else if (cat === 'Study Area') tag.innerHTML = `${icon ? icon.outerHTML : ''} ${s.filterStudy}`;
     });
 
-    // Hero section
+    // ส่วน Hero
     const heroBadgeEl = document.querySelector('.hero-badge');
     if (heroBadgeEl) heroBadgeEl.innerHTML = `<i class='bx bxs-star'></i> ${s.heroBadge}`;
     const heroTitle = document.querySelector('.hero-landing-title');
@@ -621,42 +621,42 @@ function applyUILanguage(lang) {
     const heroSub = document.querySelector('.hero-landing-subtitle');
     if (heroSub) heroSub.textContent = s.heroSub;
 
-    // Hero stats labels
+    // ป้ายกำกับสถิติ Hero
     const statLabels = document.querySelectorAll('.hero-stat-label');
     if (statLabels[0]) statLabels[0].textContent = s.statBuilding;
     if (statLabels[1]) statLabels[1].textContent = s.statPlace;
     if (statLabels[2]) statLabels[2].textContent = s.statCat;
 
-    // Hero CTA buttons
+    // ปุ่ม CTA ของ Hero
     const ctaBtns = document.querySelectorAll('.hero-cta-btn');
     if (ctaBtns[0]) ctaBtns[0].innerHTML = `<i class='bx bx-map-alt'></i> ${s.ctaMap}`;
     if (ctaBtns[1]) ctaBtns[1].innerHTML = `<i class='bx bx-current-location'></i> ${s.ctaNearby}`;
 
-    // Scroll indicator
+    // ตัวบอกการเลื่อน
     const scrollEl = document.querySelector('.hero-scroll-indicator span');
     if (scrollEl) scrollEl.textContent = s.scrollDown;
 
-    // Map section header
+    // หัวข้อส่วนแผนที่
     const mapTitle = document.querySelector('.section-title-map');
     if (mapTitle) mapTitle.textContent = s.sectionTitle;
     const mapSub = document.querySelector('.section-sub-map');
     if (mapSub) mapSub.textContent = s.sectionSub;
 
-    // Places section header
+    // หัวข้อส่วนสถานที่
     const pTitle = document.querySelector('.places-section-title h2');
     if (pTitle) pTitle.textContent = s.placesTitle;
     const pSub = document.querySelector('.places-section-title p');
     if (pSub) pSub.textContent = s.placesSub;
 
-    // Favorites panel title
+    // ชื่อแผงรายการโปรด
     const favPanelTitle = document.querySelector('#favPanel .side-panel-title');
     if (favPanelTitle) favPanelTitle.innerHTML = `<i class='bx bxs-heart' style="color:#ef4444"></i> ${s.favPanelTitle}`;
 
-    // Update settings fav count
+    // อัปเดตจำนวนรายการโปรดในตั้งค่า
     updateSettingsFavCount();
 }
 
-// ====== SETTINGS SYSTEM ======
+// ====== ระบบตั้งค่า ======
 function toggleSettingsPanel() {
     const panel = document.getElementById('settingsPanel');
     const back = document.getElementById('panelBackdrop');
@@ -792,16 +792,16 @@ function translateCategory(cat) {
 function applyFiltersAndSearch() {
     let filteredItems = [...allUniversityItems];
 
-    // Apply category filter
+    // ใช้ตัวกรองหมวดหมู่
     if (currentCategory && currentCategory !== 'all') {
         filteredItems = filteredItems.filter(item => {
-            // For buildings, use faculty as category. For places, use category.
+            // สำหรับอาคาร ใช้ faculty เป็นหมวดหมู่ สำหรับสถานที่ ใช้ category
             const itemCategory = item.type === 'building' ? item.faculty : item.category;
             return itemCategory && itemCategory.toLowerCase().includes(currentCategory.toLowerCase());
         });
     }
 
-    // Apply search query filter
+    // ใช้ตัวกรองคำค้นหา
     if (currentSearchQuery) {
         const query = currentSearchQuery.toLowerCase();
         const categoryMap = {
@@ -832,7 +832,7 @@ function applyFiltersAndSearch() {
         });
     }
 
-    // Sort: buildings first, then places, each group A-Z
+    // เรียงลำดับ: อาคารก่อน แล้วตามด้วยสถานที่ แต่ละกลุ่มเรียง A-Z
     const sortedData = filteredItems.sort((a, b) => {
         if (a.type === 'building' && b.type !== 'building') return -1;
         if (a.type !== 'building' && b.type === 'building') return 1;
@@ -859,16 +859,16 @@ async function handleAddPlace(e) {
     submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> กำลังบันทึกข้อมูล...";
     submitBtn.disabled = true;
 
-    // Convert tags string to array
+    // แปลง string แท็กเป็น array
     const tagsRaw = document.getElementById('pTags').value;
     const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
     
-    // Collect image URLs from addPlaceImages
+    // รวบรวม URL รูปภาพจาก addPlaceImages
     let imageUrls = [];
     const urlImages = addPlaceImages.filter(img => img.type === 'url').map(img => img.data);
     imageUrls = imageUrls.concat(urlImages);
     
-    // Upload file images if any
+    // อัปโหลดไฟล์รูปภาพถ้ามี
     const fileImages = addPlaceImages.filter(img => img.type === 'file').map(img => img.data);
     if (fileImages.length > 0) {
         try {
@@ -891,7 +891,7 @@ async function handleAddPlace(e) {
         category: document.getElementById('pCategory').value,
         tags: tagsArray,
         images: imageUrls,
-        // Add default values for other fields in Place entity
+        // เพิ่มค่าเริ่มต้นสำหรับฟิลด์อื่นๆ ใน entity Place
         latitude: 0.0,
         longitude: 0.0,
         rating: 0.0,
@@ -908,11 +908,11 @@ async function handleAddPlace(e) {
         if(res.ok) {
             addModal.classList.remove('active');
             addPlaceForm.reset();
-            addPlaceImages = []; // Clear images
+            addPlaceImages = []; // ล้างรูปภาพ
             renderAddPlaceGallery();
-            // Clear cache and force fresh data fetch
+            // ล้าง cache และดึงข้อมูลใหม่
             try { sessionStorage.removeItem(CACHE_KEY); } catch {}
-            // Refresh all items after adding a new one
+            // รีเฟรชข้อมูลทั้งหมดหลังเพิ่มใหม่
             await loadInitialData();
         } else {
             const errorData = await res.json();
@@ -926,14 +926,14 @@ async function handleAddPlace(e) {
     }
 }
 
-// Delete Data
+// ลบข้อมูล
 async function deletePlace(id, type) {
     if (!confirm('ยืนยันที่จะลบข้อมูลสถานที่นี้?')) return;
     let apiUrl = '';
     if (type === 'building') {
-        apiUrl = `${API_BUILDINGS}/${id}`; // API for deleting buildings
+        apiUrl = `${API_BUILDINGS}/${id}`; // API สำหรับลบอาคาร
     } else if (type === 'place') {
-        apiUrl = `${API_PLACES}/${id}`; // API for deleting places
+        apiUrl = `${API_PLACES}/${id}`; // API สำหรับลบสถานที่
     } else {
         alert('ไม่สามารถระบุประเภทที่จะลบได้');
         console.log(`[DELETE] ${apiUrl}`, { id, type });
@@ -942,11 +942,11 @@ async function deletePlace(id, type) {
         const res = await fetch(apiUrl, { method: 'DELETE' });
         console.log(`[DELETE] Response:`, res.status, res.statusText);
         if(res.ok) {
-            // Clear cache to ensure fresh data
+            // ล้าง cache เพื่อให้ได้ข้อมูลใหม่
             try { sessionStorage.removeItem(CACHE_KEY); } catch {}
             await loadInitialData();
         } else if (res.status === 404) {
-            // Item already deleted in DB, clear cache and refresh
+            // รายการถูกลบออกจาก DB แล้ว ล้าง cache และรีเฟรช
             console.log('[DELETE] Item not found in DB, clearing cache...');
             try { sessionStorage.removeItem(CACHE_KEY); } catch {}
             await loadInitialData();
@@ -962,7 +962,7 @@ async function deletePlace(id, type) {
     }
 }
 
-// UI Rendering - Updated to handle the UniversityItem object format
+// แสดงผล UI - อัปเดตให้รองรับรูปแบบ object UniversityItem
 function renderPlaces(places) {
     if (!places || places.length === 0) {
         placesGrid.innerHTML = `
@@ -979,10 +979,10 @@ function renderPlaces(places) {
         const imagesList = (item.images && item.images.length > 0) ? item.images : (item.imageUrl ? [item.imageUrl] : ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600']);
         const img = imagesList[0];
         
-        // Build gallery HTML string
+        // สร้าง HTML string ของแกลเลอรี่
         let galleryHtml = '';
         if (imagesList.length > 1) {
-            // Escape URLs for JS onclick strings
+            // Escape URL สำหรับ string onclick ของ JS
             const jsonArray = JSON.stringify(imagesList).replace(/"/g, '&quot;');
             galleryHtml = `
                 <div class="card-gallery-slider">
@@ -996,7 +996,7 @@ function renderPlaces(places) {
 
         const tagsHtml = (item.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
         
-        // Handle category logic for both entity types
+        // จัดการ logic หมวดหมู่สำหรับทั้งสอง entity type
         let catText = 'ทั่วไป';
         if (item.type === 'building') {
             catText = item.faculty || 'อาคารมหาวิทยาลัย';
@@ -1057,9 +1057,9 @@ function showError(msg) {
     placesGrid.innerHTML = `<div class="loading" style="color: #ef4444;"><i class='bx bx-error-circle'></i> ${msg}</div>`;
 }
 
-// ── Edit Place Modal ───────────────────────────────────
-let _editingPlace = null;  // holds the full place object while editing
-let _editingPlaceType = null; // holds the type ('building' or 'place')
+// ── Modal แก้ไขสถานที่ ───────────────────────────────────
+let _editingPlace = null;  // เก็บ object สถานที่ขณะแก้ไข
+let _editingPlaceType = null; // เก็บประเภท ('building' หรือ 'place')
 
 async function openEditPlaceModal(id, type) {
     let apiUrl = '';
@@ -1086,10 +1086,10 @@ async function openEditPlaceModal(id, type) {
     document.getElementById('epId').value = p.id;
     document.getElementById('epName').value = p.name || p.title || '';
     document.getElementById('epDesc').value = p.description || p.desc || '';
-    document.getElementById('epAddress').value = p.address || ''; // Only for places
-    document.getElementById('epTags').value = (p.tags || []).join(', '); // Only for places
+    document.getElementById('epAddress').value = p.address || ''; // เฉพาะสถานที่
+    document.getElementById('epTags').value = (p.tags || []).join(', '); // เฉพาะสถานที่
 
-    // Load existing images into editPlaceImages array
+    // โหลดรูปภาพที่มีอยู่เข้า array editPlaceImages
     editPlaceImages = [];
     const existingImages = p.images || [];
     existingImages.forEach(url => {
@@ -1097,21 +1097,21 @@ async function openEditPlaceModal(id, type) {
     });
     renderEditPlaceGallery();
     
-    // Clear file input and URL input
+    // ล้าง input ไฟล์และ URL
     const fileInput = document.getElementById('epImageFiles');
     if (fileInput) fileInput.value = '';
     const urlInput = document.getElementById('epImageUrl');
     if (urlInput) urlInput.value = '';
 
-    // Set category select (only for places)
+    // ตั้งค่า select หมวดหมู่ (เฉพาะสถานที่)
     const catSel = document.getElementById('epCategory');
     if (type === 'place') {
-        catSel.style.display = 'block'; // Show category for places
+        catSel.style.display = 'block'; // แสดงหมวดหมู่สำหรับสถานที่
         for (let opt of catSel.options) {
             opt.selected = (opt.value === p.category);
         }
     } else {
-        catSel.style.display = 'none'; // Hide category for buildings
+        catSel.style.display = 'none'; // ซ่อนหมวดหมู่สำหรับอาคาร
     }
 
     document.getElementById('editPlaceModal').classList.add('active');
@@ -1121,9 +1121,9 @@ function closeEditPlaceModal() {
     document.getElementById('editPlaceModal').classList.remove('active');
     _editingPlace = null;
     _editingPlaceType = null;
-    editPlaceImages = []; // Clear images
-    renderEditPlaceGallery(); // Clear preview
-    // Clear inputs
+    editPlaceImages = []; // ล้างรูปภาพ
+    renderEditPlaceGallery(); // ล้าง preview
+    // ล้าง input
     const fileInput = document.getElementById('epImageFiles');
     if (fileInput) fileInput.value = '';
     const urlInput = document.getElementById('epImageUrl');
@@ -1141,11 +1141,11 @@ async function saveEditPlace() {
     let apiUrl = '';
     let finalImageUrls = [];
 
-    // Collect existing URL images from editPlaceImages (that are already URLs)
+    // รวบรวม URL รูปภาพที่มีอยู่จาก editPlaceImages (ที่เป็น URL อยู่แล้ว)
     const urlImages = editPlaceImages.filter(img => img.type === 'url').map(img => img.data);
     finalImageUrls = finalImageUrls.concat(urlImages);
     
-    // Upload new file images if any
+    // อัปโหลดไฟล์รูปภาพใหม่ถ้ามี
     const fileImages = editPlaceImages.filter(img => img.type === 'file').map(img => img.data);
     if (fileImages.length > 0) {
         try {
@@ -1197,9 +1197,9 @@ async function saveEditPlace() {
         });
         if (res.ok) {
             closeEditPlaceModal();
-            // Clear cache and force fresh data fetch
+            // ล้าง cache และดึงข้อมูลใหม่
             try { sessionStorage.removeItem(CACHE_KEY); } catch {}
-            await loadInitialData(); // Refresh all items after editing
+            await loadInitialData(); // รีเฟรชข้อมูลทั้งหมดหลังแก้ไข
         } else {
             alert('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07');
         }
@@ -1211,7 +1211,7 @@ async function saveEditPlace() {
     }
 }
 
-// ── Lightbox ──────────────────────────────────────────
+// ── Lightbox แสดงรูปภาพ ──────────────────────────────────────────
 let _lbImages = [];
 let _lbIndex = 0;
 
@@ -1267,9 +1267,9 @@ function _renderLightbox() {
     });
 }
 
-// ─── Multi-Image Upload Functions ─────────────────────────────────────────
+// ─── ฟังก์ชันอัปโหลดหลายรูปภาพ ─────────────────────────────────────────
 
-// Add Place Modal - Add image URL
+// Modal เพิ่มสถานที่ - เพิ่ม URL รูปภาพ
 function addPlaceImageUrl() {
     const input = document.getElementById('pImageUrl');
     const url = input.value.trim();
@@ -1283,7 +1283,7 @@ function addPlaceImageUrl() {
     renderAddPlaceGallery();
 }
 
-// Add Place Modal - Render gallery preview
+// Modal เพิ่มสถานที่ - แสดง preview แกลเลอรี่
 function renderAddPlaceGallery() {
     const gallery = document.getElementById('pGalleryPreview');
     if (!gallery) return;
@@ -1303,13 +1303,13 @@ function renderAddPlaceGallery() {
     gallery.style.display = addPlaceImages.length > 0 ? 'flex' : 'none';
 }
 
-// Add Place Modal - Remove image
+// Modal เพิ่มสถานที่ - ลบรูปภาพ
 function removeAddPlaceImage(index) {
     addPlaceImages.splice(index, 1);
     renderAddPlaceGallery();
 }
 
-// Add Place Modal - Handle file selection
+// Modal เพิ่มสถานที่ - จัดการการเลือกไฟล์
 document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('pImageFiles');
     if (fileInput) {
@@ -1321,12 +1321,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             renderAddPlaceGallery();
-            fileInput.value = ''; // Allow selecting same files again
+            fileInput.value = ''; // อนุญาตให้เลือกไฟล์เดิมซ้ำได้
         });
     }
 });
 
-// Edit Place Modal - Add image URL
+// Modal แก้ไขสถานที่ - เพิ่ม URL รูปภาพ
 function addEditPlaceImageUrl() {
     const input = document.getElementById('epImageUrl');
     const url = input.value.trim();
@@ -1340,7 +1340,7 @@ function addEditPlaceImageUrl() {
     renderEditPlaceGallery();
 }
 
-// Edit Place Modal - Render gallery preview
+// Modal แก้ไขสถานที่ - แสดง preview แกลเลอรี่
 function renderEditPlaceGallery() {
     const gallery = document.getElementById('epGalleryPreview');
     if (!gallery) return;
@@ -1360,13 +1360,13 @@ function renderEditPlaceGallery() {
     gallery.style.display = editPlaceImages.length > 0 ? 'flex' : 'none';
 }
 
-// Edit Place Modal - Remove image
+// Modal แก้ไขสถานที่ - ลบรูปภาพ
 function removeEditPlaceImage(index) {
     editPlaceImages.splice(index, 1);
     renderEditPlaceGallery();
 }
 
-// Edit Place Modal - Handle file selection
+// Modal แก้ไขสถานที่ - จัดการการเลือกไฟล์
 document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('epImageFiles');
     if (fileInput) {
@@ -1386,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ====== AI CHATBOT ======
 let chatbotOpen = false;
-let chatHistory = []; // เก็บ history การสนทนา
+let chatHistory = []; // เก็บประวัติการสนทนา
 
 function toggleChatbot() {
     chatbotOpen = !chatbotOpen;
@@ -1412,10 +1412,10 @@ async function sendChat() {
         removeChatTyping(typingId);
         const reply = data.reply || 'ขออภัย ไม่สามารถตอบได้ในขณะนี้';
         appendChatMsg(reply, 'bot');
-        // เก็บ history ไว้สำหรับรอบถัดไป
+        // เก็บประวัติไว้สำหรับรอบถัดไป
         chatHistory.push({ role: 'user', text: msg });
         chatHistory.push({ role: 'model', text: reply });
-        // เก็บแค่ 20 รอบล่าสุด
+        // เก็บเฉพาะ 20 รอบล่าสุด
         if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
     } catch (e) {
         removeChatTyping(typingId);

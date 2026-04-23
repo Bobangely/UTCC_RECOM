@@ -1,4 +1,4 @@
-/* Default state: Hide admin features */
+/*ระบบ admin*/
 body:not(.admin-mode) .admin-only,
 body:not(.admin-mode) #addPlaceBtn,
 body:not(.admin-mode) .card-actions .edit-btn,
@@ -6,8 +6,7 @@ body:not(.admin-mode) .card-actions .delete-btn,
 body:not(.admin-mode) #panelEditBtn {
     display: none !important;
 }
-
-/* Show features when in admin mode */
+/*เปิดระบบแอดมินแก้ไขข้อมูล*/
 body.admin-mode .admin-only {
     display: block !important;
 }

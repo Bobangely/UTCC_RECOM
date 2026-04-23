@@ -14,7 +14,7 @@ public class Building {
     private UUID id;
 
     @Column(unique = true)
-    private String buildingKey;   // e.g. "อาคาร 24"
+    private String buildingKey;   // เช่น "อาคาร 24"
 
     private String title;
     

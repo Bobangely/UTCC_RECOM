@@ -75,12 +75,12 @@ public class GeminiService {
 
     // 2. Chatbot — ตอบคำถามเกี่ยวกับสถานที่ใน UTCC พร้อม history
     public String chat(String userMessage, String placesContext, List<Map<String, String>> history) {
-        String systemPrompt = "คุณคือผู้ช่วย AI ของมหาวิทยาลัยหอการค้าไทย (UTCC) ชื่อว่า UTCC Assistant " +
-                "ตอบเป็นภาษาไทยเท่านั้น กระชับ เป็นมิตร และเป็นประโยชน์ " +
-                "ตอบเฉพาะเรื่องสถานที่ ร้านอาหาร คาเฟ่ อาคาร และบริการในมหาวิทยาลัยหอการค้าไทยเท่านั้น " +
-                "ถ้าถามเรื่องอื่นให้บอกว่าไม่สามารถตอบได้ " +
-                "ถ้าผู้ใช้บอกว่าไม่รู้จะกินอะไร ไม่รู้จะไปไหน หรือขอให้สุ่ม " +
-                "ให้สุ่มแนะนำสถานที่จากข้อมูลที่มี 1 แห่ง พร้อมบอกเหตุผลสั้นๆ ว่าทำไมถึงแนะนำ " +
+        String systemPrompt = "คุณคือผู้ช่วย AI ของมหาวิทยาลัยหอการค้าไทย (UTCC) ชื่อว่า UTCC Assistant"+
+                "ตอบเป็นภาษาไทยเท่านั้นกระชับเป็นมิตร และ เป็นประโยชน์"+
+                "ตอบเฉพาะเรื่องสถานที่ ร้านอาหาร คาเฟ่ อาคาร และบริการในมหาวิทยาลัยหอการค้าไทยเท่านั้น"+
+                "ถ้าถามเรื่องอื่นให้บอกว่าไม่สามารถตอบได้"+
+                "ถ้าผู้ใช้บอกว่าไม่รู้จะกินอะไร ไม่รู้จะไปไหน หรือขอให้สุ่ม"+
+                "ให้สุ่มแนะนำสถานที่จากข้อมูลที่มี 1 แห่ง พร้อมบอกเหตุผลสั้นๆ ว่าทำไมถึงแนะนำ"+
                 "ข้อมูลสถานที่ที่มีในระบบ: " + placesContext;
 
         String url = String.format(API_URL_TEMPLATE, MODEL_NAME, apiKey);
@@ -90,11 +90,10 @@ public class GeminiService {
         // สร้าง contents array พร้อม history
         List<Map<String, Object>> contents = new java.util.ArrayList<>();
 
-        // system message เป็น user turn แรก
         contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", systemPrompt))));
         contents.add(Map.of("role", "model", "parts", List.of(Map.of("text", "เข้าใจแล้วครับ ยินดีช่วยเหลือ"))));
 
-        // เพิ่ม history (เก็บแค่ 10 รอบล่าสุดเพื่อไม่ให้ token เกิน)
+        // เพิ่ม history
         List<Map<String, String>> recentHistory = history.size() > 10
                 ? history.subList(history.size() - 10, history.size())
                 : history;
@@ -129,7 +128,7 @@ public class GeminiService {
         return "";
     }
 
-    // 3. วิเคราะห์รีวิว — สรุปความเห็นจากรีวิวทั้งหมด
+    // 3. วิเคราะห์รีวิว
     public String analyzeReviews(String placeName, String reviewsText) {
         String prompt = "สรุปรีวิวของ '" + placeName + "' เป็นภาษาไทย กระชับ ไม่เกิน 3 ประโยค "
                 + "แบ่งเป็น จุดเด่น / จุดด้อย / สรุปโดยรวม "

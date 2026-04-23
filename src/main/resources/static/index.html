@@ -55,7 +55,7 @@
 
 
     <div class="side-panel" id="settingsPanel">
-        <!-- Settings Panel Header -->
+        <!-- Header การตั้งค่า -->
         <div class="settings-panel-header">
             <div class="settings-header-bg"></div>
             <div class="settings-header-content">
@@ -304,10 +304,10 @@
                             </div>
                         </div>
                         <div class="panel-bldg-gallery" id="panelBldgGallery">
-                            <!-- Images injected via JS -->
+                            <!-- รูปภาพถูกแทรกผ่าน JS -->
                         </div>
 
-                        <!-- VIEW MODE -->
+                        <!-- โหมดดูข้อมูล -->
                         <div class="panel-bldg-content" id="panelViewMode">
                             <h3 id="panelBldgName">ชื่ออาคาร</h3>
                             <p id="panelBldgDesc" style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6;margin-bottom:1rem">รายละเอียด...</p>
@@ -339,7 +339,7 @@
                             </button>
                         </div>
 
-                        <!-- EDIT MODE -->
+                        <!-- โหมดแก้ไข -->
                         <div class="panel-bldg-content" id="panelEditMode" style="display:none">
                             <div class="pedit-group">
                                 <label class="pedit-label">ชื่ออาคาร</label>
@@ -378,7 +378,7 @@
                     <img src="UTCC_MAP.jpg" alt="UTCC Campus Map" class="campus-map-img">
                     
 
-                    <!-- Building hotspots — positions calibrated to yellow number labels on map -->
+                    <!-- จุดกดอาคาร — ตำแหน่งปรับให้ตรงกับหมายเลขสีเหลืองบนแผนที่ -->
 
                     <!-- อาคาร 24 (ตึกเรือใบ) -->
                     <div class="map-hotspot" style="top: 17.5%; left: 60.5%;" onclick="openBuildingInfo('อาคาร 24')">
@@ -579,7 +579,7 @@
         </div>
     </div>
 
-    <!-- Edit Place Modal -->
+    <!-- Modal แก้ไขสถานที่ -->
     <div class="modal-overlay" id="editPlaceModal">
         <div class="modal">
             <div class="modal-header">
@@ -629,7 +629,7 @@
         </div>
     </div>
 
-    <!-- Lightbox -->
+    <!-- Lightbox แสดงรูปภาพ -->
     <div class="lightbox-overlay" id="lightboxOverlay" onclick="lightboxClickOutside(event)">
         <button class="lightbox-close" onclick="closeLightbox()"><i class='bx bx-x'></i></button>
         <img class="lightbox-img" id="lightboxImg" src="" alt="">
@@ -643,7 +643,7 @@
         </div>
     </div>
 
-    <!-- AI Chatbot Bubble -->
+    <!-- ปุ่มลอย AI Chatbot -->
     <div class="chatbot-bubble" id="chatbotBubble" onclick="toggleChatbot()" title="UTCC AI Assistant">
         <i class='bx bx-bot'></i>
         <span class="chatbot-bubble-label">AI</span>

@@ -23,7 +23,6 @@ public class NearbyCategory {
 
     private int sortOrder;
 
-    // Constructors
     public NearbyCategory() {}
 
     public NearbyCategory(String name, String label, String icon, int sortOrder) {

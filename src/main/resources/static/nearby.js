@@ -1,19 +1,19 @@
 // =============================================
 //  UTCC Nearby — nearby.js
-//  Admin & Comment system + localStorage
+//  ระบบ Admin & ความคิดเห็น + localStorage
 // =============================================
 
-// ─── Admin Config ──────────────────────────
-let isAdmin = false; // Default to false
+// ─── ค่าตั้งต้น Admin ──────────────────────────
+let isAdmin = false; // ค่าเริ่มต้นเป็น false
 let currentCommentPlaceId = null;
 let selectedStars = 0;
 let deletePendingId = null;
 
-// --- Leaflet Map ---
+// --- แผนที่ Leaflet ---
 let map = null;
 let markers = [];
 
-// ─── Default Place Data ────────────────────
+// ─── ข้อมูลสถานที่เริ่มต้น ────────────────────
 const DEFAULT_PLACES = [
     { id: 'r1', cat: 'restaurant', name: 'สุกี้นายพัน',
       desc: 'ร้านสุกี้ขวัญใจนักศึกษา ม.หอการค้า น้ำจิ้มสูตรกวางตุ้งเด็ดมาก มีหมู ไก่ ทะเล และเมนูทานเล่น ราคานักศึกษา',
@@ -112,7 +112,7 @@ const DEFAULT_PLACES = [
       lat: 13.7793, lng: 100.5600, mapsUrl: 'https://maps.google.com/?q=13.7793,100.5600' }
 ];
 
-// ─── Category Meta ──────────────────────────
+// ─── ข้อมูล Meta หมวดหมู่ ──────────────────────
 const CAT_COLORS = {
     'Restaurant': '#ef4444', 'Cafe': '#f59e0b', 'Study Area': '#6366f1',
     'หอพัก': '#10b981', 'Other': '#ec4899', 'Transport': '#3b82f6',
@@ -126,7 +126,7 @@ const CAT_LABELS = {
     dorm: 'หอพัก', convenience: 'ร้านสะดวกซื้อ', transport: 'ขนส่ง'
 };
 
-// ─── API Config ──────────────────────────────
+// ─── ค่าตั้งต้น API ──────────────────────────────
 const NEARBY_API = '/api/nearby-places';
 const CATEGORIES_API = '/api/nearby-categories';
 const REVIEWS_API = '/api/reviews';
@@ -159,7 +159,7 @@ function clearNearbyCache() {
         .forEach(k => sessionStorage.removeItem(k));
 }
 
-// ─── Convert API Place → local format ────────
+// ─── แปลงข้อมูล API → รูปแบบ local ────────
 function apiToLocal(p) {
     const finalLat = p.latitude || (13.779 + (Math.random() * 0.005 - 0.0025));
     const finalLng = p.longitude || (100.56 + (Math.random() * 0.005 - 0.0025));
@@ -177,13 +177,13 @@ function apiToLocal(p) {
         price: p.price || null,
         lat: finalLat,
         lng: finalLng,
-        // Use the original Google Maps link if available to show the full place profile.
-        // Fallback to coordinates if no link was provided.
+        // ใช้ลิงก์ Google Maps เดิมถ้ามี เพื่อแสดงโปรไฟล์สถานที่แบบเต็ม
+        // ถ้าไม่มีลิงก์ให้ใช้พิกัดแทน
         mapsUrl: p.mapsUrl ? p.mapsUrl : `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`
     };
 }
 
-// ─── Convert local format → API payload ─────
+// ─── แปลงรูปแบบ local → payload สำหรับ API ─────
 function localToApi(data, existingImages) {
     return {
         name: data.name,
@@ -200,7 +200,7 @@ function localToApi(data, existingImages) {
     };
 }
 
-// ─── Reviews cache (loaded per place from API) ────────────
+// ─── cache รีวิว (โหลดต่อสถานที่จาก API) ────────────
 let REVIEWS_CACHE = {};
 
 let PLACES = [];   // filled after DOMContentLoaded
@@ -209,12 +209,12 @@ let searchQuery = '';
 
 let mapLayer = null;
 
-// ─── Map Functions ──────────────────────────
+// ─── ฟังก์ชันแผนที่ ──────────────────────────
 function initMap() {
     if (!document.getElementById('leafletMap')) return;
-    map = L.map('leafletMap').setView([13.779, 100.56], 16); // UTCC coordinates
+    map = L.map('leafletMap').setView([13.779, 100.56], 16); // พิกัด UTCC
     
-    // Google Maps Tile Layer
+    // ชั้น Tile ของ Google Maps
     mapLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -222,7 +222,7 @@ function initMap() {
     }).addTo(map);
 
     const utccIcon = L.icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png', // University icon
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png', // ไอคอนมหาวิทยาลัย
         iconSize: [32, 32],
         iconAnchor: [16, 32],
         popupAnchor: [0, -32]
@@ -236,12 +236,12 @@ function initMap() {
 function renderMapMarkers(places) {
     if (!map) return;
 
-    // Clear old markers
+    // ลบ marker เดิมออก
     markers.forEach(m => map.removeLayer(m));
     markers = [];
 
     const placeIcon = L.icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // simple pin icon
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // ไอคอน pin เรียบง่าย
         iconSize: [28, 28],
         iconAnchor: [14, 28],
         popupAnchor: [0, -28]
@@ -251,7 +251,7 @@ function renderMapMarkers(places) {
         if (p.lat && p.lng) {
             const marker = L.marker([p.lat, p.lng], {
                 icon: placeIcon,
-                draggable: false   // Disabled dragging, rely on mapsUrl parsing instead
+                draggable: false   // ปิดการลาก ใช้การแปลง mapsUrl แทน
             }).addTo(map);
 
             const firstImg = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=300');
@@ -266,7 +266,7 @@ function renderMapMarkers(places) {
 
             marker.bindPopup(popupContent);
             
-            // Open popup on hover (mouseover) so the user doesn't have to click
+            // เปิด popup เมื่อ hover เพื่อไม่ต้องคลิก
             marker.on('mouseover', function() {
                 this.openPopup();
             });
@@ -286,16 +286,16 @@ async function drawRouteToPlace(placeId) {
         return;
     }
 
-    // Scroll to map smoothly
+    // เลื่อนหน้าไปที่แผนที่
     document.getElementById('leafletMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // University coordinates (Start Point)
+    // พิกัดมหาวิทยาลัย (จุดเริ่มต้น)
     const startLat = 13.779;
     const startLng = 100.56;
     const endLat = place.lat;
     const endLng = place.lng;
 
-    // Use OSRM public API (walking profile)
+    // ใช้ OSRM public API (โปรไฟล์เดินเท้า)
     const osrmUrl = `https://router.project-osrm.org/route/v1/foot/${startLng},${startLat};${endLng},${endLat}?overview=simplified&geometries=geojson`;
 
     try {
@@ -313,26 +313,26 @@ async function drawRouteToPlace(placeId) {
             return;
         }
 
-        // Create GeoJSON layer from the OSRM route geometry
+        // สร้าง layer GeoJSON จากเส้นทาง OSRM
         const routeGeoJSON = data.routes[0].geometry;
         currentRouteLayer = L.geoJSON(routeGeoJSON, {
             style: {
-                color: '#38bdf8', /* UTCC blue/sky blue wrapper */
+                color: '#38bdf8', /* สีฟ้า UTCC */
                 weight: 6,
                 opacity: 0.8,
                 lineCap: 'round',
                 lineJoin: 'round',
-                dashArray: '1, 10' /* Optional: make it look dotted for walking */
+                dashArray: '1, 10' /* ทำให้เส้นเป็นจุดๆ สำหรับการเดิน */
             }
         }).addTo(map);
 
-        // Zoom map to fit both UTCC and the Place
+        // ซูมแผนที่ให้พอดีกับ UTCC และสถานที่
         map.fitBounds(currentRouteLayer.getBounds(), {
             padding: [50, 50],
             maxZoom: 18
         });
 
-        // Find the marker and open its popup
+        // หา marker แล้วเปิด popup
         const marker = markers.find(m => m.placeId === placeId);
         if (marker) {
             marker.openPopup();
@@ -345,7 +345,7 @@ async function drawRouteToPlace(placeId) {
 }
 
 
-// ─── Load & Render Category Filter Buttons ──────────────────
+// ─── โหลดและแสดงปุ่มกรองหมวดหมู่ ──────────────────
 async function loadCategories() {
     const bar = document.getElementById('categoryBar');
     if (!bar) return;
@@ -364,7 +364,7 @@ async function loadCategories() {
                     </span>`;
         }).join('');
     } catch (e) {
-        console.error('Failed to load categories, using fallback', e);
+        console.error('โหลดหมวดหมู่ไม่สำเร็จ ใช้ค่าสำรองแทน', e);
         bar.innerHTML = `
             <span class="filter-tag active" data-cat="all" onclick="filterCat('all',this)"><i class='bx bx-grid-alt'></i> ทั้งหมด</span>
             <span class="filter-tag" data-cat="restaurant" onclick="filterCat('restaurant',this)"><i class='bx bx-restaurant'></i> ร้านอาหาร</span>
@@ -374,7 +374,7 @@ async function loadCategories() {
     }
 }
 
-// ─── Show skeleton while loading ─────────────
+// ─── แสดง skeleton ขณะโหลด ─────────────
 function showNearbySkeleton() {
     const grid = document.getElementById('nearbyGrid');
     if (!grid) return;
@@ -391,7 +391,7 @@ function showNearbySkeleton() {
     grid.innerHTML = card.repeat(6);
 }
 
-// ─── Fetch Places from API ───────────────────
+// ─── ดึงข้อมูลสถานที่จาก API ───────────────────
 async function fetchPlacesFromApi(cat) {
     const cached = getNearbyCache(cat || 'all');
     if (cached) {
@@ -408,12 +408,12 @@ async function fetchPlacesFromApi(cat) {
         PLACES = data.map(apiToLocal);
         setNearbyCache(cat || 'all', PLACES);
     } catch (e) {
-        console.error('Failed to load from API, using defaults', e);
+        console.error('โหลดจาก API ไม่สำเร็จ ใช้ข้อมูลเริ่มต้นแทน', e);
         PLACES = DEFAULT_PLACES.map(p => ({ ...p }));
     }
 }
 
-// ─── Render ─────────────────────────────────
+// ─── แสดงผล ─────────────────────────────────
 function renderPrice(price) {
     if (!price) return '';
     try {
@@ -421,7 +421,7 @@ function renderPrice(price) {
         let text = '';
 
         if (Array.isArray(priceData)) {
-            // Handle array of prices
+            // จัดการ array ของราคา
             text = priceData.map(item => {
                 switch (item.type) {
                     case 'range': return `฿${item.min}-${item.max}`;
@@ -431,7 +431,7 @@ function renderPrice(price) {
                 }
             }).join(', ');
         } else {
-            // Handle single price object
+            // จัดการ object ราคาเดี่ยว
             switch (priceData.type) {
                 case 'range': text = `฿${priceData.min} - ฿${priceData.max}`; break;
                 case 'fixed': text = `฿${priceData.value}`; break;
@@ -441,7 +441,7 @@ function renderPrice(price) {
         }
         return `<div class="card-price"><i class='bx bx-purchase-tag-alt'></i> ${text}</div>`;
     } catch (e) {
-        // If not valid JSON, assume it's a raw string
+        // ถ้าไม่ใช่ JSON ที่ถูกต้อง ให้ถือว่าเป็น string ธรรมดา
         return `<div class="card-price"><i class='bx bx-purchase-tag-alt'></i> ${price.trim()}</div>`;
     }
 }
@@ -596,7 +596,7 @@ function reRender() {
     renderMapMarkers(filtered);
 }
 
-// ─── Admin Mode ──────────────────────────────
+// ─── โหมด Admin ──────────────────────────────
 const ADMIN_PASSWORD = 'utcc1234';
 
 function toggleAdminMode(enabled) {
@@ -619,10 +619,10 @@ function setAdminMode(enabled) {
     reRender();
 }
 
-// ─── Place Modal (Add / Edit) ────────────────
+// ─── Modal สถานที่ (เพิ่ม / แก้ไข) ────────────────
 async function autoParseLatLng(url) {
     if (!url) return;
-    // Try local parse first (works for full Google Maps URLs)
+    // ลองแปลงในเครื่องก่อน (ใช้ได้กับ URL Google Maps แบบเต็ม)
     const patterns = [
         /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/,
         /@(-?\d+\.\d+),(-?\d+\.\d+)/
@@ -635,7 +635,7 @@ async function autoParseLatLng(url) {
             return;
         }
     }
-    // Can't parse locally (short URL) — ask backend to resolve redirect
+    // แปลงในเครื่องไม่ได้ (URL สั้น) — ให้ backend แก้ไข redirect
     try {
         const latEl = document.getElementById('pm_lat');
         const lngEl = document.getElementById('pm_lng');
@@ -647,7 +647,7 @@ async function autoParseLatLng(url) {
             if (data.lng != null) lngEl.value = data.lng;
         }
         latEl.placeholder = 'เช่น 13.7790';
-    } catch(e) { /* silent fail */ }
+    } catch(e) { /* ไม่แสดง error */ }
 }
 
 function openAddPlace() {
@@ -677,7 +677,7 @@ function openEditPlace(placeId) {
     document.getElementById('pm_distance').value = p.distance;
     document.getElementById('pm_rating').value = p.rating;
     
-    // Convert price from JSON to simple string for editing
+    // แปลงราคาจาก JSON เป็น string ธรรมดาสำหรับแก้ไข
     let priceForEdit = '';
     if (p.price) {
         try {
@@ -689,13 +689,13 @@ function openEditPlace(placeId) {
                     if (item.type === 'starting') return `${item.value}+`;
                     return item.text || '';
                 }).join(', ');
-            } else { // Fallback for old single object format
+            } else { // รูปแบบ object เดี่ยวแบบเก่า
                 if (priceData.type === 'fixed') priceForEdit = priceData.value;
                 else if (priceData.type === 'range') priceForEdit = `${priceData.min}-${priceData.max}`;
                 else if (priceData.type === 'starting') priceForEdit = `${priceData.value}+`;
             }
         } catch(e) {
-            priceForEdit = p.price; // If not valid JSON, display as is
+            priceForEdit = p.price; // ถ้าไม่ใช่ JSON ที่ถูกต้อง แสดงตามเดิม
         }
     }
     document.getElementById('pm_price').value = priceForEdit;
@@ -717,35 +717,35 @@ function openEditPlace(placeId) {
 
 function closePlaceModal() { closeAllModals(); }
 
-// Helper to parse user input for price
+// ฟังก์ชันช่วยแปลง input ราคาจากผู้ใช้
 function parsePriceInput(input) {
     if (!input || !input.trim()) {
-        return null; // No input, no price
+        return null; // ไม่มี input ไม่มีราคา
     }
 
     const parts = input.split(',').map(p => p.trim()).filter(Boolean);
     if (parts.length === 0) return null;
 
     const priceData = parts.map(part => {
-        // Case 1: Range (e.g., "100-500")
+        // กรณีที่ 1: ช่วงราคา (เช่น "100-500")
         const rangeMatch = part.match(/^(\d+)\s*-\s*(\d+)$/);
         if (rangeMatch) {
             return { type: 'range', min: parseInt(rangeMatch[1]), max: parseInt(rangeMatch[2]) };
         }
 
-        // Case 2: Starting from (e.g., "4500+")
+        // กรณีที่ 2: ราคาเริ่มต้น (เช่น "4500+")
         const startingMatch = part.match(/^(\d+)\+$/);
         if (startingMatch) {
             return { type: 'starting', value: parseInt(startingMatch[1]) };
         }
 
-        // Case 3: Fixed price (e.g., "500")
+        // กรณีที่ 3: ราคาคงที่ (เช่น "500")
         const fixedMatch = part.match(/^(\d+)$/);
         if (fixedMatch) {
             return { type: 'fixed', value: parseInt(fixedMatch[1]) };
         }
 
-        // Fallback: if it doesn't match known patterns, store as raw text
+        // ค่าสำรอง: ถ้าไม่ตรงรูปแบบที่รู้จัก เก็บเป็น text ธรรมดา
         return { type: 'text', text: part };
     });
 
@@ -792,7 +792,7 @@ async function savePlaceModal() {
         name,
         cat,
         desc: document.getElementById('pm_desc').value.trim(),
-        image: finalImageUrls.length > 0 ? finalImageUrls[0] : '', // fallback for generic single image
+        image: finalImageUrls.length > 0 ? finalImageUrls[0] : '', // ค่าสำรองสำหรับรูปเดี่ยว
         images: finalImageUrls,
         distance: document.getElementById('pm_distance').value.trim() || 'N/A',
         rating: parseFloat(document.getElementById('pm_rating').value) || 4.0,
@@ -814,7 +814,7 @@ async function savePlaceModal() {
             });
             if (!res.ok) {
                 const errorText = await res.text();
-                throw new Error(`PUT failed: ${errorText}`);
+                throw new Error(`PUT ล้มเหลว: ${errorText}`);
             }
             clearNearbyCache();
             showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
@@ -828,7 +828,7 @@ async function savePlaceModal() {
             });
             if (!res.ok) {
                 const errorText = await res.text();
-                throw new Error(`POST failed: ${errorText}`);
+                throw new Error(`POST ล้มเหลว: ${errorText}`);
             }
             clearNearbyCache();
             showToast('✅ เพิ่มสถานที่สำเร็จ', 'success');
@@ -906,7 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             currentUploadFiles = currentUploadFiles.concat(files);
-            this.value = ''; // allow selecting same files again
+            this.value = ''; // อนุญาตให้เลือกไฟล์เดิมซ้ำได้
             renderGalleryPreview();
         });
     }
@@ -937,7 +937,7 @@ async function confirmDelete() {
     deletePendingId = null;
 }
 
-// ─── Comments / Reviews ──────────────────────
+// ─── ความคิดเห็น / รีวิว ──────────────────────
 async function openCommentModal(placeId, placeName) {
     currentCommentPlaceId = placeId;
     selectedStars = 0;
@@ -1021,11 +1021,11 @@ async function loadReviewsForPlace(placeId) {
         if (res.ok) {
             REVIEWS_CACHE[placeId] = await res.json();
         } else {
-            console.error('loadReviews error:', res.status);
+            console.error('โหลด reviews ผิดพลาด:', res.status);
             REVIEWS_CACHE[placeId] = [];
         }
     } catch (e) {
-        console.error('Failed to load reviews:', e);
+        console.error('โหลด reviews ไม่สำเร็จ:', e);
         REVIEWS_CACHE[placeId] = REVIEWS_CACHE[placeId] || [];
     }
 }
@@ -1046,7 +1046,7 @@ function buildRatingSummary(reviews) {
         else starsHtml += "<i class='bx bx-star'></i>";
     }
 
-    // count per star level
+    // นับจำนวนต่อระดับดาว
     const counts = [0, 0, 0, 0, 0];
     rated.forEach(r => { if (r.rating >= 1 && r.rating <= 5) counts[r.rating - 1]++; });
 
@@ -1272,7 +1272,7 @@ async function saveEditComment() {
     showToast('✅ แก้ไขความคิดเห็นแล้ว', 'success');
 }
 
-// ─── Utility ─────────────────────────────────
+// ─── ฟังก์ชันอรรถประโยชน์ ─────────────────────────────────
 function escapeHtml(str) {
     return String(str)
         .replace(/&/g, '&amp;')
@@ -1282,7 +1282,7 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
-// ─── Modal Helpers ───────────────────────────
+// ─── ฟังก์ชันช่วย Modal ───────────────────────────
 function showModal(id) {
     document.getElementById(id).classList.add('active');
     document.getElementById('modalBackdrop').classList.add('active');
@@ -1293,7 +1293,7 @@ function closeAllModals() {
     document.getElementById('modalBackdrop').classList.remove('active');
 }
 
-// ─── Toast ───────────────────────────────────
+// ─── Toast แจ้งเตือน ───────────────────────────────────
 function showToast(msg, type = 'info') {
     const t = document.createElement('div');
     t.className = `toast toast-${type}`;
@@ -1303,7 +1303,7 @@ function showToast(msg, type = 'info') {
     setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-// ─── Nearby Settings Panel UI strings ───────
+// ─── ข้อความ UI แผงตั้งค่า Nearby ───────
 const NEARBY_STRINGS = {
     th: {
         navFav: 'รายการโปรด',
@@ -1352,13 +1352,13 @@ let nearbyLang = localStorage.getItem('lang') || 'th';
 function applyNearbyLanguage(lang) {
     const s = NEARBY_STRINGS[lang] || NEARBY_STRINGS['th'];
 
-    // Nav labels
+    // ป้ายกำกับ Nav
     const favLabel = document.getElementById('nearbyNavFavLabel');
     if (favLabel) favLabel.textContent = s.navFav;
     const setLabel = document.getElementById('nearbyNavSettingsLabel');
     if (setLabel) setLabel.textContent = s.navSettings;
 
-    // Settings panel
+    // แผงตั้งค่า
     const map = {
         nearbySettingsTitle: 'settingsTitle',
         nearbySettingsSub: 'settingsSub',
@@ -1378,7 +1378,7 @@ function applyNearbyLanguage(lang) {
         if (el && s[key] !== undefined) el.textContent = s[key];
     });
 
-    // Hero text
+    // ข้อความ Hero
     const heroTag = document.querySelector('.hero-tag');
     if (heroTag) heroTag.innerHTML = `<i class='bx bx-current-location'></i> ${s.heroTag}`;
     const heroH1 = document.querySelector('.nearby-hero-content h1');
@@ -1386,14 +1386,14 @@ function applyNearbyLanguage(lang) {
     const heroPara = document.querySelector('.nearby-hero-content > p');
     if (heroPara) heroPara.textContent = s.heroSub;
 
-    // Lang buttons
+    // ปุ่มภาษา
     const thBtn = document.getElementById('nearbyLangTH');
     const enBtn = document.getElementById('nearbyLangEN');
     if (thBtn) thBtn.classList.toggle('active', lang === 'th');
     if (enBtn) enBtn.classList.toggle('active', lang === 'en');
 }
 
-// ─── Settings Panel Toggle ───────────────────
+// ─── สลับแผงตั้งค่า ───────────────────
 function toggleNearbySettings() {
     const settings = document.getElementById('nearbySettingsPanel');
     const back = document.getElementById('panelBackdrop');
@@ -1406,9 +1406,9 @@ function closeNearbyPanels() {
     document.getElementById('panelBackdrop').classList.remove('active');
 }
 
-// ─── Carousel Logic ─────────────────────────
+// ─── ตรรกะ Carousel ─────────────────────────
 function scrollCarousel(event, btn, direction) {
-    event.stopPropagation(); // prevent clicking the card underneath if any
+    event.stopPropagation(); // ป้องกันการคลิกทะลุไปที่การ์ดด้านล่าง
     const wrapper = btn.closest('.card-carousel-wrapper');
     const container = wrapper.querySelector('.card-carousel-container');
     const scrollAmount = container.clientWidth;
@@ -1426,7 +1426,7 @@ function updateCarouselDots(container) {
     });
 }
 
-// ─── Dark Mode ───────────────────────────────
+// ─── โหมดมืด ───────────────────────────────
 function toggleNearbyDarkMode(enabled) {
     document.documentElement.setAttribute('data-theme', enabled ? 'dark' : 'light');
     localStorage.setItem('darkMode', enabled ? 'dark' : 'light');
@@ -1442,16 +1442,16 @@ function toggleNearbyListView(enabled) {
     localStorage.setItem('listView', enabled ? '1' : '0');
 }
 
-// ─── Language ────────────────────────────────
+// ─── ภาษา ────────────────────────────────
 function setNearbyLanguage(lang) {
     nearbyLang = lang;
     localStorage.setItem('lang', lang);
     applyNearbyLanguage(lang);
 }
 
-// ─── Init ────────────────────────────────────
+// ─── เริ่มต้นระบบ ────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    // Restore dark mode — share same key as main page
+    // คืนค่าโหมดมืด — ใช้ key เดียวกับหน้าหลัก
     const savedDark = localStorage.getItem('darkMode');
     if (savedDark === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -1459,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (toggle) toggle.checked = true;
     }
 
-    // Restore hide images
+    // คืนค่าซ่อนรูปภาพ
     const hideImages = localStorage.getItem('hideImages') === '1';
     if (hideImages) {
         document.body.classList.add('hide-images');
@@ -1467,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (toggle) toggle.checked = true;
     }
 
-    // Restore list view
+    // คืนค่า list view
     const listView = localStorage.getItem('listView') === '1';
     if (listView) {
         document.getElementById('nearbyGrid').classList.add('list-view');
@@ -1475,11 +1475,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (toggle) toggle.checked = true;
     }
 
-    // Restore language
+    // คืนค่าภาษา
     nearbyLang = localStorage.getItem('lang') || 'th';
     applyNearbyLanguage(nearbyLang);
 
-    // Restore Admin Mode
+    // คืนค่าโหมด Admin
     const savedAdmin = localStorage.getItem('adminMode') === '1';
     if (savedAdmin) {
         const toggle = document.getElementById('adminModeToggle');
@@ -1493,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showNearbySkeleton();
     await fetchPlacesFromApi('all');
     reRender();
-    // Load real ratings in background then refresh cards
+    // โหลดคะแนนจริงในพื้นหลัง แล้วรีเฟรชการ์ด
     preloadAllReviews().then(() => reRender());
 
     const searchInput = document.getElementById('nearbySearchInput');
@@ -1520,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ====== AI CHATBOT ======
 let chatbotOpen = false;
-let chatHistory = []; // เก็บ history การสนทนา
+let chatHistory = []; // เก็บประวัติการสนทนา
 
 function toggleChatbot() {
     chatbotOpen = !chatbotOpen;
@@ -1611,7 +1611,7 @@ async function analyzeReviews(placeId) {
     btn.disabled = false;
 }
 
-// ====== LIGHTBOX ======
+// ====== Lightbox แสดงรูปภาพ ======
 let _lbImages = [];
 let _lbIndex = 0;
 

@@ -33,7 +33,7 @@ public class ChatController {
             return ResponseEntity.badRequest().body(Map.of("error", "message is required"));
         }
 
-        // รับ history จาก frontend [ {role, text}, ... ]
+        // รับ history จากหน้าเว็บ
         @SuppressWarnings("unchecked")
         List<Map<String, String>> history = (List<Map<String, String>>) request.getOrDefault("history", List.of());
 
@@ -77,9 +77,9 @@ public class ChatController {
             // [รองรับทั้ง array และ object]
             String trimmed = priceJson.trim();
             if (trimmed.startsWith("[")) {
-                // array of price objects
+                // array ของ price objects
                 StringBuilder sb = new StringBuilder();
-                // parse manually เพื่อไม่ต้องเพิ่ม dependency
+                // parse ด้วยตัวเองเพื่อไม่ต้องเพิ่ม dependency
                 String[] parts = trimmed.replaceAll("[\\[\\]{}\"]", "").split(",");
                 for (String part : parts) {
                     part = part.trim();

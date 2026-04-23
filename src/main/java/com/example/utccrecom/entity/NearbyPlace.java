@@ -49,10 +49,8 @@ public class NearbyPlace {
     @Column(name = "image_url")
     private List<String> images = new ArrayList<>();
 
-    // Constructors
     public NearbyPlace() {}
 
-    // Getters & Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 

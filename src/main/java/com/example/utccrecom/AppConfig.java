@@ -18,7 +18,7 @@ public class AppConfig {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        // Register JavaTimeModule so LocalDateTime serializes to ISO string correctly
+        // ลงทะเบียน JavaTimeModule เพื่อให้ LocalDateTime serialize เป็น ISO string ได้ถูกต้อง
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;

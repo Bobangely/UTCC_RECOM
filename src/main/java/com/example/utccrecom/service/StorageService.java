@@ -46,7 +46,7 @@ public class StorageService {
         headers.setContentType(MediaType.parseMediaType(
             file.getContentType() != null ? file.getContentType() : "application/octet-stream"
         ));
-        // Allow overwrite if same name somehow exists
+
         headers.set("x-upsert", "true");
 
         HttpEntity<byte[]> requestEntity = new HttpEntity<>(file.getBytes(), headers);
@@ -59,7 +59,7 @@ public class StorageService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 return supabaseUrl + "/storage/v1/object/public/" + BUCKET_NAME + "/" + uniqueFileName;
             } else {
-                throw new IOException("Supabase upload failed with status: " + response.getStatusCode() + " body: " + response.getBody());
+                throw new IOException("อัปโหลด Supabase ล้มเหลว status: " + response.getStatusCode() + " body: " + response.getBody());
             }
         } catch (org.springframework.web.client.HttpClientErrorException | 
                  org.springframework.web.client.HttpServerErrorException ex) {

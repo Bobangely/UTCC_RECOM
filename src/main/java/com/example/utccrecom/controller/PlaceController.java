@@ -22,13 +22,13 @@ public class PlaceController {
     @Autowired
     private UniversityService universityService;
 
-    // Fetch all places (For Map and List)
+    // ดึงสถานที่ทั้งหมด
     @GetMapping
     public List<Place> getAllPlaces() {
         return placeService.getAllPlaces();
     }
 
-    // Fetch a single place by ID
+    // ดึงสถานที่เดียวตาม ID
     @GetMapping("/{id}")
     public ResponseEntity<Place> getPlaceById(@PathVariable UUID id) {
         Optional<Place> place = placeService.getPlaceById(id);
@@ -39,43 +39,43 @@ public class PlaceController {
         }
     }
 
-    // Search places by name (e.g., /api/places/search?name=Cafe)
+    // ค้นหาสถานที่ตามชื่อ
     @GetMapping("/search")
     public List<Place> searchPlaces(@RequestParam String name) {
         return placeService.searchPlacesByName(name);
     }
 
-    // Filter places by category
+    // กรองสถานที่ตามหมวดหมู่
     @GetMapping("/category")
     public List<Place> getPlacesByCategory(@RequestParam String category) {
         return placeService.getPlacesByCategory(category);
     }
 
-    // Create a new place
+    // สร้างสถานที่ใหม่
     @PostMapping
     public Place createPlace(@RequestBody Place place) {
         Place saved = placeService.savePlace(place);
-        universityService.clearCache(); // Clear cache after create
+        universityService.clearCache(); // ล้าง cache หลังสร้างข้อมูล
         return saved;
     }
 
-    // Update an existing place
+    // อัปเดตสถานที่ที่มีอยู่
     @PutMapping("/{id}")
     public ResponseEntity<Place> updatePlace(@PathVariable UUID id, @RequestBody Place placeDetails) {
         try {
             Place updatedPlace = placeService.updatePlaceData(id, placeDetails);
-            universityService.clearCache(); // Clear cache after update
+            universityService.clearCache(); // ล้าง cache หลังอัปเดตข้อมูล
             return ResponseEntity.ok(updatedPlace);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // Delete a place
+    // ลบสถานที่
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePlace(@PathVariable UUID id) {
         placeService.deletePlace(id);
-        universityService.clearCache(); // Clear cache after delete
+        universityService.clearCache(); // ล้าง cache หลังลบข้อมูล
         return ResponseEntity.noContent().build();
     }
 }

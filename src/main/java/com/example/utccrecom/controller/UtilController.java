@@ -14,13 +14,13 @@ import java.util.regex.Pattern;
 @RequestMapping("/api/util")
 public class UtilController {
 
-    // !3d<lat>!4d<lng> = actual pin location (most accurate)
+    // ตำแหน่ง pin จริง
     private static final Pattern PLACE_PATTERN =
             Pattern.compile("!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)");
-    // @<lat>,<lng> = viewport camera center (fallback, can be slightly off)
+    // ศูนย์กลางกล้อง viewport
     private static final Pattern VIEWPORT_PATTERN =
             Pattern.compile("/@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)");
-    // ?q=<lat>,<lng> = explicit query coordinates
+    // พิกัดจาก query โดยตรง
     private static final Pattern QUERY_PATTERN =
             Pattern.compile("[?&]q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)");
 
@@ -36,7 +36,7 @@ public class UtilController {
 
             while (redirect && redirectsCount < 5) {
                 conn = (HttpURLConnection) URI.create(currentUrl).toURL().openConnection();
-                conn.setInstanceFollowRedirects(false); // We handle redirects manually for cross-host
+                conn.setInstanceFollowRedirects(false); // จัดการ redirect เองเพื่อรองรับ cross-host
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
                 conn.setConnectTimeout(6000);
                 conn.setReadTimeout(6000);
@@ -59,7 +59,7 @@ public class UtilController {
             result.put("finalUrl", finalUrl);
             result.put("status", code);
 
-            // Priority: query param > place coords (!3d!4d) > viewport (@)
+            // ลำดับความสำคัญ: query param > พิกัดสถานที่
             Matcher m = QUERY_PATTERN.matcher(finalUrl);
             String source = null;
             if (m.find()) {
