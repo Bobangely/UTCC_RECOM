@@ -28,19 +28,16 @@ public class ReviewController {
     @Autowired
     private NearbyPlaceService nearbyPlaceService;
 
-    // GET /api/reviews/nearby/{placeId}  — ดึงรีวิวแบบกรอง
     @GetMapping("/nearby/{placeId}")
     public List<Review> getNearbyReviews(@PathVariable String placeId) {
         return reviewService.getReviewsByPlace(placeId, "nearby");
     }
 
-    // GET /api/reviews/place/{placeId}  — ดึงรีวิวทั้งหมดของ place
     @GetMapping("/place/{placeId}")
     public List<Review> getReviewsByPlace(@PathVariable String placeId) {
         return reviewService.getReviewsByPlaceId(placeId);
     }
 
-    // POST /api/reviews/nearby/{placeId}  — ส่งรีวิวใหม่
     @PostMapping("/nearby/{placeId}")
     public ResponseEntity<Map<String, Object>> createNearbyReview(
             @PathVariable String placeId,
@@ -49,7 +46,6 @@ public class ReviewController {
             review.setPlaceId(placeId);
             review.setPlaceType("nearby");
             Review saved = reviewService.saveReview(review);
-            // คืนค่า DTO แทน entity เพื่อหลีกปัญหา LocalDateTime serialization
             Map<String, Object> resp = new java.util.LinkedHashMap<>();
             resp.put("status", "saved");
             resp.put("id", saved.getId() != null ? saved.getId().toString() : null);
@@ -61,7 +57,6 @@ public class ReviewController {
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
             System.err.println("Review save error: " + e.getMessage());
-            // ถึงแม้เกิด exception ข้อมูลอาจถูก commit แล้ว — คืน 200 เพื่อไม่ให้ UI พัง
             Map<String, Object> fallback = new java.util.LinkedHashMap<>();
             fallback.put("status", "saved");
             fallback.put("placeId", placeId);
@@ -69,7 +64,6 @@ public class ReviewController {
         }
     }
 
-    // GET /api/reviews/analyze/{placeId}  — AI สรุปรีวิว
     @GetMapping("/analyze/{placeId}")
     public ResponseEntity<Map<String, String>> analyzeReviews(@PathVariable String placeId) {
         List<Review> reviews = reviewService.getReviewsByPlaceId(placeId);
@@ -94,7 +88,6 @@ public class ReviewController {
         return ResponseEntity.ok(Map.of("summary", summary, "count", String.valueOf(reviews.size())));
     }
 
-    // PUT /api/reviews/{id}  — แก้ไขรีวิวของตัวเอง
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateReview(
             @PathVariable UUID id,
@@ -117,7 +110,6 @@ public class ReviewController {
         }
     }
 
-    // DELETE /api/reviews/{id}  — Adminลบรีวิวได้
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable UUID id) {
         try {

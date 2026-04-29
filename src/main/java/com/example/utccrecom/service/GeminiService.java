@@ -68,12 +68,12 @@ public class GeminiService {
         return "";
     }
 
-    // 1. Smart Search — แปลง query เป็น keywords
+    //Smart Search — แปลง query เป็น keywords
     public String extractKeywords(String promptText) {
         return callGemini(promptText);
     }
 
-    // 2. Chatbot — ตอบคำถามเกี่ยวกับสถานที่ใน UTCC พร้อม history
+    //Chatbot — ตอบคำถามเกี่ยวกับสถานที่ใน UTCC พร้อม history
     public String chat(String userMessage, String placesContext, List<Map<String, String>> history) {
         String systemPrompt = "คุณคือผู้ช่วย AI ของมหาวิทยาลัยหอการค้าไทย (UTCC) ชื่อว่า UTCC Assistant"+
                 "ตอบเป็นภาษาไทยเท่านั้นกระชับเป็นมิตร และ เป็นประโยชน์"+
@@ -87,13 +87,11 @@ public class GeminiService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // สร้าง contents array พร้อม history
         List<Map<String, Object>> contents = new java.util.ArrayList<>();
 
         contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", systemPrompt))));
         contents.add(Map.of("role", "model", "parts", List.of(Map.of("text", "เข้าใจแล้วครับ ยินดีช่วยเหลือ"))));
 
-        // เพิ่ม history
         List<Map<String, String>> recentHistory = history.size() > 10
                 ? history.subList(history.size() - 10, history.size())
                 : history;
@@ -103,7 +101,6 @@ public class GeminiService {
             contents.add(Map.of("role", role, "parts", List.of(Map.of("text", turn.get("text")))));
         }
 
-        // เพิ่ม message ปัจจุบัน
         contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", userMessage))));
 
         Map<String, Object> requestBody = new HashMap<>();
@@ -128,7 +125,7 @@ public class GeminiService {
         return "";
     }
 
-    // 3. วิเคราะห์รีวิว
+    //วิเคราะห์รีวิว
     public String analyzeReviews(String placeName, String reviewsText) {
         String prompt = "สรุปรีวิวของ '" + placeName + "' เป็นภาษาไทย กระชับ ไม่เกิน 3 ประโยค "
                 + "แบ่งเป็น จุดเด่น / จุดด้อย / สรุปโดยรวม "

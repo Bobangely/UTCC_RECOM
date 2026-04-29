@@ -34,6 +34,11 @@
 
             <!-- ขวา: ปุ่มต่างๆ -->
             <div class="nav-actions">
+                <button class="nav-icon-btn" id="favNavBtn" onclick="toggleNearbyFavorites()" title="รายการโปรด">
+                    <i class='bx bx-heart'></i>
+                    <span class="nav-btn-label" id="nearbyNavFavLabel">รายการโปรด</span>
+                    <span class="fav-badge" id="nearbyFavBadge" style="display:none">0</span>
+                </button>
                 <button class="nav-icon-btn" id="settingsNavBtn" onclick="toggleNearbySettings()" title="ตั้งค่า">
                     <i class='bx bx-cog'></i>
                     <span class="nav-btn-label" id="nearbyNavSettingsLabel">ตั้งค่า</span>
@@ -130,6 +135,38 @@
         </div>
     </div>
 
+    <!-- ====== Modal รายละเอียดสถานที่ ====== -->
+    <div class="modal-overlay" id="placeDetailModal">
+        <div class="modal detail-modal">
+            <!-- ส่วนรูปภาพ -->
+            <div class="detail-img-wrap"></div>
+            <!-- ปุ่มปิด -->
+            <button class="detail-close-btn" onclick="closeAllModals()"><i class='bx bx-x'></i></button>
+            <!-- ป้ายหมวดหมู่และระยะทาง -->
+            <div class="detail-badges">
+                <span class="detail-badge"></span>
+                <span class="detail-dist"><i class='bx bx-walk'></i></span>
+            </div>
+            <!-- เนื้อหา -->
+            <div class="detail-body">
+                <div class="detail-name"></div>
+                <div class="detail-stars"></div>
+                <p class="detail-desc"></p>
+                <div class="detail-tags"></div>
+                <div class="detail-price"></div>
+                <!-- ปุ่มกระทำ -->
+                <div class="detail-actions">
+                    <button class="detail-fav-btn"></button>
+                    <button class="detail-review-btn"></button>
+                    <button class="detail-nav-btn nav-btn" onclick=""><i class='bx bx-navigation'></i> นำทาง</button>
+                    <a class="detail-maps-btn nav-btn gmaps-btn" href="#" target="_blank" rel="noopener">
+                        <img src="https://www.google.com/favicon.ico" width="14" height="14" alt="" style="border-radius:2px"> Maps
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ====== Modal ความคิดเห็น ====== -->
     <div class="modal-overlay" id="commentModal">
         <div class="modal">
@@ -205,6 +242,23 @@
         </div>
     </div>
 
+    <!-- ====== Modal ยืนยันล้างรายการโปรด ====== -->
+    <div class="modal-overlay" id="clearNearbyFavModal">
+        <div class="modal" style="max-width:360px">
+            <div class="modal-body" style="text-align:center;padding:2rem">
+                <i class='bx bxs-heart' style="font-size:3rem;color:#ef4444;margin-bottom:1rem;display:block"></i>
+                <div style="font-weight:700;font-size:1.1rem;color:var(--text);margin-bottom:0.5rem">ล้างรายการโปรดทั้งหมด?</div>
+                <p style="color:var(--muted);font-size:0.9rem">รายการโปรดทั้งหมดจะถูกลบออก ไม่สามารถกู้คืนได้</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAllModals()">ยกเลิก</button>
+                <button class="btn-danger" onclick="confirmClearNearbyFavorites()">
+                    <i class='bx bx-trash'></i> ล้างทั้งหมด
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ====== Modal ยืนยันการลบ ====== -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal" style="max-width:380px">
@@ -238,6 +292,15 @@
 
     <!-- ====== ฉากหลัง Panel ====== -->
     <div class="panel-backdrop" id="panelBackdrop" onclick="closeNearbyPanels()"></div>
+
+    <!-- ====== แผง Favorites ====== -->
+    <div class="side-panel" id="nearbyFavPanel">
+        <div class="side-panel-header">
+            <div class="side-panel-title"><i class='bx bx-heart' style="color:#ef4444"></i> <span id="nearbyFavPanelTitle">รายการโปรด</span></div>
+            <button class="close-panel-btn" onclick="closeNearbyPanels()"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="side-panel-body" id="nearbyFavList"></div>
+    </div>
 
 
     <!-- ====== แผงตั้งค่า ====== -->
@@ -419,7 +482,7 @@
         <!-- Places Grid -->
         <section class="places-section">
             <div class="section-header">
-                <h2><i class='bx bx-star'></i> สถานที่แนะนำรอบมหาลัย</h2>
+                <h2><i class='bx bx-star'></i> สถานที่แนะนำรอบมหาวิทยาลัย</h2>
                 <div class="search-and-count" style="display:flex; align-items:center; gap: 1rem; flex-wrap: wrap;">
                     <div class="nearby-search" style="display:flex;">
                         <input type="text" id="nearbySearchInput" class="form-input" placeholder="ค้นหาร้านอาหาร, หอพัก..." style="border-radius: 8px 0 0 8px; border-right: none; min-width: 200px;">

@@ -266,7 +266,7 @@
                     </a>
                     <a href="nearby.html" class="hero-cta-btn hero-cta-outline">
                         <i class='bx bx-current-location'></i>
-                        สถานที่รอบมหาลัย
+                        สถานที่รอบมหาวิทยาลัย
                     </a>
                 </div>
             </div>
@@ -529,6 +529,36 @@
     </main>
 
 
+    <!-- ====== Modal รายละเอียดสถานที่ ====== -->
+    <div class="modal-overlay" id="placeDetailModal" onclick="if(event.target===this) closePlaceDetailModal()">
+        <div class="modal detail-modal">
+            <!-- ส่วนรูปภาพ -->
+            <div class="detail-img-wrap"></div>
+            <!-- ปุ่มปิดลอยอยู่บนรูป -->
+            <button class="detail-close-btn" onclick="closePlaceDetailModal()"><i class='bx bx-x'></i></button>
+            <!-- ป้ายหมวดหมู่และที่อยู่ -->
+            <div class="detail-badges">
+                <span class="detail-badge"></span>
+                <span class="detail-dist" style="font-size:0.8rem;color:var(--text-muted)"></span>
+            </div>
+            <!-- เนื้อหา -->
+            <div class="detail-body">
+                <div class="detail-name"></div>
+                <!-- คะแนนดาว -->
+                <div class="detail-stars"></div>
+                <p class="detail-desc"></p>
+                <div class="detail-tags"></div>
+                <!-- ราคา -->
+                <div class="detail-price"></div>
+                <!-- ปุ่มกระทำ -->
+                <div class="detail-actions">
+                    <button class="detail-fav-btn"></button>
+                    <button class="detail-review-btn"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header">
@@ -668,6 +698,23 @@
         <div class="chatbot-input-row">
             <input type="text" id="chatbotInput" placeholder="พิมพ์คำถาม..." onkeypress="if(event.key==='Enter') sendChat()">
             <button onclick="sendChat()"><i class='bx bx-send'></i></button>
+        </div>
+    </div>
+
+    <!-- Modal ยืนยันล้างรายการโปรด -->
+    <div class="modal-overlay" id="clearFavModal" onclick="if(event.target===this) closeClearFavModal()">
+        <div class="modal" style="max-width:360px">
+            <div class="modal-body" style="text-align:center;padding:2rem">
+                <i class='bx bxs-heart' style="font-size:3rem;color:#ef4444;margin-bottom:1rem;display:block"></i>
+                <div style="font-weight:700;font-size:1.1rem;color:var(--text-main);margin-bottom:0.5rem">ล้างรายการโปรดทั้งหมด?</div>
+                <p style="color:var(--text-muted);font-size:0.9rem">รายการโปรดทั้งหมดจะถูกลบออก ไม่สามารถกู้คืนได้</p>
+            </div>
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end;padding:1rem 1.5rem;border-top:1px solid var(--border-color)">
+                <button class="btn-secondary" onclick="closeClearFavModal()">ยกเลิก</button>
+                <button class="btn-danger" onclick="confirmClearFavorites()">
+                    <i class='bx bx-trash'></i> ล้างทั้งหมด
+                </button>
+            </div>
         </div>
     </div>
 

@@ -1,7 +1,3 @@
-// =============================================
-//  UTCC Nearby — nearby.js
-//  ระบบ Admin & ความคิดเห็น + localStorage
-// =============================================
 
 // ─── ค่าตั้งต้น Admin ──────────────────────────
 let isAdmin = false; // ค่าเริ่มต้นเป็น false
@@ -56,7 +52,7 @@ const DEFAULT_PLACES = [
       tags: ['กาแฟ', 'ราคาถูก', 'เก่าแก่'], distance: '~60 ม.', rating: 4.3,
       lat: 13.7785, lng: 100.5608, mapsUrl: 'https://maps.google.com/?q=13.7785,100.5608' },
     { id: 'c3', cat: 'cafe', name: 'Inthanin Coffee (ปั้มบางจาก)',
-      desc: 'กาแฟสดจากดอยอินทนนท์ ราคาเป็นมิตร บรรยากาศสบาย เดินถึงได้จากมหาลัย',
+      desc: 'กาแฟสดจากดอยอินทนนท์ ราคาเป็นมิตร บรรยากาศสบาย เดินถึงได้จากมหาวิทยาลัย',
       image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=600',
       tags: ['กาแฟไทย', 'อินทนิล', 'ราคาดี'], distance: '~200 ม.', rating: 4.0,
       lat: 13.7770, lng: 100.5620, mapsUrl: 'https://maps.google.com/?q=13.7770,100.5620' },
@@ -65,7 +61,7 @@ const DEFAULT_PLACES = [
       image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?auto=format&fit=crop&q=80&w=600',
       tags: ['Co-working', 'Wi-Fi เร็ว', 'ห้องประชุม'], distance: '~50 ม.', rating: 4.2,
       lat: 13.7792, lng: 100.5602, mapsUrl: 'https://maps.google.com/?q=13.7792,100.5602' },
-    { id: 'i2', cat: 'internet', name: 'ร้านถ่ายเอกสาร / Print ใกล้มหาลัย',
+    { id: 'i2', cat: 'internet', name: 'ร้านถ่ายเอกสาร / Print ใกล้มหาวิทยาลัย',
       desc: 'ร้านถ่ายเอกสาร พรินต์งาน เข้าเล่มรายงาน มีให้เลือกหลายร้านรอบซอยวิภาวดี 2',
       image: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&q=80&w=600',
       tags: ['ถ่ายเอกสาร', 'พรินต์', 'เข้าเล่ม'], distance: '~30 ม.', rating: 4.1,
@@ -202,6 +198,108 @@ function localToApi(data, existingImages) {
 
 // ─── cache รีวิว (โหลดต่อสถานที่จาก API) ────────────
 let REVIEWS_CACHE = {};
+
+// ─── รายการโปรด (ใช้ key เดียวกับหน้า index เพื่อซิงค์ข้ามหน้า) ───
+const FAV_KEY = 'utcc_favorites';
+let nearbyFavorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+
+// เพิ่ม/ลบรายการโปรด แล้วอัปเดต badge และ panel
+function toggleNearbyFavorite(id, name, image, cat) {
+    nearbyFavorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); // อ่านล่าสุดก่อนเสมอ
+    const idx = nearbyFavorites.findIndex(f => f.id === id);
+    if (idx === -1) {
+        nearbyFavorites.push({ id, name, image, category: cat, source: 'nearby' }); // บันทึกว่ามาจากหน้า nearby
+    } else {
+        nearbyFavorites.splice(idx, 1);
+    }
+    localStorage.setItem(FAV_KEY, JSON.stringify(nearbyFavorites));
+    updateNearbyFavBadge();
+    renderNearbyFavList();
+    // อัปเดตไอคอนหัวใจบนการ์ดทันที
+    const btn = document.querySelector(`.nearby-fav-btn[data-id="${id}"]`);
+    if (btn) {
+        const isFav = nearbyFavorites.some(f => f.id === id);
+        btn.classList.toggle('is-fav', isFav);
+        btn.innerHTML = `<i class='bx ${isFav ? 'bxs-heart' : 'bx-heart'}'></i>`;
+        btn.title = isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด';
+    }
+}
+
+// อัปเดตตัวเลขบน badge ใน navbar
+function updateNearbyFavBadge() {
+    nearbyFavorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+    const badge = document.getElementById('nearbyFavBadge');
+    if (!badge) return;
+    if (nearbyFavorites.length > 0) {
+        badge.style.display = 'flex';
+        badge.textContent = nearbyFavorites.length;
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// แสดงรายการโปรดใน panel พร้อมป้ายบอกว่ามาจากหน้าไหน
+function renderNearbyFavList() {
+    nearbyFavorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+    const list = document.getElementById('nearbyFavList');
+    if (!list) return;
+    if (nearbyFavorites.length === 0) {
+        list.innerHTML = `<div class="fav-empty"><i class='bx bx-heart'></i><p>ยังไม่มีรายการโปรด</p><small>กดไอคอน ♡ บนการ์ดสถานที่เพื่อบันทึก</small></div>`;
+        return;
+    }
+    const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=100';
+    list.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0 0.75rem;border-bottom:1px solid var(--border);margin-bottom:0.5rem">
+            <span style="font-size:0.8rem;color:var(--muted)">${nearbyFavorites.length} รายการ</span>
+            <button onclick="clearNearbyFavorites()" style="background:none;border:none;color:#ef4444;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.25rem;font-family:inherit">
+                <i class='bx bx-trash'></i> ล้างทั้งหมด
+            </button>
+        </div>
+        ${nearbyFavorites.map(f => {
+            const catLabel = CAT_LABELS[f.cat || f.category] || f.cat || f.category || '';
+            const srcLabel = f.source === 'nearby' ? 'สถานที่รอบมหาวิทยาลัย' : 'ภายในมหาวิทยาลัย'; // บอกที่มาของรายการ
+            const safeId = f.id;
+            const safeName = (f.name || '').replace(/'/g, "&#39;");
+            const safeImg = (f.image || '').replace(/'/g, "&#39;");
+            const safeCat = (f.cat || f.category || '').replace(/'/g, "&#39;");
+            return `
+            <div class="fav-item">
+                <img src="${f.image || defaultImg}" alt="${safeName}" class="fav-item-img" onerror="this.src='${defaultImg}'">
+                <div class="fav-item-info">
+                    <div class="fav-item-name">${f.name}</div>
+                    <div class="fav-item-cat">${catLabel} <span style="opacity:0.5">• ${srcLabel}</span></div>
+                </div>
+                <button class="fav-remove-btn" onclick="toggleNearbyFavorite('${safeId}','${safeName}','${safeImg}','${safeCat}')" title="ลบออก"><i class='bx bx-x'></i></button>
+                <button class="fav-detail-btn" onclick="openPlaceDetail('${safeId}')" title="ดูรายละเอียด"><i class='bx bx-info-circle'></i></button>
+            </div>`;
+        }).join('')}`;
+}
+
+// ล้างรายการโปรดทั้งหมดแล้ว re-render การ์ด
+function clearNearbyFavorites() {
+    // แสดง custom modal แทน confirm()
+    document.getElementById('clearNearbyFavModal').classList.add('active');
+    document.getElementById('modalBackdrop').classList.add('active');
+}
+
+function confirmClearNearbyFavorites() {
+    closeAllModals();
+    nearbyFavorites = [];
+    localStorage.setItem(FAV_KEY, '[]');
+    updateNearbyFavBadge();
+    renderNearbyFavList();
+    reRender();
+}
+
+// เปิด/ปิด panel รายการโปรด (ปิด settings ก่อนถ้าเปิดอยู่)
+function toggleNearbyFavorites() {
+    renderNearbyFavList();
+    const panel = document.getElementById('nearbyFavPanel');
+    const back = document.getElementById('panelBackdrop');
+    document.getElementById('nearbySettingsPanel').classList.remove('active');
+    panel.classList.toggle('active');
+    back.classList.toggle('active', panel.classList.contains('active'));
+}
 
 let PLACES = [];   // filled after DOMContentLoaded
 let currentCat = 'all';
@@ -466,6 +564,8 @@ function renderCards(places) {
         const tagsHtml = (p.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
         const priceHtml = renderPrice(p.price);
         const commentCount = (REVIEWS_CACHE[p.id] || []).length;
+        const isFav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').some(f => f.id === p.id);
+        const firstImg = (p.images && p.images.length > 0) ? p.images[0] : (p.image || '');
         const adminBtns = `
             <div class="admin-card-btns admin-only">
                 <button class="admin-card-btn edit" onclick="openEditPlace('${p.id}')" title="แก้ไข">
@@ -479,6 +579,7 @@ function renderCards(places) {
         let imgHtml = '';
         const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
         const allImgs = (p.images && p.images.length > 0) ? p.images : (p.image ? [p.image] : [defaultImg]);
+        const favBtn = `<button class="nearby-fav-btn ${isFav ? 'is-fav' : ''}" data-id="${p.id}" onclick="toggleNearbyFavorite('${p.id}','${p.name.replace(/'/g,"&#39;")}','${allImgs[0]}','${p.cat}')" title="${isFav ? 'ยกเลิกรายการโปรด' : 'เพิ่มในรายการโปรด'}"><i class='bx ${isFav ? 'bxs-heart' : 'bx-heart'}'></i></button>`;
         const placeImgKey = `lb_${p.id}`;
         window[placeImgKey] = allImgs;
         if (allImgs.length > 1) {
@@ -504,6 +605,7 @@ function renderCards(places) {
                 ${imgHtml}
                 <span class="card-cat-badge" style="background:${color}">${label}</span>
                 <span class="card-dist-badge"><i class='bx bx-walk'></i>${p.distance}</span>
+                ${favBtn}
             </div>
             <div class="card-body">
                 <div class="card-name">${p.name}</div>
@@ -518,6 +620,9 @@ function renderCards(places) {
                     <button class="comment-btn" onclick="openCommentModal('${p.id}', \`${p.name.replace(/`/g, "&#96;")}\`)">
                         <i class='bx bx-chat'></i>
                         ${commentCount > 0 ? `<span class="comment-count">${commentCount}</span>` : ''}
+                    </button>
+                    <button class="detail-btn" onclick="openPlaceDetail('${p.id}')" title="ดูรายละเอียด">
+                        <i class='bx bx-info-circle'></i>
                     </button>
                     ${p.lat && p.lng ? `
                     <button class="nav-btn" onclick="drawRouteToPlace('${p.id}')">
@@ -937,7 +1042,90 @@ async function confirmDelete() {
     deletePendingId = null;
 }
 
-// ─── ความคิดเห็น / รีวิว ──────────────────────
+// ─── Modal รายละเอียดสถานที่ ──────────────────────────
+// เปิด modal แสดงข้อมูลครบของสถานที่ที่เลือก
+function openPlaceDetail(placeId) {
+    // หาข้อมูลจาก PLACES ก่อน ถ้าไม่เจอให้ดึงจาก favorites
+    let p = PLACES.find(x => x.id === placeId);
+    if (!p) {
+        const fav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').find(f => f.id === placeId);
+        if (!fav) return;
+        // สร้าง object จาก favorites เพื่อแสดงข้อมูลเบื้องต้น
+        p = { id: fav.id, name: fav.name, image: fav.image, images: [fav.image], cat: fav.cat || fav.category, desc: '', tags: [], distance: '', rating: 0, price: null, mapsUrl: '' };
+    }
+
+    const modal = document.getElementById('placeDetailModal');
+    const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+    const allImgs = (p.images && p.images.length > 0) ? p.images : (p.image ? [p.image] : [defaultImg]);
+    const color = CAT_COLORS[p.cat] || '#64748b';
+    const label = CAT_LABELS[p.cat] || p.cat;
+    const ratings = getAverageRating(p.id, p.rating);
+    const stars = renderStars(ratings.avg);
+    const tagsHtml = (p.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
+    const priceHtml = renderPrice(p.price);
+    const isFav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').some(f => f.id === p.id);
+    const commentCount = (REVIEWS_CACHE[p.id] || []).length;
+
+    // สร้าง HTML รูปภาพ (carousel ถ้ามีหลายรูป)
+    const detailImgKey = `detail_lb_${p.id}`;
+    window[detailImgKey] = allImgs;
+    let imgHtml = '';
+    if (allImgs.length > 1) {
+        imgHtml = `
+        <div class="detail-carousel">
+            <button class="carousel-btn prev" onclick="scrollCarousel(event,this,-1)">❮</button>
+            <div class="card-carousel-container" onscroll="updateCarouselDots(this)">
+                ${allImgs.map((url, idx) => `<img class="carousel-img detail-img" src="${url}" onerror="this.src='${defaultImg}'" onclick="openLightbox(window['${detailImgKey}'],${idx})" style="cursor:zoom-in">`).join('')}
+            </div>
+            <button class="carousel-btn next" onclick="scrollCarousel(event,this,1)">❯</button>
+            <div class="carousel-dots">${allImgs.map((_,i) => `<span class="dot ${i===0?'active':''}"></span>`).join('')}</div>
+        </div>`;
+    } else {
+        imgHtml = `<img src="${allImgs[0]}" class="detail-img" onerror="this.src='${defaultImg}'" onclick="openLightbox(window['${detailImgKey}'],0)" style="cursor:zoom-in">`;
+    }
+
+    // ใส่เนื้อหาลงใน modal
+    modal.querySelector('.detail-img-wrap').innerHTML = imgHtml;
+    modal.querySelector('.detail-badge').textContent = label;
+    modal.querySelector('.detail-badge').style.background = color;
+    modal.querySelector('.detail-dist').textContent = p.distance || '';
+    modal.querySelector('.detail-name').textContent = p.name;
+    modal.querySelector('.detail-desc').textContent = p.desc || 'ไม่มีคำอธิบาย';
+    modal.querySelector('.detail-tags').innerHTML = tagsHtml;
+    modal.querySelector('.detail-price').innerHTML = priceHtml;
+    modal.querySelector('.detail-stars').innerHTML = `<span class="stars">${stars}</span> <span>${ratings.avg.toFixed(1)}</span>`;
+
+    // ปุ่ม fav ใน modal
+    const favBtn = modal.querySelector('.detail-fav-btn');
+    favBtn.classList.toggle('is-fav', isFav);
+    favBtn.innerHTML = `<i class='bx ${isFav ? 'bxs-heart' : 'bx-heart'}'></i> ${isFav ? 'บันทึกแล้ว' : 'บันทึก'}`;
+    favBtn.onclick = () => {
+        toggleNearbyFavorite(p.id, p.name, allImgs[0], p.cat);
+        const nowFav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').some(f => f.id === p.id);
+        favBtn.classList.toggle('is-fav', nowFav);
+        favBtn.innerHTML = `<i class='bx ${nowFav ? 'bxs-heart' : 'bx-heart'}'></i> ${nowFav ? 'บันทึกแล้ว' : 'บันทึก'}`;
+    };
+
+    // ปุ่มรีวิว
+    const reviewBtn = modal.querySelector('.detail-review-btn');
+    reviewBtn.innerHTML = `<i class='bx bx-chat'></i> รีวิว${commentCount > 0 ? ` (${commentCount})` : ''}`;
+    reviewBtn.onclick = () => { closeAllModals(); openCommentModal(p.id, p.name); };
+
+    // ปุ่ม Maps
+    const mapsUrl = p.mapsUrl || (p.lat && p.lng ? `https://www.google.com/maps?q=${p.lat},${p.lng}` : `https://maps.google.com/?q=${encodeURIComponent(p.name)}`);
+    modal.querySelector('.detail-maps-btn').href = mapsUrl;
+
+    // ปุ่มนำทาง (แสดงเฉพาะถ้ามีพิกัด)
+    const navBtn = modal.querySelector('.detail-nav-btn');
+    if (p.lat && p.lng) {
+        navBtn.style.display = 'inline-flex';
+        navBtn.onclick = () => { closeAllModals(); drawRouteToPlace(p.id); };
+    } else {
+        navBtn.style.display = 'none';
+    }
+
+    showModal('placeDetailModal');
+}
 async function openCommentModal(placeId, placeName) {
     currentCommentPlaceId = placeId;
     selectedStars = 0;
@@ -1397,12 +1585,14 @@ function applyNearbyLanguage(lang) {
 function toggleNearbySettings() {
     const settings = document.getElementById('nearbySettingsPanel');
     const back = document.getElementById('panelBackdrop');
+    document.getElementById('nearbyFavPanel').classList.remove('active');
     settings.classList.toggle('active');
     back.classList.toggle('active', settings.classList.contains('active'));
 }
 
 function closeNearbyPanels() {
     document.getElementById('nearbySettingsPanel').classList.remove('active');
+    document.getElementById('nearbyFavPanel').classList.remove('active');
     document.getElementById('panelBackdrop').classList.remove('active');
 }
 
@@ -1487,6 +1677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setAdminMode(true);
     }
 
+    updateNearbyFavBadge();
 
     initMap();
     await loadCategories();

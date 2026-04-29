@@ -59,7 +59,6 @@ public class UtilController {
             result.put("finalUrl", finalUrl);
             result.put("status", code);
 
-            // ลำดับความสำคัญ: query param > พิกัดสถานที่
             Matcher m = QUERY_PATTERN.matcher(finalUrl);
             String source = null;
             if (m.find()) {

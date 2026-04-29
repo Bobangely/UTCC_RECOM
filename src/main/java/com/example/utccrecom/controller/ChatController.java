@@ -74,12 +74,10 @@ public class ChatController {
     private String parsePrice(String priceJson) {
         if (priceJson == null || priceJson.isBlank()) return "";
         try {
-            // [รองรับทั้ง array และ object]
+
             String trimmed = priceJson.trim();
             if (trimmed.startsWith("[")) {
-                // array ของ price objects
                 StringBuilder sb = new StringBuilder();
-                // parse ด้วยตัวเองเพื่อไม่ต้องเพิ่ม dependency
                 String[] parts = trimmed.replaceAll("[\\[\\]{}\"]", "").split(",");
                 for (String part : parts) {
                     part = part.trim();

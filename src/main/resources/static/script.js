@@ -5,7 +5,6 @@ const API_BUILDINGS = '/api/buildings'; // API สำหรับอาคาร
 let currentCategory = '';
 let currentSearchQuery = ''; // ติดตามคำค้นหาปัจจุบัน
 let currentLang = localStorage.getItem('lang') || 'th';
-let favorites = JSON.parse(localStorage.getItem('utcc_favorites') || '[]');
 let allUniversityItems = []; // เก็บข้อมูลทั้งหมดสำหรับกรองฝั่ง client
 let adminMode = false; // สถานะโหมด Admin
 
@@ -402,18 +401,23 @@ filterTags.forEach(tag => {
     });
 });
 
-// ====== ระบบรายการโปรด ======
+// ====== ระบบรายการโปรด (ใช้ key เดียวกับหน้า nearby เพื่อซิงค์ข้ามหน้า) ======
+const FAV_KEY = 'utcc_favorites';
+let favorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+
+// เพิ่ม/ลบรายการโปรด แล้วอัปเดต badge และ panel
 function toggleFavorite(placeId, placeName, placeImg, placeCategory) {
+    favorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); // อ่านล่าสุดก่อนเสมอ
     const idx = favorites.findIndex(f => f.id === placeId);
     if (idx === -1) {
-        favorites.push({ id: placeId, name: placeName, image: placeImg, category: placeCategory });
+        favorites.push({ id: placeId, name: placeName, image: placeImg, category: placeCategory, source: 'index' }); // บันทึกว่ามาจากหน้า index
     } else {
         favorites.splice(idx, 1);
     }
-    localStorage.setItem('utcc_favorites', JSON.stringify(favorites));
+    localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
     updateFavBadge();
     renderFavList();
-    // แสดงสถานะไอคอนหัวใจบนการ์ดใหม่
+    // อัปเดตไอคอนหัวใจบนการ์ดทันที
     const btn = document.querySelector(`.fav-btn[data-id="${placeId}"]`);
     if (btn) {
         const isFav = favorites.some(f => f.id === placeId);
@@ -422,7 +426,9 @@ function toggleFavorite(placeId, placeName, placeImg, placeCategory) {
     }
 }
 
+// อัปเดตตัวเลขบน badge ใน navbar
 function updateFavBadge() {
+    favorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
     const badge = document.getElementById('favCountBadge');
     if (favorites.length > 0) {
         badge.style.display = 'flex';
@@ -432,22 +438,40 @@ function updateFavBadge() {
     }
 }
 
+// แสดงรายการโปรดใน panel พร้อมป้ายบอกว่ามาจากหน้าไหน
 function renderFavList() {
+    favorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
     const list = document.getElementById('favList');
     if (favorites.length === 0) {
         list.innerHTML = `<div class="fav-empty"><i class='bx bx-heart'></i><p>ยังไม่มีรายการโปรด</p><small>กดไอคอน ♡ บนการ์ดสถานที่เพื่อบันทึก</small></div>`;
         return;
     }
-    list.innerHTML = favorites.map(f => `
-        <div class="fav-item">
-            <img src="${f.image}" alt="${f.name}" class="fav-item-img" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=100'">
-            <div class="fav-item-info">
-                <div class="fav-item-name">${f.name}</div>
-                <div class="fav-item-cat">${translateCategory(f.category)}</div>
-            </div>
-            <button class="fav-remove-btn" onclick="toggleFavorite('${f.id}', '${f.name}', '${f.image}', '${f.category}')" title="ลบออก"><i class='bx bx-x'></i></button>
+    const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=100';
+    list.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0 0.75rem;border-bottom:1px solid var(--border, #e2e8f0);margin-bottom:0.5rem">
+            <span style="font-size:0.8rem;color:var(--text-muted,#64748b)">${favorites.length} รายการ</span>
+            <button onclick="clearAllFavorites()" style="background:none;border:none;color:#ef4444;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.25rem;font-family:inherit">
+                <i class='bx bx-trash'></i> ล้างทั้งหมด
+            </button>
         </div>
-    `).join('');
+        ${favorites.map(f => {
+            const catLabel = translateCategory(f.category);
+            const srcLabel = f.source === 'nearby' ? 'สถานที่รอบมหาวิทยาลัย' : 'ภายในมหาวิทยาลัย'; // บอกที่มาของรายการ
+            const safeId = f.id;
+            const safeName = (f.name || '').replace(/'/g, "&#39;");
+            const safeImg = (f.image || '').replace(/'/g, "&#39;");
+            const safeCat = (f.category || '').replace(/'/g, "&#39;");
+            return `
+            <div class="fav-item">
+                <img src="${f.image || defaultImg}" alt="${safeName}" class="fav-item-img" onerror="this.src='${defaultImg}'">
+                <div class="fav-item-info">
+                    <div class="fav-item-name">${f.name}</div>
+                    <div class="fav-item-cat">${catLabel} <span style="opacity:0.5">• ${srcLabel}</span></div>
+                </div>
+                <button class="fav-remove-btn" onclick="toggleFavorite('${safeId}','${safeName}','${safeImg}','${safeCat}')" title="ลบออก"><i class='bx bx-x'></i></button>
+                <button class="fav-detail-btn" onclick="openPlaceDetail('${safeId}')" title="ดูรายละเอียด"><i class='bx bx-info-circle'></i></button>
+            </div>`;
+        }).join('')}`;
 }
 
 function toggleFavPanel() {
@@ -503,7 +527,7 @@ const UI_STRINGS = {
         statPlace: 'สถานที่แนะนำ',
         statCat: 'หมวดหมู่',
         ctaMap: 'ดูแผนผังมหาวิทยาลัย',
-        ctaNearby: 'สถานที่รอบมหาลัย',
+        ctaNearby: 'สถานที่รอบมหาวิทยาลัย',
         scrollDown: 'เลื่อนลงดูแผนที่',
         // ส่วนหัว
         sectionTitle: '🗺️ แผนผังมหาวิทยาลัยหอการค้าไทย',
@@ -698,16 +722,26 @@ function toggleHideImages(enabled) {
 }
 
 function clearAllFavorites() {
-    const s = UI_STRINGS[currentLang] || UI_STRINGS['th'];
-    if (!confirm(s.confirmClearFav)) return;
+    // แสดง custom modal ยืนยัน
+    document.getElementById('clearFavModal').classList.add('active');
+}
+
+function closeClearFavModal() {
+    document.getElementById('clearFavModal').classList.remove('active');
+}
+
+function confirmClearFavorites() {
+    closeClearFavModal();
     favorites = [];
-    localStorage.setItem('utcc_favorites', '[]');
+    localStorage.setItem(FAV_KEY, '[]');
     updateFavBadge();
     renderFavList();
     updateSettingsFavCount();
+    applyFiltersAndSearch();
 }
 
 function updateSettingsFavCount() {
+    favorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
     const el = document.getElementById('settingsFavCount');
     if (el) el.textContent = favorites.length;
 }
@@ -1005,7 +1039,7 @@ function renderPlaces(places) {
         }
 
         const delay = index * 0.08;
-        const isFav = favorites.some(f => f.id === item.id);
+        const isFav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').some(f => f.id === item.id);
         
         return `
             <div class="place-card" style="animation-delay: ${delay}s">
@@ -1027,6 +1061,7 @@ function renderPlaces(places) {
                 <div class="card-footer">
                     <span class="card-location"><i class='bx bx-map-pin'></i>${item.address || item.floors || 'ม.หอการค้าไทย'}</span>
                     <div class="card-actions">
+                        <button class="card-action-btn info-btn" onclick="openPlaceDetail('${item.id}')" title="ดูรายละเอียด"><i class='bx bx-info-circle'></i></button>
                         <button class="card-action-btn edit-btn" onclick="openEditPlaceModal('${item.id}', '${item.type}')" title="แก้ไขข้อมูล"><i class='bx bx-edit-alt'></i></button>
                         <button class="card-action-btn delete-btn" onclick="deletePlace('${item.id}', '${item.type}')" title="ลบข้อมูล"><i class='bx bx-trash'></i></button>
                     </div>
@@ -1209,6 +1244,96 @@ async function saveEditPlace() {
         btn.innerHTML = origText;
         btn.disabled = false;
     }
+}
+
+// ── Modal รายละเอียดสถานที่ ─────────────────────────────────────────
+// เปิด modal แสดงข้อมูลครบของสถานที่ที่เลือก
+function openPlaceDetail(itemId) {
+    // หาข้อมูลจาก allUniversityItems ก่อน ถ้าไม่เจอให้ดึงจาก favorites
+    let item = allUniversityItems.find(x => x.id === itemId);
+    if (!item) {
+        const fav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').find(f => f.id === itemId);
+        if (!fav) return;
+        // สร้าง object เบื้องต้นจาก favorites เพื่อแสดงข้อมูล
+        item = { id: fav.id, name: fav.name, title: fav.name, image: fav.image, images: [fav.image], category: fav.category, type: 'place', description: '', tags: [], address: '', rating: 0 };
+    }
+
+    const modal = document.getElementById('placeDetailModal');
+    const defaultImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600';
+    const imagesList = (item.images && item.images.length > 0) ? item.images : (item.imageUrl ? [item.imageUrl] : [defaultImg]);
+    const isFav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').some(f => f.id === itemId);
+
+    // หมวดหมู่ — อาคารใช้ faculty, สถานที่ใช้ category
+    let catText = item.type === 'building' ? (item.faculty || 'อาคารมหาวิทยาลัย') : translateCategory(item.category);
+    const name = item.title || item.name || '';
+    const desc = item.description || item.desc || 'ไม่มีคำอธิบาย';
+    const tags = (item.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
+    const addr = item.address || item.floors || 'ม.หอการค้าไทย';
+
+    // คะแนนดาว
+    const rating = item.rating || 0;
+    const fullStars = Math.round(rating);
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+        starsHtml += i <= fullStars ? "<i class='bx bxs-star' style='color:#fbbf24'></i>" : "<i class='bx bx-star' style='color:#cbd5e1'></i>";
+    }
+
+    // สร้าง HTML รูปภาพ (slider ถ้ามีหลายรูป)
+    const detailImgKey = `idx_detail_lb_${itemId}`;
+    window[detailImgKey] = imagesList;
+    let imgHtml = '';
+    if (imagesList.length > 1) {
+        const jsonArray = JSON.stringify(imagesList).replace(/"/g, '&quot;');
+        imgHtml = `
+        <div class="card-gallery-slider" style="height:240px">
+            ${imagesList.map((url, i) => `<img src="${url}" class="card-img slide-item detail-img" onerror="this.src='${defaultImg}'" onclick="openLightbox(window['${detailImgKey}'],${i})" style="cursor:zoom-in;height:240px;object-fit:cover">`).join('')}
+        </div>
+        <div class="card-photo-count"><i class='bx bx-images'></i> ${imagesList.length}</div>`;
+    } else {
+        imgHtml = `<img src="${imagesList[0]}" class="detail-img" onerror="this.src='${defaultImg}'" onclick="openLightbox(window['${detailImgKey}'],0)" style="cursor:zoom-in">`;
+    }
+
+    // ใส่เนื้อหาลงใน modal
+    modal.querySelector('.detail-img-wrap').innerHTML = imgHtml;
+    modal.querySelector('.detail-badge').textContent = catText;
+    modal.querySelector('.detail-dist').innerHTML = addr ? `<i class='bx bx-map-pin'></i> ${addr}` : '';
+    modal.querySelector('.detail-name').textContent = name;
+    modal.querySelector('.detail-stars').innerHTML = rating > 0 ? `<span style="display:flex;align-items:center;gap:0.3rem">${starsHtml} <span style="font-size:0.9rem;color:var(--text-muted)">${rating.toFixed(1)}</span></span>` : '';
+    modal.querySelector('.detail-desc').textContent = desc;
+    modal.querySelector('.detail-tags').innerHTML = tags;
+    modal.querySelector('.detail-price').innerHTML = ''; // สถานที่ภายในไม่มีข้อมูลราคา
+
+    // ปุ่ม fav — อัปเดตสถานะและผูก onclick
+    const favBtn = modal.querySelector('.detail-fav-btn');
+    favBtn.classList.toggle('is-fav', isFav);
+    favBtn.innerHTML = `<i class='bx ${isFav ? 'bxs-heart' : 'bx-heart'}'></i> ${isFav ? 'บันทึกแล้ว' : 'บันทึก'}`;
+    favBtn.onclick = () => {
+        toggleFavorite(itemId, name, imagesList[0], item.category || item.faculty);
+        const nowFav = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').some(f => f.id === itemId);
+        favBtn.classList.toggle('is-fav', nowFav);
+        favBtn.innerHTML = `<i class='bx ${nowFav ? 'bxs-heart' : 'bx-heart'}'></i> ${nowFav ? 'บันทึกแล้ว' : 'บันทึก'}`;
+    };
+
+    // ปุ่มรีวิว (แสดงเฉพาะสถานที่ประเภท place)
+    const reviewBtn = modal.querySelector('.detail-review-btn');
+    if (item.type === 'place') {
+        reviewBtn.style.display = 'inline-flex';
+        reviewBtn.innerHTML = `<i class='bx bx-chat'></i> รีวิว`;
+        reviewBtn.onclick = () => {
+            closePlaceDetailModal();
+            // เปิด nearby.html พร้อม query param เพื่อเปิด comment modal
+            window.open(`nearby.html?review=${itemId}`, '_blank');
+        };
+    } else {
+        reviewBtn.style.display = 'none';
+    }
+
+    // เปิด modal
+    document.getElementById('placeDetailModal').classList.add('active');
+}
+
+function closePlaceDetailModal() {
+    document.getElementById('placeDetailModal').classList.remove('active');
 }
 
 // ── Lightbox แสดงรูปภาพ ──────────────────────────────────────────
