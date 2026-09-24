@@ -1,0 +1,237 @@
+{
+  "info": {
+    "_postman_id": "29d284a0-2cbe-4a82-97d7-8e7c49b20001",
+    "name": "UTCC_RECOM API Tests",
+    "description": "Beginner QA portfolio collection based on the real UTCC_RECOM controllers. CRUD requests use QA_TEST_ data and should be run only against an approved test database.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "test_place_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Page Availability",
+      "item": [
+        {
+          "name": "Home page returns 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));",
+                  "pm.test('Response time is below 5000ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nearby page returns 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/nearby.html"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Read APIs",
+      "item": [
+        {
+          "name": "Get university items",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/university/items" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+            "pm.test('Response is JSON', () => pm.response.to.be.json);",
+            "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+            "pm.test('Response time is below 5000ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));"
+          ] } }]
+        },
+        {
+          "name": "Get all places",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/places" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+            "pm.test('Response is JSON', () => pm.response.to.be.json);",
+            "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ] } }]
+        },
+        {
+          "name": "Get all nearby places",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/nearby-places" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+            "pm.test('Response is JSON', () => pm.response.to.be.json);",
+            "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ] } }]
+        },
+        {
+          "name": "Get nearby categories",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/nearby-categories" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+            "pm.test('Response is JSON', () => pm.response.to.be.json);",
+            "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Negative API Tests",
+      "item": [
+        {
+          "name": "Place ID has invalid UUID format",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/places/not-a-uuid" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 400', () => pm.response.to.have.status(400));",
+            "pm.test('Response is JSON', () => pm.response.to.be.json);"
+          ] } }]
+        },
+        {
+          "name": "Place search is missing name parameter",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/places/search" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+          ] } }]
+        },
+        {
+          "name": "Nearby search is missing name parameter",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/nearby-places/search" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+          ] } }]
+        },
+        {
+          "name": "Chat body is missing message",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/api/chat"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 400', () => pm.response.to.have.status(400));",
+            "pm.test('Error message is returned', () => pm.expect(pm.response.json().error).to.eql('message is required'));"
+          ] } }]
+        },
+        {
+          "name": "Chat message contains whitespace only",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"message\":\"   \"}" },
+            "url": "{{base_url}}/api/chat"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 400', () => pm.response.to.have.status(400));",
+            "pm.test('Error message is returned', () => pm.expect(pm.response.json().error).to.eql('message is required'));"
+          ] } }]
+        },
+        {
+          "name": "Chat does not support PATCH",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/api/chat"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 405', () => pm.response.to.have.status(405));"
+          ] } }]
+        },
+        {
+          "name": "Maps resolver is missing url parameter",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/util/resolve-maps-url" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+          ] } }]
+        },
+        {
+          "name": "Upload multiple is missing multipart files",
+          "request": { "method": "POST", "header": [], "url": "{{base_url}}/api/upload/multiple" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Invalid upload returns a client error', () => pm.expect(pm.response.code).to.be.within(400, 499));",
+            "pm.test('Response does not expose a Java stack trace', () => pm.expect(pm.response.text()).not.to.include('org.springframework'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "CRUD Lifecycle - NOT EXECUTED",
+      "description": "Run only after the datasource is fixed and only against an approved test database. This folder creates and deletes its own QA_TEST_ record.",
+      "item": [
+        {
+          "name": "1 - Create QA test place",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QA_TEST_PLACE\",\n  \"description\": \"Created by Postman QA lifecycle\",\n  \"address\": \"QA test area\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"category\": \"other\",\n  \"rating\": 0,\n  \"mapsUrl\": \"https://maps.google.com/?q=QA_TEST_PLACE\",\n  \"tags\": [\"QA_TEST\"],\n  \"images\": []\n}"
+            },
+            "url": "{{base_url}}/api/places"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+            "pm.test('Created object has an id', () => pm.expect(pm.response.json().id).to.be.a('string'));",
+            "if (pm.response.code === 200) pm.collectionVariables.set('test_place_id', pm.response.json().id);"
+          ] } }]
+        },
+        {
+          "name": "2 - Get created QA test place",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/places/{{test_place_id}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+            "pm.test('Correct test record is returned', () => pm.expect(pm.response.json().name).to.eql('QA_TEST_PLACE'));"
+          ] } }]
+        },
+        {
+          "name": "3 - Update QA test place",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QA_TEST_PLACE_UPDATED\",\n  \"description\": \"Updated by Postman QA lifecycle\",\n  \"address\": \"QA test area\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"category\": \"other\",\n  \"rating\": 0,\n  \"mapsUrl\": \"https://maps.google.com/?q=QA_TEST_PLACE_UPDATED\",\n  \"tags\": [\"QA_TEST\"],\n  \"images\": []\n}"
+            },
+            "url": "{{base_url}}/api/places/{{test_place_id}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+            "pm.test('Name is updated', () => pm.expect(pm.response.json().name).to.eql('QA_TEST_PLACE_UPDATED'));"
+          ] } }]
+        },
+        {
+          "name": "4 - Delete QA test place",
+          "request": { "method": "DELETE", "header": [], "url": "{{base_url}}/api/places/{{test_place_id}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status code is 204', () => pm.response.to.have.status(204));",
+            "if (pm.response.code === 204) pm.collectionVariables.unset('test_place_id');"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}
