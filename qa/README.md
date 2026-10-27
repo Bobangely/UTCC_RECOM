@@ -42,4 +42,4 @@ Newman รันทั้งหมด 14 requests และ 30 assertions ส่
 - `BLOCKED` — ยังรันต่อไม่ได้เพราะ environment หรือระบบที่ต้องใช้มีปัญหา
 - `NOT RUN` — เขียนเคสไว้แล้ว แต่ยังไม่ได้รันในรอบนี้
 
-หมายเหตุ: ไฟล์ Postman ไม่มี password, token, Supabase key หรือ Gemini key เก็บไว้ มีแค่ `base_url` และ placeholder เท่านั้น
+หมายเหตุ: ไฟล์ Postman ไม่มี password, token, Supabase key หรือ Gemini key เก็บไว้ มีแค่ `base_url` และ placeholder 
