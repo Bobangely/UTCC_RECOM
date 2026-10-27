@@ -1,37 +1,24 @@
-# UTCC_RECOM QA Portfolio
+# QA ที่ลองทำกับโปรเจกต์ UTCC_RECOM
 
-## Purpose
+โฟลเดอร์นี้เป็นเอกสารที่ผมลองเขียนระหว่างทดสอบโปรเจกต์ UTCC_RECOM เพื่อฝึกงานด้าน QA/Tester โดยทดสอบจากระบบที่รันในเครื่องจริง แล้วจดผลตามที่เจอ ไม่ได้ตั้งใจให้เป็นเอกสารระดับบริษัทหรือ QA มืออาชีพ
 
-โฟลเดอร์นี้รวบรวมเอกสารทดสอบที่ทำกับโปรเจกต์ UTCC_RECOM จริง เพื่อแสดงขั้นตอนการฝึกงานด้าน QA/Tester ตั้งแต่การสำรวจระบบ ออกแบบ test case รันทดสอบ บันทึก defect และเตรียม regression test
+## ส่วนที่ลองทดสอบ
 
-งานชุดนี้เป็นผลงานระดับเริ่มต้น ไม่ได้อ้างว่าเป็นประสบการณ์ QA ระดับมืออาชีพ
-
-## Test Scope
-
-- หน้าแนะนำสถานที่ภายในมหาวิทยาลัย
+- หน้าสถานที่ภายในมหาวิทยาลัย
 - หน้าสถานที่รอบมหาวิทยาลัยและแผนที่
-- Search, empty state, navigation, language และ dark mode
-- REST APIs สำหรับ building, place, nearby place, category, review, chat และ upload
-- Positive, negative และ boundary scenarios ตามพฤติกรรมที่มีอยู่จริง
+- การค้นหา, กรณีไม่พบข้อมูล, navigation, ภาษา และ Dark Mode
+- REST API ของ building, place, nearby place, category, review, chat และ upload
+- กรณีปกติ กรณีใส่ข้อมูลผิด และค่าขอบเขตบางส่วน
 
-## Testing Performed
+## วิธีที่ใช้
 
-- Manual functional testing
-- Positive and negative testing
-- Basic boundary test design
-- REST API testing
-- Bug reporting
-- Regression checklist preparation
+- เปิดทดสอบหน้าเว็บและดู Network ใน Browser Developer Tools
+- เรียก API ด้วย PowerShell, curl และ Postman
+- รัน Postman Collection ด้วย Newman
+- รัน Maven test เพื่อดู baseline ของโปรเจกต์
+- จด bug และทำ regression checklist ไว้สำหรับรอบแก้ไข
 
-## Tools Used
-
-- Browser และ Browser Developer Tools
-- PowerShell / curl สำหรับเรียก API baseline
-- Maven
-- Postman Collection และ Newman runner
-- Git / GitHub
-
-## Documents
+## ไฟล์ในโฟลเดอร์นี้
 
 - [Manual Test Cases](./test-cases/manual-test-cases.md)
 - [Bug Reports](./bug-reports/bug-reports.md)
@@ -42,21 +29,17 @@
 - [Test Summary](./test-summary.md)
 - [Testing Evidence](./evidence/README.md)
 
-Newman รัน 14 requests และ 30 assertions จริงในรอบนี้ โดยไม่รัน CRUD folder เพราะ datasource ยังไม่พร้อม
+## ผลที่ได้ในรอบนี้
 
-## Current Limitation
+Newman รันทั้งหมด 14 requests และ 30 assertions ส่วน CRUD ยังไม่ได้รัน เพราะตอนทดสอบ datasource เชื่อมต่อไม่ได้
 
-วันที่ 24 กันยายน 2026 แอปเริ่มทำงานและเปิด static pages ได้ แต่ datasource ที่ตั้งค่าไว้ตอบกลับว่า PostgreSQL tenant/user ไม่พบ ทำให้ API ที่ต้องอ่านหรือเขียนฐานข้อมูลตอบ HTTP 500
+ปัญหาหลักคือ API ที่ใช้ PostgreSQL ตอบ HTTP 500 เนื่องจาก local environment หา tenant/user ไม่เจอ ผมจึงใส่ผลเป็น `BLOCKED` แทนการเดาว่าฟังก์ชันผ่าน ส่วนหน้าเว็บที่ใช้ข้อมูล fallback ใน JavaScript ยังทดสอบ search, map, ภาษา และ Dark Mode ได้
 
-กรณีที่ต้องใช้ฐานข้อมูลจึงถูกบันทึกเป็น `BLOCKED` ไม่ได้บันทึกเป็น `PASS` ส่วนหน้า nearby ยังแสดง fallback data ภายใน JavaScript ได้ จึงทดสอบ search และ UI บางส่วนได้โดยไม่ถือว่าเป็นข้อมูลจาก API
+ความหมายของสถานะที่ใช้:
 
-## Status Meaning
+- `PASS` — รันแล้วได้ผลตามที่คาดไว้
+- `FAIL` — รันแล้วผลไม่ตรงกับที่คาดไว้
+- `BLOCKED` — ยังรันต่อไม่ได้เพราะ environment หรือระบบที่ต้องใช้มีปัญหา
+- `NOT RUN` — เขียนเคสไว้แล้ว แต่ยังไม่ได้รันในรอบนี้
 
-- `PASS` — รันแล้วและผลตรงกับ expected result
-- `FAIL` — รันแล้วและพบผลต่างจาก expected result
-- `BLOCKED` — รันต่อไม่ได้เพราะ environment หรือ dependency
-- `NOT RUN` — ออกแบบไว้แล้วแต่ยังไม่ได้รัน
-
-## Safety
-
-Postman environment มีเพียง `base_url` และ placeholder เท่านั้น ไม่มี password, token, Supabase key หรือ Gemini key
+หมายเหตุ: ไฟล์ Postman ไม่มี password, token, Supabase key หรือ Gemini key เก็บไว้ มีแค่ `base_url` และ placeholder เท่านั้น

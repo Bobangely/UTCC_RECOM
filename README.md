@@ -51,11 +51,11 @@ Features
 
 Software Testing
 
-มีชุดงาน QA ระดับเริ่มต้นจากการตรวจและทดสอบระบบจริง ด้วย Manual Test Cases, API Testing, Bug Reports, Regression Checklist และ Test Summary
+มีเอกสาร QA ที่ลองเขียนและทดสอบจากโปรเจกต์นี้จริง ทั้ง Manual Test Cases, API Testing, Bug Reports, Regression Checklist และ Test Summary
 
-ผลการทดสอบจะระบุ `PASS`, `FAIL`, `BLOCKED` และ `NOT RUN` 
+ในเอกสารแยกผลเป็น `PASS`, `FAIL`, `BLOCKED` และ `NOT RUN` ตามสิ่งที่รันได้จริง
 
-รายละเอียด [QA Documentation](./qa/README.md)
+ดูรายละเอียดได้ที่ [QA Documentation](./qa/README.md)
 
 Running the Project
 

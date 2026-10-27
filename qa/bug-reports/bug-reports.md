@@ -1,6 +1,6 @@
 # Bug Reports
 
-บันทึกเฉพาะปัญหาที่พบและทำซ้ำได้ในการทดสอบวันที่ 24 กันยายน 2026
+รายการนี้จดจากปัญหาที่เจอและลองทำซ้ำได้ในวันที่ 24 กันยายน 2026 ส่วนข้อสังเกตจากการอ่านโค้ดแยกไว้ท้ายไฟล์และยังไม่นับเป็น bug ที่ทดสอบแล้ว
 
 ## BUG-001 — Database-backed APIs return HTTP 500 in the current environment
 
@@ -22,11 +22,11 @@
 
 **Expected Result:**
 
-The APIs connect to the configured datasource and return JSON data with HTTP 200.
+API ควรเชื่อมต่อ datasource และตอบข้อมูล JSON พร้อม HTTP 200
 
 **Actual Result:**
 
-Each endpoint returns HTTP 500. The server log reports that the configured PostgreSQL tenant/user cannot be found. The secret value is intentionally not included in this report.
+ทุก endpoint ตอบ HTTP 500 และใน server log แจ้งว่าหา PostgreSQL tenant/user ไม่เจอ โดยไม่ได้ใส่ค่า secret ลงในรายงานนี้
 
 **Evidence:**
 
@@ -56,11 +56,11 @@ Each endpoint returns HTTP 500. The server log reports that the configured Postg
 
 **Expected Result:**
 
-The server should reject the invalid client request with a 4xx status such as HTTP 400 and a concise validation error.
+Server ควรปฏิเสธ request ที่ไม่ถูกต้องด้วย 4xx เช่น HTTP 400 และตอบข้อความสั้น ๆ ว่าส่งข้อมูลไม่ครบ
 
 **Actual Result:**
 
-The server returns HTTP 500 Internal Server Error. The response includes a full Java stack trace beginning with `MultipartException: Current request is not a multipart request`.
+Server ตอบ HTTP 500 และส่ง Java stack trace กลับมา โดยเริ่มจาก `MultipartException: Current request is not a multipart request`
 
 **Evidence:**
 
@@ -91,7 +91,7 @@ The server returns HTTP 500 Internal Server Error. The response includes a full 
 
 **Expected Result:**
 
-The user should see a clear message that data could not be loaded from the server, with an option to retry if possible.
+หน้าเว็บควรบอกว่าโหลดข้อมูลจาก server ไม่สำเร็จ และถ้าทำได้ควรมีปุ่มให้ลองใหม่
 
 **Actual Result:**
 
@@ -104,7 +104,7 @@ The page shows an empty-data message similar to “ไม่พบข้อม�
 
 **Status:** OPEN
 
-## Code-review observations (not filed as executed bugs)
+## ข้อสังเกตจากการอ่านโค้ด (ยังไม่ได้นับเป็น bug)
 
-- Admin mode uses a password constant in frontend JavaScript and stores the enabled state in `localStorage`. This should be reviewed as a security/design concern, but it was not recorded as a confirmed manual defect in this run.
-- Entity fields have few database constraints and no Jakarta Bean Validation annotations in request handling. Boundary/invalid-body behavior should be tested again after the datasource is available.
+- Admin mode มี password อยู่ใน frontend JavaScript และเก็บสถานะไว้ใน `localStorage` จุดนี้น่าจะต้องตรวจเรื่อง security เพิ่ม แต่รอบนี้ยังไม่ได้ยืนยันเป็น manual bug
+- Entity หลาย field ยังไม่มี Jakarta Bean Validation ตอนรับ request ควรลอง invalid body และ boundary cases อีกครั้งหลัง datasource ใช้งานได้

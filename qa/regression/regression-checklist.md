@@ -1,6 +1,6 @@
 # Regression Checklist
 
-ใช้ checklist นี้หลังแก้ datasource configuration หรือแก้ defect เพื่อยืนยันว่าฟังก์ชันหลักยังทำงานเหมือนเดิม
+checklist นี้เตรียมไว้ใช้หลังแก้ datasource หรือ bug เพื่อเช็กซ้ำว่าฟังก์ชันเดิมยังใช้งานได้
 
 | ID | Core Feature | Expected Behavior | Result |
 |---|---|---|---|
@@ -17,7 +17,7 @@
 | REG-011 | Review lifecycle | เพิ่ม แก้ไข และลบ QA review ได้ | BLOCKED |
 | REG-012 | Invalid chat request | message ว่างคืน HTTP 400 พร้อม `message is required` | PASS |
 
-## Retest Order
+## ลำดับที่คิดว่าจะรันทดสอบซ้ำ
 
 1. แก้และยืนยัน datasource configuration โดยไม่ commit secret
 2. รัน Postman Collection

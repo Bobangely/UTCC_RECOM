@@ -1,11 +1,11 @@
 # Newman Execution Summary — 2026-09-24
 
-Command scope:
+ส่วนที่เลือกรัน:
 
 - Page Availability
 - Read APIs
 - Negative API Tests
-- CRUD Lifecycle excluded
+- ไม่ได้รัน CRUD Lifecycle เพราะ datasource ยังใช้ไม่ได้
 
 ## Run Statistics
 
@@ -23,7 +23,7 @@ Command scope:
 | Maximum response time | 3.6 seconds |
 | Data received | approximately 149.39 kB |
 
-## Failed Assertions
+## Assertion ที่ไม่ผ่าน
 
 | Area | Failures | Reason |
 |---|---:|---|
@@ -33,7 +33,7 @@ Command scope:
 | `GET /api/nearby-categories` | 2 | Expected 200 JSON array, received 500 error object |
 | `POST /api/upload/multiple` without multipart files | 2 | Expected 4xx without stack trace, received 500 with Java stack trace |
 
-## Passed Areas
+## ส่วนที่ผ่าน
 
 - Home and Nearby pages returned 200 HTML
 - Invalid UUID returned 400
@@ -42,4 +42,4 @@ Command scope:
 - Unsupported PATCH method returned 405
 - Missing maps URL returned 400
 
-Raw response bodies are intentionally not committed because local error responses contain internal stack traces and environment identifiers.
+ไม่ได้ commit raw response body เพราะ error response มี stack trace และข้อมูลของ environment ปนอยู่
