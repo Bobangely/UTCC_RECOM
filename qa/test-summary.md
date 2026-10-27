@@ -1,67 +1,60 @@
-# Test Summary
+# สรุปผลการทดสอบ
 
-## Test Environment
+ทดสอบวันที่ 24 กันยายน 2026 บน Windows โดยรัน Spring Boot ที่ `http://localhost:8080` และเปิดหน้าเว็บผ่าน Codex in-app browser
 
-- Date: 24 September 2026
-- OS: Windows
-- Browser: Codex in-app browser
-- Backend: Java 17, Spring Boot 3.2.5, local port 8080
-- Database: PostgreSQL/Supabase — unavailable with current local configuration
-- API Tools: PowerShell `Invoke-WebRequest`, curl, Postman Collection และ Newman
+ตอนทดสอบ PostgreSQL/Supabase ยังเชื่อมต่อไม่ได้ จึงมีหลายเคสที่ต้องใส่เป็น `BLOCKED` โดยเฉพาะ API และ CRUD ที่ต้องใช้ข้อมูลจากฐานข้อมูล
 
-## Test Execution Summary
+## ผลรวม
 
-ผลรวมด้านล่างนับ Manual/UI 20 cases และ API/HTTP 14 requests
+นับรวม Manual/UI 20 เคส และ API/HTTP 14 requests
 
-- Total Test Cases/Requests: 34
-- Passed: 18
-- Failed: 2
-- Blocked: 11
-- Not Run: 3
+- ทั้งหมด: 34
+- PASS: 18
+- FAIL: 2
+- BLOCKED: 11
+- NOT RUN: 3
 
-## Manual / UI Testing
+## Manual / UI
 
-- Total: 20
-- Passed: 9
-- Failed: 1
-- Blocked: 7
-- Not Run: 3
+- ทั้งหมด: 20
+- PASS: 9
+- FAIL: 1
+- BLOCKED: 7
+- NOT RUN: 3
 
-ฟังก์ชันที่ยืนยันได้คือ page load, navigation, dark mode, language switch, setting persistence, map, search และ empty state โดย search บน Nearby ใช้ fallback dataset ใน JavaScript ไม่ใช่ผลจาก live API
+ส่วนที่ทดสอบผ่านคือการเปิดหน้าเว็บ, navigation, Dark Mode, เปลี่ยนภาษา, การจำค่าตั้งค่า, แผนที่, search และ empty state โดยข้อมูลที่ใช้ค้นหาในหน้า Nearby เป็น fallback dataset ใน JavaScript ไม่ใช่ข้อมูลจาก live API
 
-## API Testing
+## API
 
-- Requests Tested: 14
-- Passed: 9
-- Failed: 1
-- Blocked: 4
+- Requests ที่รัน: 14
+- PASS: 9
+- FAIL: 1
+- BLOCKED: 4
 
-Negative tests สำหรับ invalid UUID, missing query parameter, missing chat message, whitespace-only message, unsupported method และ missing maps URL ให้สถานะ 400/405 ตามที่ตรวจจากระบบจริง
+Negative test ที่ลองมี invalid UUID, ไม่ส่ง query parameter, ไม่ส่งข้อความให้ chat, ส่งข้อความที่มีแต่ช่องว่าง, ใช้ method ที่ไม่รองรับ และไม่ส่ง maps URL ซึ่งระบบตอบ 400/405 ตามที่คาดไว้
 
-API ที่ต้องใช้ฐานข้อมูลถูก block เพราะ datasource configuration ปัจจุบันเชื่อมต่อ PostgreSQL tenant ไม่ได้
+API ที่ต้องอ่านข้อมูลจากฐานข้อมูลตอบ HTTP 500 เพราะ datasource เชื่อมต่อ PostgreSQL tenant ไม่ได้ ส่วน upload endpoint ตอบ HTTP 500 พร้อม stack trace เมื่อส่ง request ที่ไม่ใช่ multipart จึงบันทึกไว้เป็น bug
 
-Newman รัน 14 requests และ 30 assertions โดยผ่าน 20 assertions และไม่ผ่าน 10 assertions ผลที่ไม่ผ่านตรงกับ database blocker และ upload defect ที่บันทึกไว้ ไม่ได้แก้ expected status ให้ผ่านแบบหลอก ๆ
+Newman รัน 14 requests และ 30 assertions ผ่าน 20 และไม่ผ่าน 10 จุด ผลที่ไม่ผ่านมาจาก database blocker และ upload bug ข้างต้น จึงไม่ได้แก้ assertion เพื่อให้รายงานดูผ่าน
 
-## Automated Baseline
+## Maven baseline
 
-Command: `.\mvnw.cmd test`
+คำสั่งที่ใช้ในรอบเดิม: `.\mvnw.cmd test`
 
 - Tests run: 1
 - Failures: 0
 - Errors: 0
 - Build result: SUCCESS
 
-อย่างไรก็ตาม Spring context log มี datasource error ระหว่าง `DatabaseSeeder` แต่ test ยังผ่าน จึงไม่ควรใช้ผล Maven test เพียงอย่างเดียวเพื่อสรุปว่า database/API พร้อมใช้งาน
+แม้ Maven test จะผ่าน แต่ใน log ยังมี datasource error ตอน `DatabaseSeeder` ทำงาน ดังนั้นผลนี้บอกได้แค่ว่า test เดิมผ่าน ไม่ได้แปลว่า database และ API พร้อมใช้งานทั้งหมด
 
-## Defects
+## Bug ที่จดไว้
 
 - Critical: 0
 - High: 1
 - Medium: 2
 - Low: 0
 
-## Overall Result
+## สรุปที่เข้าใจจากการทดสอบ
 
-ส่วน static UI และฟังก์ชันที่ใช้ข้อมูลใน browser ทำงานได้ตามกรณีที่ทดสอบ แต่ core API ที่พึ่งพาฐานข้อมูลยังไม่พร้อมใน environment นี้ จึงยังไม่สามารถยืนยัน CRUD และ review lifecycle ได้
-
-ก่อนนำผลไปใส่ Resume ควรแก้ datasource configuration แล้วรัน Postman Collection, CRUD tests, retest และ regression checklist อีกครั้ง จากนั้นอัปเดตตัวเลขในรายงานตามผลจริง
+หน้าเว็บส่วนที่เป็น static และฟังก์ชันที่ใช้ข้อมูล fallback ยังใช้งานได้ตามปกติ แต่ API ที่ต้องต่อฐานข้อมูลและ CRUD ยังยืนยันผลไม่ได้ ต้องแก้ datasource configuration แล้วค่อยรันซ้ำ ส่วนรายละเอียดแต่ละเคสอยู่ใน [Manual Test Cases](./test-cases/manual-test-cases.md), [API Report](./api-testing/api-test-report.md) และ [Bug Reports](./bug-reports/bug-reports.md)

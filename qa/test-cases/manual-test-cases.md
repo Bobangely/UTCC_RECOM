@@ -4,7 +4,9 @@
 
 Environment: Windows, local Spring Boot (`http://localhost:8080`), Codex in-app browser
 
-Database: PostgreSQL/Supabase connection unavailable during execution
+Database: ตอนทดสอบยังเชื่อมต่อ PostgreSQL/Supabase ไม่ได้
+
+ตารางนี้จด expected result ไว้ก่อน แล้วเติม actual result ตามที่เห็นตอนรันจริง เคสที่ติด database จึงใช้ `BLOCKED` และไม่ได้ใส่ผลผ่านแทน
 
 | ID | Feature | Test Scenario | Preconditions | Test Steps | Test Data | Expected Result | Actual Result | Status |
 |---|---|---|---|---|---|---|---|---|
@@ -29,7 +31,7 @@ Database: PostgreSQL/Supabase connection unavailable during execution
 | TC-UI-019 | Rating boundary | กรอก rating ต่ำกว่าค่าต่ำสุด | เปิดฟอร์ม Nearby Place | 1. กรอก rating 0<br>2. บันทึก | rating=`0` | ป้องกันค่าต่ำกว่า 1 หรือแจ้ง validation | ยังไม่ได้รัน และ backend ไม่มี validation annotation | NOT RUN |
 | TC-UI-020 | Rating boundary | กรอก rating สูงกว่าค่าสูงสุด | เปิดฟอร์ม Nearby Place | 1. กรอก rating 5.1<br>2. บันทึก | rating=`5.1` | ป้องกันค่าสูงกว่า 5 หรือแจ้ง validation | ยังไม่ได้รัน และ backend ไม่มี validation annotation | NOT RUN |
 
-## Execution Totals
+## สรุปจำนวนเคสที่รัน
 
 - Total: 20
 - PASS: 9

@@ -2,6 +2,8 @@
 
 วันที่ทดสอบ: 24 กันยายน 2026
 
+รอบนี้ลองเรียก API จากเครื่อง local แล้วจด status และ response ที่ได้จริง
+
 Base URL: `http://localhost:8080`
 
 การรันรอบนี้ตรวจ baseline ด้วย PowerShell/curl และรัน collection ซ้ำด้วย Newman จริง โดยเลือกเฉพาะ Page Availability, Read APIs และ Negative API Tests ไม่ได้รัน CRUD folder เพราะ datasource ยังไม่พร้อม
@@ -41,7 +43,7 @@ Base URL: `http://localhost:8080`
 - Minimum response time: 2 ms
 - Maximum response time: 3.6 seconds
 
-สาเหตุของ assertion failures:
+จุดที่ assertion ไม่ผ่าน:
 
 - 8 failures มาจาก 4 read APIs ที่ตอบ 500 และ response ไม่ใช่ JSON array ตาม contract ที่คาดไว้
 - 2 failures มาจาก upload endpoint ที่ตอบ 500 และมี Java stack trace ใน response
@@ -50,15 +52,15 @@ Base URL: `http://localhost:8080`
 
 ## Response-time Notes
 
-Negative requests API-005 ถึง API-012 ตอบกลับประมาณ 1–213 ms ใน local run ยกเว้นการเชื่อม datasource ซึ่งอาจรอ timeout หลายวินาที
+Negative requests API-005 ถึง API-012 ตอบกลับประมาณ 1–213 ms ในเครื่องที่ทดสอบ ส่วน request ที่ต้องต่อ datasource ใช้เวลาหลายวินาทีเพราะรอ connection timeout
 
 ## Postman Collection
 
-Collection มี requests ที่รันแล้วด้านบน พร้อม assertions สำหรับ status, JSON content และ response time รวมถึง CRUD lifecycle template สำหรับ `Place`
+Collection มี requests และ assertions สำหรับเช็ก status, JSON และ response time รวมถึง CRUD template ของ `Place` ที่เตรียมไว้รันหลัง database ใช้งานได้
 
 CRUD folder ยังไม่ได้รัน เพราะ database unavailable ทุกข้อมูลทดสอบใช้ชื่อขึ้นต้นด้วย `QA_TEST_` และ delete request จะอ้างเฉพาะ ID ที่สร้างใน collection variable
 
-## Retest Needed
+## สิ่งที่ต้องลองใหม่
 
 1. แก้ PostgreSQL/Supabase configuration โดยไม่ commit secret
 2. Import environment และ collection เข้า Postman

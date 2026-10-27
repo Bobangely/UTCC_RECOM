@@ -26,8 +26,8 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
-The same run logged a PostgreSQL datasource error. Connection identifiers and secrets are omitted from this evidence file.
+ใน run เดียวกันมี PostgreSQL datasource error อยู่ใน log จึงสรุปไม่ได้ว่า database พร้อมใช้งาน และไม่ได้คัดลอก connection identifier หรือ secret มาใส่ไฟล์นี้
 
 ## Newman Confirmation
 
-The Postman Collection was executed with Newman after the baseline requests. See [Newman execution summary](./newman-summary-2026-09-24.md).
+หลังเรียก baseline requests แล้วได้รัน Postman Collection ด้วย Newman ต่อ ผลอยู่ใน [Newman execution summary](./newman-summary-2026-09-24.md)
